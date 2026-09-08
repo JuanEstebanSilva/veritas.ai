@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { QuickStartSection } from '../components/QuickStartSection';
 import {
   Shield,
   Bot,
@@ -13,6 +14,7 @@ import {
   Search,
   Scale,
   Zap,
+  Terminal,
 } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
@@ -63,6 +65,14 @@ export const LandingPage: React.FC = () => {
           >
             Iniciar Sesión
           </Link>
+
+          <a
+            href="#guia-inicio"
+            className="px-6 py-4 rounded-2xl border border-emerald-300 dark:border-emerald-800/80 bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold text-base hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all flex items-center gap-2 shadow-sm"
+          >
+            <Terminal className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <span>Paso a Paso (Cómo Correr)</span>
+          </a>
         </div>
 
         <div className="flex items-center justify-center gap-6 text-xs text-slate-500 pt-2">
@@ -77,6 +87,9 @@ export const LandingPage: React.FC = () => {
           </span>
         </div>
       </section>
+
+      {/* Sección Prioritaria: Guía Paso a Paso para Correr el Aplicativo */}
+      <QuickStartSection />
 
       {/* Los 3 Pilares */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
