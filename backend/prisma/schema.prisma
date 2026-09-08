@@ -1,0 +1,110 @@
+// Prisma Schema para Veritas AI
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AnalysisType {
+  TEXT
+  DOCX
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id                   String        @id @default(uuid())
+  name                 String
+  last_name            String
+  email                String        @unique
+  password_hash        String
+  role                 Role          @default(USER)
+  is_active            Boolean       @default(true)
+  is_premium           Boolean       @default(false)
+  premium_since        DateTime?
+  daily_analysis_count Int           @default(0)
+  last_analysis_date   DateTime      @default(now())
+  created_at           DateTime      @default(now())
+  updated_at           DateTime      @updatedAt
+
+  analyses             Analysis[]
+  payments             Payment[]
+
+  @@map("users")
+}
+
+model Analysis {
+  id                      String           @id @default(uuid())
+  user_id                 String
+  type                    AnalysisType     @default(TEXT)
+  title_or_filename       String
+  original_text           String           @db.Text
+  improved_text           String?          @db.Text
+  ai_score                Float            @default(0)
+  similarity_score        Float            @default(0)
+  improved_ai_score       Float?
+  improved_similarity_score Float?
+  created_at              DateTime         @default(now())
+
+  user                    User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  results                 AnalysisResult[]
+  sources                 AnalysisSource[]
+
+  @@map("analyses")
+}
+
+model AnalysisResult {
+  id                 String    @id @default(uuid())
+  analysis_id        String
+  paragraph_index    Int
+  paragraph_text     String    @db.Text
+  paragraph_ai_score Float
+  indicators         String    // JSON serialized array of tags e.g. ["Alta uniformidad", "Patrones repetitivos"]
+  explanation        String    @db.Text
+
+  analysis           Analysis  @relation(fields: [analysis_id], references: [id], onDelete: Cascade)
+
+  @@map("analysis_results")
+}
+
+model AnalysisSource {
+  id                    String    @id @default(uuid())
+  analysis_id           String
+  source_url            String
+  source_title          String
+  matched_text          String    @db.Text
+  user_snippet          String    @db.Text
+  similarity_percentage Float
+
+  analysis              Analysis  @relation(fields: [analysis_id], references: [id], onDelete: Cascade)
+
+  @@map("analysis_sources")
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  user_id        String
+  provider       String        @default("stripe")
+  transaction_id String        @unique
+  amount         Float         @default(2.00)
+  currency       String        @default("USD")
+  status         PaymentStatus @default(PENDING)
+  created_at     DateTime      @default(now())
+
+  user           User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
