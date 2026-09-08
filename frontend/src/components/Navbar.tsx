@@ -14,7 +14,6 @@ import {
   FileSearch,
   History,
   ShieldAlert,
-  Terminal,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -34,30 +33,19 @@ export const Navbar: React.FC = () => {
     <header className="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo & Marca */}
-        <div className="flex items-center gap-4">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              <Shield className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-300 bg-clip-text text-transparent">
-                Veritas AI
-              </span>
-              <span className="hidden sm:inline-block ml-1.5 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
-                Turnitin Style
-              </span>
-            </div>
-          </Link>
-
-          {/* Botón Acceso Rápido a Guía de Inicio */}
-          <a
-            href="/#guia-inicio"
-            className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-300/70 dark:border-emerald-800/80 bg-emerald-50/80 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors shadow-xs"
-          >
-            <Terminal className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Cómo Correr</span>
-          </a>
-        </div>
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
+            <Shield className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-300 bg-clip-text text-transparent">
+              Veritas AI
+            </span>
+            <span className="hidden sm:inline-block ml-1.5 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+              Turnitin Style
+            </span>
+          </div>
+        </Link>
 
         {/* Enlaces Principales de Navegación */}
         {isAuthenticated && (

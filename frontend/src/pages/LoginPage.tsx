@@ -13,20 +13,9 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Si fue redirigido por intentar analizar sin iniciar sesión o con demo
+  // Si fue redirigido por intentar analizar sin iniciar sesión
   const queryParams = new URLSearchParams(location.search);
   const redirectNotice = queryParams.get('notice');
-  const demoParam = queryParams.get('demo');
-
-  React.useEffect(() => {
-    if (demoParam === 'admin') {
-      setEmail('admin@veritas.ai');
-      setPassword('Admin123!Secure*');
-    } else if (demoParam === 'user') {
-      setEmail('usuario@veritas.ai');
-      setPassword('User123!Secure*');
-    }
-  }, [demoParam]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,15 +73,6 @@ export const LoginPage: React.FC = () => {
           <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
             <span>Debes iniciar sesión para utilizar el analizador.</span>
-          </div>
-        )}
-
-        {demoParam && (
-          <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-blue-800 dark:text-blue-300 text-xs flex items-center justify-between">
-            <span className="flex items-center gap-1.5">
-              <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-              Credenciales de <strong>{demoParam === 'admin' ? 'Administrador' : 'Usuario Demo'}</strong> precargadas.
-            </span>
           </div>
         )}
 
