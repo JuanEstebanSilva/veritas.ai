@@ -46,6 +46,31 @@ Movimiento
   métrica creciendo desde la izquierda, resplandor que respira en el plan de pago.
   Todo bajo `prefers-reduced-motion`.
 
+## Regla: la cápsula es un control
+
+Un rectángulo redondeado con texto dentro significa **"esto se pulsa"**. Nada
+más lleva cápsula.
+
+Es la única regla dura del sistema, y existe porque el rótulo en cápsula
+—icono + versalitas dentro de una píldora con borde y tinte— es la firma
+visual de las landings generadas por IA. Cuando un rótulo decorativo se
+disfraza de control, además de verse genérico, miente sobre lo que es.
+
+Lo que sí lleva cápsula: botones, campos de formulario y filas pulsables.
+Lo que no, y cómo se resuelve en su lugar:
+
+| Antes                     | Ahora                                             |
+| ------------------------- | ------------------------------------------------- |
+| Antetítulo en píldora     | Filetes a los lados del texto en versalitas        |
+| Estado "verificado"       | Punto de color con halo + versalitas               |
+| Calificación en insignia  | Cifra grande en serif itálica junto a un filete    |
+| Etiquetas de indicadores  | Una línea con filete de color y separadores medios |
+| Caja de alerta tintada    | Filete arriba y abajo, color solo en el titular    |
+| "AI" en cajita junto a VERITAS | Serif itálica en azure, parte del logotipo    |
+
+Al pasarlo a React esto se codifica igual: `rounded-full` queda reservado a
+`<button>`, `<input>` y filas interactivas.
+
 ## Pendiente de decisión
 
 - Las cifras del panel izquierdo del login son marcadores `[TU CIFRA]`.

@@ -90,8 +90,8 @@
           <path d="M54 45 C54 39, 66 39, 66 45 L60 54 Z" fill="#f4f5f8"/>
         </svg>
         <span style="font-size:15px;font-weight:800;letter-spacing:.16em;">VERITAS</span>
-        <span style="font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;
-          color:var(--azure);border:1px solid rgba(64,190,253,.4);border-radius:5px;padding:2px 5px;">AI</span>
+        <span style="font-family:var(--serif);font-style:italic;font-size:19px;line-height:1;
+          color:var(--azure);margin-left:1px;">AI</span>
       </div>
       <div style="display:flex;align-items:center;gap:36px;font-size:14px;font-weight:500;color:var(--mid);">
         <span style="cursor:pointer;transition:color .3s;">Método</span>
@@ -111,12 +111,10 @@
   <!-- ========== HERO ========== -->
   <section style="position:relative;z-index:2;padding:130px 0 0;">
     <div class="wrap" style="display:flex;flex-direction:column;align-items:center;gap:0;text-align:center;">
-      <div class="rise" style="animation-delay:.05s;display:inline-flex;align-items:center;gap:9px;
-        height:32px;padding:0 16px;border-radius:999px;border:1px solid var(--hair);
-        background:rgba(255,255,255,.03);">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#40befd" stroke-width="1.9"
-          stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.4-3 8.3-7 9.4-4-1.1-7-5-7-9.4V6z"/><path d="M9.2 12.2l2 2 3.6-3.9"/></svg>
+      <div class="rise" style="animation-delay:.05s;display:flex;align-items:center;gap:20px;">
+        <span style="width:56px;height:1px;background:linear-gradient(90deg,transparent,var(--hair-2));"></span>
         <span class="eyebrow" style="color:var(--mid);">Protocolo de integridad académica</span>
+        <span style="width:56px;height:1px;background:linear-gradient(90deg,var(--hair-2),transparent);"></span>
       </div>
 
       <h1 class="rise" style="animation-delay:.16s;margin-top:38px;font-size:118px;line-height:.92;
@@ -177,12 +175,13 @@
           <!-- cabecera del informe -->
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:40px;">
             <div style="display:flex;flex-direction:column;gap:12px;">
-              <div style="display:flex;align-items:center;gap:10px;">
+              <div style="display:flex;align-items:center;gap:18px;">
                 <span class="eyebrow" style="color:var(--azure);">Informe de originalidad</span>
-                <span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 10px;
-                  border-radius:999px;background:rgba(76,198,128,.12);border:1px solid rgba(76,198,128,.3);
-                  font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--human);text-transform:uppercase;">
-                  Autenticidad verificada</span>
+                <span style="width:1px;height:11px;background:var(--hair-2);"></span>
+                <span style="display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;
+                  letter-spacing:.16em;color:var(--human);text-transform:uppercase;">
+                  <span style="width:5px;height:5px;border-radius:50%;background:var(--human);
+                    box-shadow:0 0 0 3px rgba(76,198,128,.16);"></span>Autenticidad verificada</span>
               </div>
               <h3 style="font-size:25px;font-weight:600;letter-spacing:-.025em;">
                 Ensayo_Metodologia_Investigacion_2026.docx</h3>
@@ -195,9 +194,12 @@
                 <span class="num" style="font-size:52px;font-weight:500;line-height:1;color:var(--human);">96.4%</span>
                 <span class="eyebrow">Índice humano</span>
               </div>
-              <div style="width:62px;height:62px;border-radius:16px;display:flex;align-items:center;
-                justify-content:center;font-size:19px;font-weight:700;color:var(--human);
-                background:rgba(76,198,128,.1);border:1px solid rgba(76,198,128,.3);">A+</div>
+              <div style="width:1px;height:56px;background:var(--hair);"></div>
+              <div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;">
+                <span style="font-family:var(--serif);font-style:italic;font-size:48px;line-height:.86;
+                  color:var(--human);">A+</span>
+                <span class="eyebrow">Calificación</span>
+              </div>
             </div>
           </div>
 
@@ -238,8 +240,8 @@
   <!-- ========== BANDA DE HONESTIDAD ========== -->
   <section style="position:relative;z-index:2;padding:110px 0;">
     <div class="wrap">
-      <div style="display:flex;align-items:flex-start;gap:28px;padding:34px 38px;border-radius:18px;
-        border:1px solid rgba(221,167,51,.22);background:rgba(221,167,51,.045);">
+      <div style="display:flex;align-items:flex-start;gap:28px;padding:38px 0;
+        border-top:1px solid rgba(221,167,51,.3);border-bottom:1px solid rgba(221,167,51,.3);">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dda733" stroke-width="1.6"
           stroke-linecap="round" style="flex-shrink:0;margin-top:2px;">
           <circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.2v.1"/></svg>
@@ -341,16 +343,9 @@
               «En conclusión, es crucial destacar que la inteligencia artificial desempeña un papel
               fundamental en la transformación del sector educativo contemporáneo…»
             </p>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;">
-              <span style="height:24px;padding:0 11px;border-radius:6px;display:inline-flex;align-items:center;
-                font-size:11.5px;font-weight:600;color:var(--ai);background:rgba(251,130,122,.1);
-                border:1px solid rgba(251,130,122,.26);">Fuerte presencia de fórmulas de IA</span>
-              <span style="height:24px;padding:0 11px;border-radius:6px;display:inline-flex;align-items:center;
-                font-size:11.5px;font-weight:600;color:var(--ai);background:rgba(251,130,122,.1);
-                border:1px solid rgba(251,130,122,.26);">Cadencia uniforme</span>
-              <span style="height:24px;padding:0 11px;border-radius:6px;display:inline-flex;align-items:center;
-                font-size:11.5px;font-weight:600;color:var(--ai);background:rgba(251,130,122,.1);
-                border:1px solid rgba(251,130,122,.26);">Simetría estructural sintética</span>
+            <div style="display:flex;align-items:baseline;gap:13px;">
+              <span style="width:18px;height:1px;background:var(--ai);flex-shrink:0;position:relative;top:-4px;"></span>
+              <span style="font-size:12.5px;font-weight:600;color:var(--ai);line-height:1.6;">Fuerte presencia de fórmulas de IA&ensp;·&ensp;Cadencia uniforme&ensp;·&ensp;Simetría estructural sintética</span>
             </div>
           </div>
         </div>
@@ -367,13 +362,9 @@
               «Los datos recogidos durante el trabajo de campo (Mendoza, 2024) sugieren una correlación
               que el marco teórico previo no había anticipado…»
             </p>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;">
-              <span style="height:24px;padding:0 11px;border-radius:6px;display:inline-flex;align-items:center;
-                font-size:11.5px;font-weight:600;color:var(--mixed);background:rgba(219,158,22,.1);
-                border:1px solid rgba(219,158,22,.26);">Conectores formales reiterados</span>
-              <span style="height:24px;padding:0 11px;border-radius:6px;display:inline-flex;align-items:center;
-                font-size:11.5px;font-weight:600;color:var(--mixed);background:rgba(219,158,22,.1);
-                border:1px solid rgba(219,158,22,.26);">Cita académica preservada</span>
+            <div style="display:flex;align-items:baseline;gap:13px;">
+              <span style="width:18px;height:1px;background:var(--mixed);flex-shrink:0;position:relative;top:-4px;"></span>
+              <span style="font-size:12.5px;font-weight:600;color:var(--mixed);line-height:1.6;">Conectores formales reiterados&ensp;·&ensp;Cita académica preservada</span>
             </div>
           </div>
         </div>
@@ -390,13 +381,9 @@
               «Llegué a esta pregunta por accidente. Revisaba actas de 1987 buscando otra cosa y el
               nombre apareció tres veces en una misma página. No podía ser casualidad.»
             </p>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;">
-              <span style="height:24px;padding:0 11px;border-radius:6px;display:inline-flex;align-items:center;
-                font-size:11.5px;font-weight:600;color:var(--human);background:rgba(76,198,128,.1);
-                border:1px solid rgba(76,198,128,.26);">Variación estilística natural</span>
-              <span style="height:24px;padding:0 11px;border-radius:6px;display:inline-flex;align-items:center;
-                font-size:11.5px;font-weight:600;color:var(--human);background:rgba(76,198,128,.1);
-                border:1px solid rgba(76,198,128,.26);">Alternancia rítmica marcada</span>
+            <div style="display:flex;align-items:baseline;gap:13px;">
+              <span style="width:18px;height:1px;background:var(--human);flex-shrink:0;position:relative;top:-4px;"></span>
+              <span style="font-size:12.5px;font-weight:600;color:var(--human);line-height:1.6;">Variación estilística natural&ensp;·&ensp;Alternancia rítmica marcada</span>
             </div>
           </div>
         </div>
@@ -461,9 +448,8 @@
           <div style="position:relative;display:flex;flex-direction:column;gap:14px;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <span class="eyebrow" style="color:var(--azure);">Licencia vitalicia</span>
-              <span style="height:23px;padding:0 11px;border-radius:999px;display:inline-flex;align-items:center;
-                font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--azure);
-                background:rgba(64,190,253,.13);border:1px solid rgba(64,190,253,.35);">Pago único</span>
+              <span style="font-size:11px;font-weight:700;letter-spacing:.2em;
+                text-transform:uppercase;color:var(--azure);">Pago único</span>
             </div>
             <div style="display:flex;align-items:baseline;gap:8px;">
               <span class="num" style="font-size:56px;font-weight:400;letter-spacing:-.04em;">$2</span>

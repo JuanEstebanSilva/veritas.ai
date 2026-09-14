@@ -45,9 +45,12 @@
     .btn-primary:hover{background:#79d0ff;transform:translateY(-2px);
       box-shadow:0 24px 56px -18px rgba(64,190,253,.9);}
     .demo-row{display:flex;align-items:center;justify-content:space-between;gap:14px;
-      height:46px;padding:0 14px;border-radius:10px;border:1px solid var(--hair);
-      background:rgba(255,255,255,.022);cursor:pointer;transition:all .4s var(--ease);}
-    .demo-row:hover{border-color:var(--hair-2);background:rgba(255,255,255,.05);}
+      height:56px;border-bottom:1px solid var(--hair);cursor:pointer;
+      transition:border-color .4s var(--ease);}
+    .demo-row:first-child{border-top:1px solid var(--hair);}
+    .demo-row:hover{border-bottom-color:var(--hair-2);}
+    .demo-row:hover .demo-cta{color:var(--hi);}
+    .demo-cta{transition:color .4s var(--ease);}
     @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;}}
   </style>
 </helmet>
@@ -71,8 +74,8 @@
         <path d="M60 86 L71 56 L66 45 L60 74 Z" fill="#afb2b8"/>
         <path d="M54 45 C54 39, 66 39, 66 45 L60 54 Z" fill="#f4f5f8"/></svg>
       <span style="font-size:15px;font-weight:800;letter-spacing:.16em;">VERITAS</span>
-      <span style="font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;
-        color:var(--azure);border:1px solid rgba(64,190,253,.4);border-radius:5px;padding:2px 5px;">AI</span>
+      <span style="font-family:var(--serif);font-style:italic;font-size:19px;line-height:1;
+        color:var(--azure);margin-left:1px;">AI</span>
     </div>
 
     <div class="rise" style="animation-delay:.14s;position:relative;display:flex;flex-direction:column;gap:30px;max-width:580px;">
@@ -160,12 +163,11 @@
         <div style="flex-grow:1;height:1px;background:var(--hair);"></div>
       </div>
 
-      <div style="display:flex;flex-direction:column;gap:9px;">
+      <div style="display:flex;flex-direction:column;">
         <div class="demo-row">
           <div style="display:flex;align-items:center;gap:11px;">
-            <span style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;
-              background:rgba(221,167,51,.12);border:1px solid rgba(221,167,51,.3);">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dda733" stroke-width="1.8"
+            <span style="display:flex;align-items:center;justify-content:center;width:18px;flex-shrink:0;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#dda733" stroke-width="1.8"
                 stroke-linecap="round" stroke-linejoin="round"><path d="M4 18h16"/><path d="M4 15l2.5-8 5.5 5 5.5-5L20 15z"/></svg>
             </span>
             <div style="display:flex;flex-direction:column;gap:1px;">
@@ -173,14 +175,13 @@
               <span style="font-family:var(--mono);font-size:11px;color:var(--low);">admin@veritas.ai</span>
             </div>
           </div>
-          <span style="font-size:11.5px;font-weight:600;color:var(--gold);">Rellenar</span>
+          <span class="demo-cta" style="font-size:11.5px;font-weight:600;color:var(--gold);">Rellenar</span>
         </div>
 
         <div class="demo-row">
           <div style="display:flex;align-items:center;gap:11px;">
-            <span style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;
-              background:rgba(64,190,253,.12);border:1px solid rgba(64,190,253,.3);">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#40befd" stroke-width="1.8"
+            <span style="display:flex;align-items:center;justify-content:center;width:18px;flex-shrink:0;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#40befd" stroke-width="1.8"
                 stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"/></svg>
             </span>
             <div style="display:flex;flex-direction:column;gap:1px;">
@@ -188,7 +189,7 @@
               <span style="font-family:var(--mono);font-size:11px;color:var(--low);">usuario@veritas.ai</span>
             </div>
           </div>
-          <span style="font-size:11.5px;font-weight:600;color:var(--azure);">Rellenar</span>
+          <span class="demo-cta" style="font-size:11.5px;font-weight:600;color:var(--azure);">Rellenar</span>
         </div>
       </div>
 
