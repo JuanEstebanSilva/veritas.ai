@@ -3,14 +3,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { analysisApi, writingApi } from '../services/api';
 import { Analysis } from '../types';
-import { ResultScoreCard } from '../components/ResultScoreCard';
-import { DiffViewer } from '../components/DiffViewer';
+import { ResultScoreCard, DiffViewer } from '../components/analysis';
+import { sound } from '../utils/soundEffects';
+import { getScoreMood } from '../utils/scoreMood';
 import {
   FileText,
   UploadCloud,
   FileCheck,
-  Bot,
-  Sparkles,
   ExternalLink,
   AlertCircle,
   Loader2,
@@ -22,6 +21,11 @@ import {
   Copy,
   Check,
   Download,
+  PenTool,
+  ShieldCheck,
+  FileSearch,
+  FileCheck2,
+  Layers,
 } from 'lucide-react';
 
 export const AnalyzerPage: React.FC = () => {
@@ -132,45 +136,54 @@ export const AnalyzerPage: React.FC = () => {
 
       setLoading(true);
       setLoadingStage('Analizando perplejidad, burstiness y regularidad sintáctica...');
+      sound.playScan();
 
       const res = await analysisApi.analyzeText(textInput, titleInput);
       setLoading(false);
 
       if (res.isLimitReached) {
+        sound.playError();
         setError(res.error || 'Has alcanzado tus 5 análisis gratuitos de hoy.');
         openPremiumModal();
         return;
       }
 
       if (res.data?.success && res.data.analysis) {
+        sound.playSuccess();
         setAnalysis(res.data.analysis);
         await refreshProfile();
       } else {
+        sound.playError();
         setError(res.error || 'Error al procesar el análisis de texto.');
       }
     } else {
       // Pestaña DOCX
       if (!selectedFile) {
+        sound.playError();
         setError('Por favor selecciona un archivo .docx para analizar.');
         return;
       }
 
       setLoading(true);
       setLoadingStage('Extrayendo párrafos y estructura del documento .docx...');
+      sound.playScan();
 
       const res = await analysisApi.analyzeDocx(selectedFile);
       setLoading(false);
 
       if (res.isLimitReached) {
+        sound.playError();
         setError(res.error || 'Has alcanzado tus 5 análisis gratuitos de hoy.');
         openPremiumModal();
         return;
       }
 
       if (res.data?.success && res.data.analysis) {
+        sound.playSuccess();
         setAnalysis(res.data.analysis);
         await refreshProfile();
       } else {
+        sound.playError();
         setError(res.error || 'Error al procesar el archivo DOCX.');
       }
     }
@@ -190,6 +203,7 @@ export const AnalyzerPage: React.FC = () => {
 
     setError(null);
     setImproving(true);
+    sound.playScan();
 
     const res = await writingApi.improveText({
       text: textInput.trim(),
@@ -198,6 +212,7 @@ export const AnalyzerPage: React.FC = () => {
     setImproving(false);
 
     if (res.data?.success) {
+      sound.playSuccess();
       setImprovedResult({
         improvedText: res.data.improvedText,
         summaryOfChanges: res.data.summaryOfChanges,
@@ -206,7 +221,8 @@ export const AnalyzerPage: React.FC = () => {
         aiReduction: res.data.aiReduction,
       });
     } else {
-      setError(res.error || 'No se pudo procesar la humanización del texto.');
+      sound.playError();
+      setError(res.error || 'No se pudo procesar la reescritura del texto.');
     }
   };
 
@@ -268,23 +284,25 @@ export const AnalyzerPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
-            <span>Veritas AI Studio</span>
-            <span className="text-xs font-black uppercase px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
-              v2.0
+            <span>🏛️</span>
+            <span>Centro de Auditoría Documental</span>
+            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+              🛡️ Veritas v1.2
             </span>
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Detección probabilística de IA, cálculo de similitud y humanizador de texto con reducción máxima de porcentaje
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+            <span>🎯</span>
+            <span>Análisis estilométrico de perplejidad, cotejo de similitud y asistente editorial de reescritura ética</span>
           </p>
         </div>
 
         {(analysis || improvedResult) && (
           <button
-            onClick={resetForm}
+            onClick={() => { sound.playClick(); resetForm(); }}
             className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 self-start"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Nuevo Análisis / Texto</span>
+            <span>🔄</span>
+            <span>Nueva Auditoría</span>
           </button>
         )}
       </div>
@@ -295,6 +313,7 @@ export const AnalyzerPage: React.FC = () => {
           <button
             type="button"
             onClick={() => {
+              sound.playToggle();
               setMode('analyzer');
               setError(null);
             }}
@@ -304,25 +323,26 @@ export const AnalyzerPage: React.FC = () => {
                 : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
-            <FileText className="w-4 h-4" />
-            <span>🔍 Analizador Completo (IA & Plagio)</span>
+            <span>🔍</span>
+            <span>Auditoría de Originalidad (Estilometría & Plagio)</span>
           </button>
 
           <button
             type="button"
             onClick={() => {
+              sound.playToggle();
               setMode('humanizer');
               setActiveTab('text');
               setError(null);
             }}
             className={`py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
               mode === 'humanizer'
-                ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
                 : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
-            <Zap className="w-4 h-4 text-emerald-500" />
-            <span>⚡ Humanizador Directo (Copiar Listo)</span>
+            <span>✍️</span>
+            <span>Reescritura Editorial Ética</span>
           </button>
         </div>
       )}
@@ -339,10 +359,10 @@ export const AnalyzerPage: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">
-                    ¡Texto Humanizado y Listo para Usar!
+                    🎉 ¡Texto Humanizado y Listo para Usar! ✨
                   </h3>
                   <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-                    Baja Detección Garantizada
+                    🛡️ Baja Detección Garantizada
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -351,16 +371,20 @@ export const AnalyzerPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Badge de Reducción Máxima del % de IA */}
+            {/* Badge de Reducción Máxima del % de IA con Emojis Dinámicos */}
             {improvedResult.originalAiScore !== undefined && improvedResult.improvedAiScore !== undefined && (
               <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 text-xs font-bold text-emerald-800 dark:text-emerald-200 self-start sm:self-auto shadow-sm">
-                <span className="text-slate-400 line-through">IA Antes: {improvedResult.originalAiScore}%</span>
+                <span className="text-slate-400 line-through flex items-center gap-1">
+                  <span>{getScoreMood(improvedResult.originalAiScore).aiEmoji}</span>
+                  <span>IA Antes: {improvedResult.originalAiScore}%</span>
+                </span>
                 <span className="text-emerald-600 font-extrabold">➔</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-black text-sm">
-                  IA Ahora: {improvedResult.improvedAiScore}%
+                <span className="text-emerald-600 dark:text-emerald-400 font-black text-sm flex items-center gap-1">
+                  <span>{getScoreMood(improvedResult.improvedAiScore).aiEmoji}</span>
+                  <span>IA Ahora: {improvedResult.improvedAiScore}%</span>
                 </span>
                 <span className="px-2 py-0.5 rounded-lg bg-emerald-600 text-white text-[11px] font-black">
-                  -{Math.max(0, improvedResult.originalAiScore - improvedResult.improvedAiScore)}% Reducción
+                  ⚡ -{Math.max(0, improvedResult.originalAiScore - improvedResult.improvedAiScore)}% Reducción
                 </span>
               </div>
             )}
@@ -370,11 +394,11 @@ export const AnalyzerPage: React.FC = () => {
           <div className="relative rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden shadow-inner">
             <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 flex items-center justify-between text-xs text-slate-500">
               <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                <span>✨</span>
                 <span>Texto Final Optimizado</span>
               </span>
               <span className="text-[11px]">
-                {improvedResult.improvedText.split(/\s+/).filter(Boolean).length} palabras •{' '}
+                📊 {improvedResult.improvedText.split(/\s+/).filter(Boolean).length} palabras •{' '}
                 {improvedResult.improvedText.length} caracteres
               </span>
             </div>
@@ -400,12 +424,12 @@ export const AnalyzerPage: React.FC = () => {
               {copiedDirect ? (
                 <>
                   <Check className="w-5 h-5 stroke-[3]" />
-                  <span>¡Texto Copiado al Portapapeles!</span>
+                  <span>✅ ¡Texto Copiado al Portapapeles!</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-5 h-5" />
-                  <span>Copiar Texto Listo (1 Clic)</span>
+                  <span>📋 Copiar Texto Listo (1 Clic)</span>
                 </>
               )}
             </button>
@@ -416,14 +440,15 @@ export const AnalyzerPage: React.FC = () => {
                 className="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Descargar en Word (.docx)</span>
+                <span>💾 Descargar en Word (.docx)</span>
               </button>
 
               <button
                 onClick={resetForm}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-100 border border-slate-200 dark:border-slate-700 transition-colors"
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-100 border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-1.5"
               >
-                Humanizar otro texto
+                <span>🔄</span>
+                <span>Humanizar otro texto</span>
               </button>
             </div>
           </div>
@@ -447,8 +472,8 @@ export const AnalyzerPage: React.FC = () => {
                   : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
-              <FileText className="w-4 h-4" />
-              <span>Opción A — Pegar Texto</span>
+              <span>📝</span>
+              <span>Texto Directo</span>
             </button>
 
             <button
@@ -463,15 +488,16 @@ export const AnalyzerPage: React.FC = () => {
                   : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
-              <UploadCloud className="w-4 h-4" />
-              <span>Opción B — Documento .DOCX</span>
+              <span>📄</span>
+              <span>Archivo Word .DOCX</span>
             </button>
           </div>
 
           {/* Campo de Título Opcional */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Título o Referencia del Trabajo (opcional)
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+              <span>🏷️</span>
+              <span>Título o Referencia del Trabajo (opcional)</span>
             </label>
             <input
               type="text"
@@ -486,13 +512,16 @@ export const AnalyzerPage: React.FC = () => {
           {activeTab === 'text' && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  {mode === 'humanizer'
-                    ? 'Pega aquí el texto que deseas humanizar para bajar el % de IA'
-                    : 'Pega aquí el contenido a evaluar'}
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <span>{mode === 'humanizer' ? '✍️' : '📝'}</span>
+                  <span>
+                    {mode === 'humanizer'
+                      ? 'Pega aquí el texto que deseas humanizar para bajar el % de IA'
+                      : 'Pega aquí el contenido a evaluar'}
+                  </span>
                 </label>
                 <span className="text-[11px] text-slate-400">
-                  {textInput.split(/\s+/).filter(Boolean).length} palabras • {textInput.length} caracteres
+                  📊 {textInput.split(/\s+/).filter(Boolean).length} palabras • {textInput.length} caracteres
                 </span>
               </div>
               <textarea
@@ -525,29 +554,29 @@ export const AnalyzerPage: React.FC = () => {
                 className="hidden"
               />
 
-              <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-3 shadow-sm">
-                <UploadCloud className="w-8 h-8" />
+              <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-3 shadow-sm text-2xl">
+                📄
               </div>
 
               {selectedFile ? (
                 <div className="space-y-1">
                   <span className="text-sm font-bold text-slate-900 dark:text-white block">
-                    {selectedFile.name}
+                    📄 {selectedFile.name}
                   </span>
                   <span className="text-xs text-slate-500 block">
-                    {(selectedFile.size / 1024).toFixed(1)} KB • Documento Word válido
+                    ✅ {(selectedFile.size / 1024).toFixed(1)} KB • Documento Word válido
                   </span>
                   <span className="text-xs text-blue-600 font-semibold inline-block pt-2">
-                    Haz clic para cambiar de archivo
+                    🔄 Haz clic para cambiar de archivo
                   </span>
                 </div>
               ) : (
                 <div className="space-y-1">
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-200 block">
-                    Arrastra y suelta tu archivo .docx aquí, o haz clic para seleccionarlo
+                    📥 Arrastra y suelta tu archivo .docx aquí, o haz clic para seleccionarlo
                   </span>
                   <span className="text-xs text-slate-400 block">
-                    Solo formato .docx • Tamaño máximo permitido: 10 MB
+                    ℹ️ Solo formato .docx • Tamaño máximo permitido: 10 MB
                   </span>
                 </div>
               )}
@@ -557,7 +586,7 @@ export const AnalyzerPage: React.FC = () => {
           {/* Mensaje de Error */}
           {error && (
             <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs flex items-start gap-3">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span className="text-base shrink-0 mt-0.5">⚠️</span>
               <div className="space-y-1">
                 <span className="font-semibold">{error}</span>
                 {error.includes('5 análisis') && (
@@ -565,7 +594,7 @@ export const AnalyzerPage: React.FC = () => {
                     onClick={openPremiumModal}
                     className="block text-blue-600 dark:text-blue-400 underline font-bold mt-1"
                   >
-                    Haz clic aquí para activar Premium Vitalicio por $2 USD
+                    ⭐ Haz clic aquí para activar Premium Vitalicio por $2 USD
                   </button>
                 )}
               </div>
@@ -578,36 +607,36 @@ export const AnalyzerPage: React.FC = () => {
             <button
               disabled={loading || improving}
               onClick={handleAnalyze}
-              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-sm shadow-xl shadow-blue-500/25 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99]"
+              className="w-full py-4 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99]"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>{loadingStage || 'Procesando análisis...'}</span>
+                  <span>⏳ {loadingStage || 'Procesando auditoría...'}</span>
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-5 h-5 text-amber-300" />
-                  <span>Analizar Contenido (Detección Completa)</span>
+                  <span>🚀</span>
+                  <span>Ejecutar Auditoría Estilométrica</span>
                 </>
               )}
             </button>
 
-            {/* Botón 2: Humanizar Directamente (Disponible para texto pegado) */}
+            {/* Botón 2: Reescritura Editorial Ética */}
             <button
               disabled={loading || improving || activeTab !== 'text'}
               onClick={handleDirectHumanize}
-              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-sm shadow-xl shadow-emerald-500/25 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99]"
+              className="w-full py-4 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99]"
             >
               {improving ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Humanizando y reduciendo % de IA...</span>
+                  <span>⚡ Optimizando cadencia y variedad sintáctica...</span>
                 </>
               ) : (
                 <>
-                  <Zap className="w-5 h-5 text-amber-300 fill-amber-300" />
-                  <span>⚡ Humanizar Texto y Bajar % de IA</span>
+                  <span>✨</span>
+                  <span>Reescritura Editorial Ética</span>
                 </>
               )}
             </button>
@@ -630,11 +659,12 @@ export const AnalyzerPage: React.FC = () => {
           <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-700 text-white shadow-xl shadow-emerald-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-[11px] font-bold">
-                <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                <span>🪄</span>
                 <span>Humanizador Algorítmico Veritas</span>
               </div>
-              <h3 className="text-xl font-bold">
-                Reducir probabilidad de IA al menor porcentaje posible
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <span>⚡</span>
+                <span>Reducir probabilidad de IA al menor porcentaje posible</span>
               </h3>
               <p className="text-xs text-emerald-100 max-w-xl">
                 Reestructura oraciones para crear cadencia humana, erradica más de 40 frases cliché de IA y conserva el sentido y las citas intactas.
@@ -649,12 +679,12 @@ export const AnalyzerPage: React.FC = () => {
               {improving ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
-                  <span>Humanizando texto...</span>
+                  <span>⏳ Reescribiendo texto...</span>
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 text-emerald-600" />
-                  <span>Humanizar Texto Ahora</span>
+                  <span>✨</span>
+                  <span>Aplicar Reescritura Editorial</span>
                 </>
               )}
             </button>
@@ -674,65 +704,56 @@ export const AnalyzerPage: React.FC = () => {
             />
           )}
 
-          {/* Desglose de Párrafos con Resaltado Estilométrico */}
+          {/* Desglose de Párrafos con Resaltado Estilométrico y Emojis Reactivos */}
           {analysis.paragraphs && analysis.paragraphs.length > 0 && (
             <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <Bot className="w-5 h-5 text-blue-600" />
+                    <span>📑</span>
                     <span>Evaluación Párrafo a Párrafo</span>
+                    <span>🔍</span>
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Probabilidad estimada e indicadores detectados por segmento
+                    Probabilidad estimada e indicadores detectados por segmento textual
                   </p>
                 </div>
                 <span className="text-xs text-slate-400">
-                  {analysis.paragraphs.length} párrafos evaluados
+                  📊 {analysis.paragraphs.length} párrafos evaluados
                 </span>
               </div>
 
               <div className="space-y-4 pt-2">
                 {analysis.paragraphs.map((p, idx) => {
-                  const isHighAi = p.aiScore >= 70;
-                  const isModerateAi = p.aiScore >= 35 && p.aiScore < 70;
+                  const pMood = getScoreMood(p.aiScore);
 
                   return (
                     <div
                       key={idx}
-                      className={`p-4 rounded-2xl border transition-all ${
-                        isHighAi
-                          ? 'border-rose-200 dark:border-rose-900/60 bg-rose-50/40 dark:bg-rose-950/20'
-                          : isModerateAi
-                          ? 'border-amber-200 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20'
-                          : 'border-slate-200 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-950/40'
-                      }`}
+                      className={`p-4 rounded-2xl border transition-all ${pMood.bgClass} ${pMood.borderClass}`}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[11px] font-bold text-slate-500">
-                          Párrafo {p.index + 1}
+                        <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1.5">
+                          <span>📝</span>
+                          <span>Párrafo {p.index + 1}</span>
                         </span>
 
                         <div className="flex items-center gap-2">
                           {p.indicators.map((ind, i) => (
                             <span
                               key={i}
-                              className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                              className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1"
                             >
-                              [{ind}]
+                              <span>🏷️</span>
+                              <span>[{ind}]</span>
                             </span>
                           ))}
 
                           <span
-                            className={`text-xs font-black px-2.5 py-0.5 rounded-full ${
-                              isHighAi
-                                ? 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200'
-                                : isModerateAi
-                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
-                                : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
-                            }`}
+                            className={`text-xs font-black px-2.5 py-0.5 rounded-full flex items-center gap-1.5 border ${pMood.badgeClass}`}
                           >
-                            IA: {p.aiScore}%
+                            <span>{pMood.aiEmoji}</span>
+                            <span>IA: {p.aiScore}%</span>
                           </span>
                         </div>
                       </div>
@@ -741,8 +762,9 @@ export const AnalyzerPage: React.FC = () => {
                         {p.text}
                       </p>
 
-                      <p className="text-[11px] text-slate-500 italic">
-                        {p.explanation}
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 italic flex items-center gap-1.5">
+                        <span>💡</span>
+                        <span>{p.explanation}</span>
                       </p>
                     </div>
                   );
@@ -757,15 +779,17 @@ export const AnalyzerPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <FileCheck className="w-5 h-5 text-blue-600" />
+                    <span>🌐</span>
                     <span>Fuentes Identificadas en el Corpus Público</span>
+                    <span>📑</span>
                   </h3>
                   <p className="text-xs text-slate-500">
                     Desglose de coincidencia textual con repositorios abiertos
                   </p>
                 </div>
-                <span className="text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-950 px-2.5 py-1 rounded-full">
-                  Total Similitud: {analysis.similarityScore}%
+                <span className="text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-950 px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <span>📑</span>
+                  <span>Total Similitud: {analysis.similarityScore}%</span>
                 </span>
               </div>
 
@@ -782,18 +806,20 @@ export const AnalyzerPage: React.FC = () => {
                         rel="noreferrer"
                         className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1.5"
                       >
+                        <span>🔗</span>
                         <span>{src.title}</span>
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
-                      <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-full">
-                        {src.similarityPercentage}% coincidencia
+                      <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                        <span>📑</span>
+                        <span>{src.similarityPercentage}% coincidencia</span>
                       </span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs pt-1">
                       <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
                         <span className="text-[10px] font-bold text-slate-400 block mb-1">
-                          Fragmento de la Fuente Externa
+                          📑 Fragmento de la Fuente Externa
                         </span>
                         <p className="text-slate-600 dark:text-slate-300 italic">
                           "{src.matchedText}"
@@ -802,7 +828,7 @@ export const AnalyzerPage: React.FC = () => {
 
                       <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
                         <span className="text-[10px] font-bold text-slate-400 block mb-1">
-                          Fragmento en tu Documento
+                          📝 Fragmento en tu Documento
                         </span>
                         <p className="text-slate-800 dark:text-slate-200">
                           "{src.userSnippet}"

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Shield, Lock, Mail, User, ArrowRight, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
+import { sound } from '../utils/soundEffects';
+import { VeritasLogo } from '../components/brand';
+import { Lock, Mail, User, ArrowRight, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
 
 export const RegisterPage: React.FC = () => {
   const { register } = useAuth();
@@ -25,6 +27,7 @@ export const RegisterPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    sound.playClick();
 
     if (
       !formData.name ||
@@ -33,16 +36,19 @@ export const RegisterPage: React.FC = () => {
       !formData.password ||
       !formData.confirm_password
     ) {
+      sound.playError();
       setError('Todos los campos son obligatorios.');
       return;
     }
 
     if (formData.password !== formData.confirm_password) {
+      sound.playError();
       setError('Las contraseñas ingresadas no coinciden.');
       return;
     }
 
     if (formData.password.length < 8) {
+      sound.playError();
       setError('La contraseña debe contener al menos 8 caracteres.');
       return;
     }
@@ -54,8 +60,10 @@ export const RegisterPage: React.FC = () => {
     setLoading(false);
 
     if (res.success) {
+      sound.playSuccess();
       navigate('/dashboard');
     } else {
+      sound.playError();
       setError(res.message || 'Error al completar el registro.');
     }
   };
@@ -64,14 +72,14 @@ export const RegisterPage: React.FC = () => {
     <div className="min-h-[85vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
       <div className="w-full max-w-md space-y-8 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl">
         <div className="text-center space-y-2">
-          <div className="inline-flex p-3 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 mb-2">
-            <Shield className="w-7 h-7" />
+          <div className="flex justify-center mb-3">
+            <VeritasLogo variant="full" size="lg" />
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Crear Cuenta Gratuita
+          <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            Crear Cuenta
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Únete a Veritas AI y obtén 5 análisis diarios sin costo
+            Regístrate en Veritas AI para iniciar auditorías de integridad académica
           </p>
         </div>
 

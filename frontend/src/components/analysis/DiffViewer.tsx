@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { writingApi, analysisApi } from '../services/api';
+import { writingApi, analysisApi } from '../../services/api';
+import { getScoreMood } from '../../utils/scoreMood';
 import {
   Copy,
   Check,
@@ -117,11 +118,13 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                  Texto Humanizado Listo para Usar
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <span>🎉</span>
+                  <span>Texto Humanizado Listo para Usar</span>
+                  <span>✨</span>
                 </h3>
                 <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                  100% Optimizado
+                  🛡️ 100% Optimizado
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -130,16 +133,20 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
             </div>
           </div>
 
-          {/* Badge de Reducción Máxima del % de IA */}
+          {/* Badge de Reducción Máxima del % de IA con Emojis Dinámicos */}
           {reductionAmount !== null && reductionAmount > 0 && (
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-300/80 dark:border-emerald-800 text-xs font-bold text-emerald-800 dark:text-emerald-200 self-start sm:self-auto">
-              <span className="text-slate-400 line-through">IA: {effectiveAiOriginal}%</span>
-              <span className="text-emerald-600 dark:text-emerald-400">➔</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">
-                IA: {effectiveAiImproved}%
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-300/80 dark:border-emerald-800 text-xs font-bold text-emerald-800 dark:text-emerald-200 self-start sm:self-auto shadow-sm">
+              <span className="text-slate-400 line-through flex items-center gap-1">
+                <span>{effectiveAiOriginal !== undefined ? getScoreMood(effectiveAiOriginal).aiEmoji : '🤖'}</span>
+                <span>IA: {effectiveAiOriginal}%</span>
               </span>
-              <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-black">
-                -{reductionAmount}%
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold">➔</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-black flex items-center gap-1">
+                <span>{effectiveAiImproved !== undefined ? getScoreMood(effectiveAiImproved).aiEmoji : '😊'}</span>
+                <span>IA: {effectiveAiImproved}%</span>
+              </span>
+              <span className="px-2 py-0.5 rounded-lg bg-emerald-600 text-white text-[10px] font-black">
+                ⚡ -{reductionAmount}%
               </span>
             </div>
           )}
@@ -148,11 +155,12 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         {/* Caja de Texto Humanizado Listo */}
         <div className="relative rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden shadow-inner">
           <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 flex items-center justify-between text-[11px] text-slate-500">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">
-              Contenido Humanizado Final
+            <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>✨</span>
+              <span>Contenido Humanizado Final</span>
             </span>
             <span>
-              {improvedText.split(/\s+/).filter(Boolean).length} palabras • {improvedText.length} caracteres
+              📊 {improvedText.split(/\s+/).filter(Boolean).length} palabras • {improvedText.length} caracteres
             </span>
           </div>
 
@@ -175,12 +183,12 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
             {copied ? (
               <>
                 <Check className="w-4 h-4 stroke-[3]" />
-                <span>¡Texto Copiado al Portapapeles!</span>
+                <span>✅ ¡Texto Copiado al Portapapeles!</span>
               </>
             ) : (
               <>
                 <Copy className="w-4 h-4" />
-                <span>Copiar Texto Listo (1 Clic)</span>
+                <span>📋 Copiar Texto Listo (1 Clic)</span>
               </>
             )}
           </button>
@@ -192,7 +200,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
               onClick={handleDownloadTxt}
               className="px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-1.5 disabled:opacity-50"
             >
-              <FileText className="w-3.5 h-3.5 text-slate-500" />
+              <span>📄</span>
               <span>Descargar .TXT</span>
             </button>
 
@@ -202,7 +210,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
               className="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>{downloadingDocx ? 'Generando...' : 'Descargar Word (.docx)'}</span>
+              <span>{downloadingDocx ? '⏳ Generando...' : '💾 Descargar Word (.docx)'}</span>
             </button>
 
             {analysisId && (
@@ -212,7 +220,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                 className="px-3.5 py-2.5 rounded-xl text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 border border-indigo-200 dark:border-indigo-900 transition-colors flex items-center gap-1.5 disabled:opacity-50"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${reanalyzing ? 'animate-spin' : ''}`} />
-                <span>Re-analizar para verificar</span>
+                <span>🔄 Re-analizar para verificar</span>
               </button>
             )}
           </div>
@@ -223,7 +231,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
       {summaryOfChanges.length > 0 && (
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5 flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+            <span>✨</span>
             <span>Optimizaciones y Mejoras Aplicadas</span>
           </h4>
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs text-slate-600 dark:text-slate-300">
@@ -242,11 +250,18 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         {/* Columna Izquierda: Original */}
         <div className="flex flex-col rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
           <div className="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              Texto Original
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+              <span>📄</span>
+              <span>Texto Original</span>
+              {effectiveAiOriginal !== undefined && (
+                <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-black flex items-center gap-1 border border-slate-200 dark:border-slate-700">
+                  <span>{getScoreMood(effectiveAiOriginal).aiEmoji}</span>
+                  <span>IA: {effectiveAiOriginal}%</span>
+                </span>
+              )}
             </span>
             <span className="text-[11px] text-slate-400">
-              {originalText.split(/\s+/).filter(Boolean).length} palabras
+              📊 {originalText.split(/\s+/).filter(Boolean).length} palabras
             </span>
           </div>
 
@@ -258,12 +273,18 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         {/* Columna Derecha: Mejorada */}
         <div className="flex flex-col rounded-3xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/20 dark:bg-emerald-950/20 overflow-hidden shadow-sm">
           <div className="px-5 py-3.5 border-b border-emerald-100 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/50 flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-              Versión Humanizada
+            <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+              <span>✨</span>
+              <span>Versión Humanizada</span>
+              {effectiveAiImproved !== undefined && (
+                <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-black flex items-center gap-1 border border-emerald-200 dark:border-emerald-800">
+                  <span>{getScoreMood(effectiveAiImproved).aiEmoji}</span>
+                  <span>IA: {effectiveAiImproved}%</span>
+                </span>
+              )}
             </span>
             <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-              {improvedText.split(/\s+/).filter(Boolean).length} palabras
+              📊 {improvedText.split(/\s+/).filter(Boolean).length} palabras
             </span>
           </div>
 

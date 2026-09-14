@@ -21,8 +21,8 @@ describe('1. Módulo de Autenticación (Registro y Login)', () => {
       const res = await request(app)
         .post('/api/auth/register')
         .send({
-          name: 'Juan',
-          last_name: 'Pérez',
+          name: 'Usuario',
+          last_name: 'Prueba',
           email: testEmail,
           password: testPassword,
           confirm_password: testPassword,
@@ -39,8 +39,8 @@ describe('1. Módulo de Autenticación (Registro y Login)', () => {
       const res = await request(app)
         .post('/api/auth/register')
         .send({
-          name: 'Juan',
-          last_name: 'Pérez',
+          name: 'Usuario',
+          last_name: 'Prueba',
           email: `mismatch_${Date.now()}@veritas.ai`,
           password: testPassword,
           confirm_password: 'DifferentPassword123!',
@@ -55,8 +55,8 @@ describe('1. Módulo de Autenticación (Registro y Login)', () => {
       const res = await request(app)
         .post('/api/auth/register')
         .send({
-          name: 'Juan',
-          last_name: 'Pérez',
+          name: 'Usuario',
+          last_name: 'Prueba',
           email: testEmail,
           password: testPassword,
           confirm_password: testPassword,
@@ -70,8 +70,8 @@ describe('1. Módulo de Autenticación (Registro y Login)', () => {
       const res = await request(app)
         .post('/api/auth/register')
         .send({
-          name: 'Juan',
-          last_name: 'Pérez',
+          name: 'Usuario',
+          last_name: 'Prueba',
           email: `short_${Date.now()}@veritas.ai`,
           password: '123',
           confirm_password: '123',

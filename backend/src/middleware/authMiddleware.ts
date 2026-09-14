@@ -4,15 +4,8 @@ import { ENV } from '../config/env';
 import { prisma } from '../config/prisma';
 import { User } from '@prisma/client';
 
-export interface AuthenticatedRequest extends Request {
-  user?: User;
-}
-
-interface JwtPayload {
-  userId: string;
-  email: string;
-  role: string;
-}
+import { AuthenticatedRequest, JwtPayload } from '../types';
+export type { AuthenticatedRequest };
 
 export const authenticateJWT = async (
   req: AuthenticatedRequest,

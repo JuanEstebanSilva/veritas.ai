@@ -67,13 +67,7 @@ export class PaymentController {
     try {
       const user = req.user!;
 
-      if (user.is_premium) {
-        res.status(400).json({
-          success: false,
-          message: 'Tu cuenta ya cuenta con acceso Premium vitalicio.',
-        });
-        return;
-      }
+      // En ambiente de pruebas / sandbox, permitimos simular pagos incluso si la cuenta ya tiene Premium
 
       const transaction = await PaymentService.createSandboxTransaction(user.id);
 

@@ -8,65 +8,148 @@
   }
 }
 
-/* Animaciones suaves */
+/* ============================================================ */
+/* ANIMACIONES DE ENTRADA Y SALIDA                              */
+/* ============================================================ */
+
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(32px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes stepEnter {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes stepEnterLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ============================================================ */
+/* ANIMACIONES DE FEEDBACK Y ESTADO                             */
+/* ============================================================ */
+
 @keyframes shimmerSweep {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(250%);
-  }
+  0%   { transform: translateX(-100%) skewX(-12deg); }
+  100% { transform: translateX(350%) skewX(-12deg); }
 }
 
 @keyframes pulseGlow {
-  0%, 100% {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.05); }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
 }
 
-.animate-shimmer {
-  animation: shimmerSweep 3s infinite;
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%       { transform: translateX(-5px); }
+  30%       { transform: translateX(5px); }
+  45%       { transform: translateX(-4px); }
+  60%       { transform: translateX(4px); }
+  75%       { transform: translateX(-2px); }
+  90%       { transform: translateX(2px); }
 }
 
-.animate-pulseGlow {
-  animation: pulseGlow 4s ease-in-out infinite;
+/* ============================================================ */
+/* BARRA DE PROGRESO DE PROCESAMIENTO                          */
+/* ============================================================ */
+
+@keyframes progressBarFill {
+  from { width: 0%; }
+  to   { width: 100%; }
 }
 
-/* Scrollbar moderno estilizado */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+@keyframes progressPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+/* ============================================================ */
+/* ANIMACIÓN DE CHECK SVG (ÉXITO)                              */
+/* ============================================================ */
+
+@keyframes checkDraw {
+  from { stroke-dashoffset: 100; }
+  to   { stroke-dashoffset: 0; }
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.4);
-  border-radius: 9999px;
+@keyframes circleDraw {
+  from { stroke-dashoffset: 283; }
+  to   { stroke-dashoffset: 0; }
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.6);
+/* ============================================================ */
+/* CONFETTI / PARTÍCULAS DE ÉXITO                              */
+/* ============================================================ */
+
+@keyframes confettiFall1 {
+  0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(300px) rotate(720deg); opacity: 0; }
 }
+@keyframes confettiFall2 {
+  0%   { transform: translateY(-20px) rotate(0deg) translateX(0);    opacity: 1; }
+  100% { transform: translateY(280px) rotate(-540deg) translateX(40px); opacity: 0; }
+}
+@keyframes confettiFall3 {
+  0%   { transform: translateY(-20px) rotate(0deg) translateX(0);     opacity: 1; }
+  100% { transform: translateY(260px) rotate(600deg) translateX(-30px); opacity: 0; }
+}
+
+/* ============================================================ */
+/* INDICADOR DE PASOS — LÍNEA FILL                             */
+/* ============================================================ */
+
+@keyframes stepLineFill {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+/* ============================================================ */
+/* UTILITY CLASSES                                             */
+/* ============================================================ */
+
+.animate-fadeIn       { animation: fadeIn       0.3s  cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slideUp      { animation: slideUp      0.4s  cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-scaleIn      { animation: scaleIn      0.4s  cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-stepEnter    { animation: stepEnter    0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-stepEnterLeft{ animation: stepEnterLeft 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-shimmer      { animation: shimmerSweep 2.8s  ease-in-out infinite; }
+.animate-pulseGlow    { animation: pulseGlow    4s    ease-in-out infinite; }
+.animate-pulseSlow    { animation: pulseSlow    2s    ease-in-out infinite; }
+.animate-shake        { animation: shake        0.5s  cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+.animate-checkDraw    { animation: checkDraw    0.6s  cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards; stroke-dasharray: 100; stroke-dashoffset: 100; }
+.animate-circleDraw   { animation: circleDraw   0.7s  cubic-bezier(0.16, 1, 0.3, 1) forwards; stroke-dasharray: 283; stroke-dashoffset: 283; }
+
+.animate-confetti-1   { animation: confettiFall1 1.4s ease-in 0.1s forwards; }
+.animate-confetti-2   { animation: confettiFall2 1.6s ease-in 0.2s forwards; }
+.animate-confetti-3   { animation: confettiFall3 1.5s ease-in 0.0s forwards; }
+.animate-confetti-4   { animation: confettiFall1 1.8s ease-in 0.3s forwards; }
+.animate-confetti-5   { animation: confettiFall2 1.3s ease-in 0.15s forwards; }
+.animate-confetti-6   { animation: confettiFall3 1.7s ease-in 0.25s forwards; }
+.animate-confetti-7   { animation: confettiFall1 1.5s ease-in 0.4s forwards; }
+.animate-confetti-8   { animation: confettiFall2 1.6s ease-in 0.05s forwards; }
+
+/* ============================================================ */
+/* SCROLLBAR MODERNO ESTILIZADO                                */
+/* ============================================================ */
+
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.4); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.6); }

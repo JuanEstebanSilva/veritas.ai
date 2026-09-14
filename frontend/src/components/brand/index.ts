@@ -1,0 +1,1 @@
+export { VeritasLogo } from './VeritasLogo';

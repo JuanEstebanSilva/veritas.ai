@@ -1,18 +1,22 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { VeritasLogo } from '../components/brand';
+import { sound } from '../utils/soundEffects';
 import {
-  Shield,
-  Bot,
+  ShieldCheck,
   FileCheck,
-  Sparkles,
   ArrowRight,
   CheckCircle2,
   Lock,
   FileText,
   Search,
   Scale,
-  Zap,
+  PenTool,
+  BarChart3,
+  Award,
+  Layers,
+  BookOpen,
 } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
@@ -20,6 +24,7 @@ export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleStart = () => {
+    sound.playClick();
     if (isAuthenticated) {
       navigate('/analyzer');
     } else {
@@ -28,103 +33,174 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-24 py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      {/* Sección Hero */}
+    <div className="space-y-28 py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      {/* Sección Hero Editorial */}
       <section className="text-center space-y-8 max-w-4xl mx-auto pt-6">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-semibold shadow-sm">
-          <Sparkles className="w-4 h-4 text-blue-500" />
-          <span>Inspirado en Turnitin • Análisis Ético y Rigor Metodológico</span>
+        {/* Badge Institucional */}
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 text-xs font-bold tracking-wide shadow-sm">
+          <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <span>Protocolo de Integridad Académica & Análisis Estilométrico</span>
+        </div>
+
+        {/* Logo destacado */}
+        <div className="flex justify-center py-2">
+          <VeritasLogo variant="full" size="xl" />
         </div>
 
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
-          Detección Inteligente de IA,{' '}
-          <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 dark:from-blue-400 dark:to-indigo-300 bg-clip-text text-transparent">
-            Similitud Textual
+          Auditoría de Autenticidad,{' '}
+          <span className="text-blue-600 dark:text-blue-400 underline decoration-blue-500/30 underline-offset-8">
+            Detección Estilométrica
           </span>{' '}
-          y Perfeccionamiento de Redacción.
+          y Verificación Documental.
         </h1>
 
-        <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          Veritas AI evalúa textos y documentos .DOCX para estimar probabilidades de generación por IA, indexar coincidencias con fuentes públicas y optimizar la fluidez manteniendo la autenticidad.
+        <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal">
+          Plataforma de rigor metodológico inspirada en estándares editoriales como Turnitin y Grammarly. Evalúa perplejidad, uniformidad sintáctica y coincidencias bibliográficas en textos y documentos nativos <strong className="text-slate-900 dark:text-white font-bold">.DOCX</strong>.
         </p>
 
-        <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+        {/* Botones de Acción */}
+        <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
           <button
             onClick={handleStart}
-            className="px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-base shadow-xl shadow-blue-500/25 transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+            className="px-8 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-base shadow-lg shadow-blue-600/25 transition-all flex items-center gap-2 hover:scale-[1.015] active:scale-[0.985]"
           >
-            <span>Analizar Contenido Ahora</span>
+            <span>Iniciar Verificación Documental</span>
             <ArrowRight className="w-5 h-5" />
           </button>
 
           <Link
             to="/login"
-            className="px-8 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold text-base hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors"
+            onClick={() => sound.playClick()}
+            className="px-8 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-bold text-base hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
-            Iniciar Sesión
+            Acceder al Sistema
           </Link>
         </div>
 
-        <div className="flex items-center justify-center gap-6 text-xs text-slate-500 pt-2">
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" /> 5 análisis diarios gratis
+        {/* Sellos de Confianza Institucional */}
+        <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 dark:text-slate-400 pt-3">
+          <span className="flex items-center gap-1.5 font-medium">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" /> 5 análisis diarios sin costo
           </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Soporte nativo para .DOCX
+          <span className="flex items-center gap-1.5 font-medium">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Cifrado de documentos Word (.docx)
           </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Premium vitalicio por US$2
+          <span className="flex items-center gap-1.5 font-medium">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Sin almacenamiento de propiedad intelectual
           </span>
         </div>
       </section>
 
-      {/* Los 3 Pilares */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 hover:border-blue-500/50 transition-colors">
-          <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shadow-sm">
-            <Bot className="w-6 h-6" />
+      {/* Muestra de Reporte de Auditoría (Mockup Editorial) */}
+      <section className="max-w-5xl mx-auto rounded-3xl p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black tracking-wider uppercase text-blue-600 dark:text-blue-400">
+                Informe de Originalidad
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold">
+                Autenticidad Verificada
+              </span>
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-1">
+              Ensayo_Metodologia_Investigacion_2026.docx
+            </h3>
           </div>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-            Detección Probabilística de IA
-          </h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-            Identifica regularidades sintácticas, perplejidad y burstiness mediante indicadores estilométricos precisos como <em>[Alta uniformidad]</em> o <em>[Patrones repetitivos]</em>. Con advertencias claras de probabilidad.
-          </p>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <div className="text-2xl font-black text-slate-900 dark:text-white">96.4%</div>
+              <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Índice Humano</div>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-sm border border-emerald-200 dark:border-emerald-800">
+              A+
+            </div>
+          </div>
         </div>
 
-        <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 hover:border-blue-500/50 transition-colors">
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-sm">
-            <FileCheck className="w-6 h-6" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Perplejidad Lingüística</span>
+            <div className="text-xl font-black text-slate-900 dark:text-white">82.4 / 100</div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">Variabilidad de vocabulario alta y natural</p>
           </div>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-            Índice de Similitud Riguroso
-          </h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-            Compara contra repositorios abiertos y fuentes académicas. Distingue estrictamente entre coincidencia incidental (citas legítimas o terminología técnica) y presunto plagio.
-          </p>
-        </div>
 
-        <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 hover:border-blue-500/50 transition-colors">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shadow-sm">
-            <Sparkles className="w-6 h-6" />
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Burstiness (Cadencia)</span>
+            <div className="text-xl font-black text-slate-900 dark:text-white">Elevada (0.78)</div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">Longitud de oraciones orgánica y heterogénea</p>
           </div>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-            Mejora y Humanización Ética
-          </h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-            Enriquece la redacción eliminando muletillas y variando cadencias sin alterar citas ni inventar datos. Descarga directa en <strong>documento_mejorado.docx</strong>.
-          </p>
+
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Citas Legítimas</span>
+            <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">14 fuentes APA 7</div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">Referencias cotejadas en repositorios abiertos</p>
+          </div>
         </div>
       </section>
 
-      {/* Tabla de Planes: Gratuito vs Premium Vitalicio */}
+      {/* Los 3 Pilares Metodológicos */}
+      <section className="space-y-10">
+        <div className="text-center space-y-2 max-w-2xl mx-auto">
+          <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">
+            Tres Pilares de Rigor Académico
+          </h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Una suite completa para investigadores, docentes, redactores y profesionales del texto.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Pilar 1 */}
+          <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 hover:border-blue-500 transition-colors">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <BarChart3 className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+              Análisis Estilométrico Probabilístico
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
+              Detecta regularidades sintácticas, patrones de perplejidad y burstiness mediante algoritmos estadísticos rigurosos, identificando párrafos uniformes propios de modelos de lenguaje sin emitir veredictos binarios engañosos.
+            </p>
+          </div>
+
+          {/* Pilar 2 */}
+          <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 hover:border-blue-500 transition-colors">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <FileCheck className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+              Cotejo Indexado de Similitud
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
+              Compara contra repositorios abiertos y literatura académica. Separa estrictamente la coincidencia incidental (citas legítimas, fórmulas o terminología técnica estándar) de presunto plagio sin atribución.
+            </p>
+          </div>
+
+          {/* Pilar 3 */}
+          <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 hover:border-blue-500 transition-colors">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+              <PenTool className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+              Reescritura Editorial Ética
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
+              Asistente de edición de estilo que optimiza la cadencia de párrafos, elimina muletillas y aumenta la riqueza léxica sin distorsionar citas ni alterar el rigor de las fuentes. Descarga directa en Word (.docx).
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Planes Transparentes */}
       <section className="max-w-4xl mx-auto space-y-8">
         <div className="text-center space-y-2">
           <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">
-            Planes Transparentes y Accesibles
+            Tarifas Claras y Sin Suscripciones
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Sin suscripciones recurrentes ni costos ocultos.
+            Pagas una sola vez por acceso vitalicio o usas la cuota diaria sin costo.
           </p>
         </div>
 
@@ -133,89 +209,97 @@ export const LandingPage: React.FC = () => {
           <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-6">
             <div className="space-y-4">
               <div className="inline-block px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300">
-                Plan Gratuito
+                Uso Estándar
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="text-4xl font-extrabold">$0</span>
-                <span className="text-sm text-slate-500">/ día</span>
+                <span className="text-sm text-slate-500">/ permanente</span>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                Ideal para revisiones esporádicas y verificación de fragmentos breves.
+                Ideal para consultas esporádicas y verificación de textos académicos cortos.
               </p>
 
               <ul className="space-y-3 text-xs text-slate-700 dark:text-slate-300 pt-4">
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span><strong>5 análisis por día</strong> (se reinicia automáticamente)</span>
+                  <span><strong>5 análisis por día</strong> con reinicio automático a las 00:00 UTC</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>Análisis de texto pegado y documentos DOCX</span>
+                  <span>Soporte para texto plano y archivos .docx</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>Detección de IA con indicadores detallados</span>
+                  <span>Métricas de perplejidad y similitud</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>Asistente de mejora de redacción básica</span>
+                  <span>Sugerencias básicas de edición</span>
                 </li>
               </ul>
             </div>
 
             <Link
               to="/register"
-              className="w-full py-3 text-center rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors block"
+              onClick={() => sound.playClick()}
+              className="w-full py-3.5 text-center rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors block"
             >
-              Comenzar Gratis
+              Comenzar sin Costo
             </Link>
           </div>
 
           {/* Plan Premium Vitalicio */}
-          <div className="p-8 rounded-3xl bg-gradient-to-b from-blue-600/10 to-indigo-600/10 dark:from-blue-950/40 dark:to-indigo-950/40 border-2 border-blue-500 shadow-xl flex flex-col justify-between space-y-6 relative overflow-hidden">
-            <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-amber-500 text-slate-950 text-[11px] font-extrabold uppercase tracking-wider">
-              Oferta Especial
+          <div className="p-8 rounded-3xl bg-slate-900 text-white border border-slate-800 shadow-2xl flex flex-col justify-between space-y-6 relative overflow-hidden">
+            <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-black uppercase tracking-wider">
+              Pago Único
             </div>
 
             <div className="space-y-4">
               <div className="inline-block px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-bold">
-                Premium Vitalicio
+                Licencia Vitalicia
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold">$2</span>
-                <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                  USD / Pago Único
+                <span className="text-4xl font-extrabold text-white">$2</span>
+                <span className="text-sm font-semibold text-slate-400">
+                  USD / De por vida
                 </span>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Desbloqueo de por vida. Sin renovación mensual ni cargos ocultos.
+              <p className="text-xs text-slate-300">
+                Desbloqueo permanente sin cobros recurrentes ni suscripciones ocultas.
               </p>
 
-              <ul className="space-y-3 text-xs text-slate-700 dark:text-slate-300 pt-4">
+              <ul className="space-y-3 text-xs text-slate-200 pt-4">
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span><strong>Análisis ilimitados de por vida</strong></span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span><strong>Análisis ilimitados para siempre</strong></span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span>Procesamiento prioritario de documentos DOCX extensos</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Procesamiento prioritario de tesis y documentos DOCX extensos</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>Descargas ilimitadas de <strong>documento_mejorado.docx</strong></span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span>Comparativas antes y después ilimitadas</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Garantía de reembolso de 30 días</span>
                 </li>
               </ul>
             </div>
 
             <button
-              onClick={() => (isAuthenticated ? openPremiumModal() : navigate('/register'))}
-              className="w-full py-3.5 text-center rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-md shadow-blue-500/25 transition-all hover:scale-[1.01]"
+              onClick={() => {
+                sound.playClick();
+                if (isAuthenticated) {
+                  openPremiumModal();
+                } else {
+                  navigate('/register');
+                }
+              }}
+              className="w-full py-3.5 text-center rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs shadow-md transition-all hover:scale-[1.01]"
             >
-              Obtener Premium Vitalicio (US$2)
+              Adquirir Licencia Vitalicia ($2 USD)
             </button>
           </div>
         </div>
