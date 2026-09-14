@@ -7,7 +7,7 @@
   ],
   "annotations": [
     { "id": "sistema", "x": 2120, "y": 2120, "w": 420,
-      "text": "SISTEMA DE DISEÑO\n\nFondos (oklch h265, croma casi nulo)\n  void #06070a · base #0d0f13\n  surface #17191f · surface-2 #22252b\n\nTexto\n  alto #f4f5f8 · medio #afb2b8 · bajo #777a81\n\nAcentos de marca — L 0.76 / C 0.140\n  azure #40befd · gold #dda733\n\nVeredicto — L 0.74 / C 0.149\n  humano #4cc680 · mixto #db9e16 · IA #fb827a\n\nTodos comparten luminosidad y croma: solo\ncambia el tono, por eso conviven sin pelearse." },
+      "text": "SISTEMA DE DISEÑO\n\nFondos (oklch h265, croma casi nulo)\n  void #06070a · base #0d0f13\n  surface #17191f · surface-2 #22252b\n\nTexto (contraste WCAG AA verificado)\n  alto #f4f5f8 · medio #afb2b8 · bajo #898c93\n\nAcentos de marca — L 0.76 / C 0.140\n  azure #40befd · gold #dda733\n\nVeredicto — L 0.74 / C 0.149\n  humano #4cc680 · mixto #db9e16 · IA #fb827a\n\nTodos comparten luminosidad y croma: solo\ncambia el tono, por eso conviven sin pelearse." },
     { "id": "tipografia", "x": 2120, "y": 2900, "w": 420,
       "text": "TIPOGRAFÍA\n\nDisplay — Instrument Serif itálica\n  Solo para la segunda línea de cada titular.\n  Es lo que aleja esto del look SaaS genérico.\n\nInterfaz — Manrope 300/500/600/800\n  Titulares en 300 a tamaño grande, tracking -0.04em.\n  Deliberadamente NO Inter.\n\nDatos — JetBrains Mono\n  Todas las cifras, con tabular-nums para que\n  no bailen al animarse.\n\nNada de emojis: los iconos son SVG de trazo\ndibujados a mano sobre rejilla de 24px." },
     { "id": "motion", "x": 2120, "y": 3680, "w": 420,

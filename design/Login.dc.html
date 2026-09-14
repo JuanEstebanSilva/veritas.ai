@@ -12,7 +12,7 @@
     :root{
       --void:#06070a; --base:#0d0f13; --surface:#17191f;
       --hair:rgba(255,255,255,0.075); --hair-2:rgba(255,255,255,0.13);
-      --hi:#f4f5f8; --mid:#afb2b8; --low:#777a81;
+      --hi:#f4f5f8; --mid:#afb2b8; --low:#898c93;
       --azure:#40befd; --gold:#dda733; --human:#4cc680;
       --serif:'Instrument Serif',Georgia,'Times New Roman',serif;
       --sans:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -38,7 +38,7 @@
     .field-focus{border-color:rgba(64,190,253,.55);background:rgba(64,190,253,.05);
       box-shadow:0 0 0 4px rgba(64,190,253,.11);color:var(--hi);}
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:54px;
-      border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;
+      border-radius:999px;font-size:15px;font-weight:600;cursor:pointer;
       transition:all .45s var(--ease);border:1px solid transparent;}
     .btn-primary{background:var(--azure);color:#05202e;
       box-shadow:0 16px 44px -18px rgba(64,190,253,.75);}
@@ -48,7 +48,7 @@
       height:46px;padding:0 14px;border-radius:10px;border:1px solid var(--hair);
       background:rgba(255,255,255,.022);cursor:pointer;transition:all .4s var(--ease);}
     .demo-row:hover{border-color:var(--hair-2);background:rgba(255,255,255,.05);}
-    @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
+    @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;}}
   </style>
 </helmet>
 
@@ -71,7 +71,7 @@
         <path d="M60 86 L71 56 L66 45 L60 74 Z" fill="#afb2b8"/>
         <path d="M54 45 C54 39, 66 39, 66 45 L60 54 Z" fill="#f4f5f8"/></svg>
       <span style="font-size:15px;font-weight:800;letter-spacing:.16em;">VERITAS</span>
-      <span style="font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.1em;
+      <span style="font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;
         color:var(--azure);border:1px solid rgba(64,190,253,.4);border-radius:5px;padding:2px 5px;">AI</span>
     </div>
 
@@ -170,7 +170,7 @@
             </span>
             <div style="display:flex;flex-direction:column;gap:1px;">
               <span style="font-size:13px;font-weight:600;">Administrador</span>
-              <span style="font-family:var(--mono);font-size:10.5px;color:var(--low);">admin@veritas.ai</span>
+              <span style="font-family:var(--mono);font-size:11px;color:var(--low);">admin@veritas.ai</span>
             </div>
           </div>
           <span style="font-size:11.5px;font-weight:600;color:var(--gold);">Rellenar</span>
@@ -185,7 +185,7 @@
             </span>
             <div style="display:flex;flex-direction:column;gap:1px;">
               <span style="font-size:13px;font-weight:600;">Usuario de prueba</span>
-              <span style="font-family:var(--mono);font-size:10.5px;color:var(--low);">usuario@veritas.ai</span>
+              <span style="font-family:var(--mono);font-size:11px;color:var(--low);">usuario@veritas.ai</span>
             </div>
           </div>
           <span style="font-size:11.5px;font-weight:600;color:var(--azure);">Rellenar</span>

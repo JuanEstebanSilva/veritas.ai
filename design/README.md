@@ -27,7 +27,7 @@ Fondos (tono 265, croma casi nulo)
 : `--void #06070a` · `--base #0d0f13` · `--surface #17191f` · `--surface-2 #22252b`
 
 Texto
-: alto `#f4f5f8` · medio `#afb2b8` · bajo `#777a81`
+: alto `#f4f5f8` · medio `#afb2b8` · bajo `#898c93`
 
 Acentos de marca — L 0.76 / C 0.140
 : azure `#40befd` · gold `#dda733`
