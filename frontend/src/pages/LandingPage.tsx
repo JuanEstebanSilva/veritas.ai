@@ -70,6 +70,8 @@ export const LandingPage: React.FC = () => {
         gsap.set(q('[data-bar]'), { scaleX: (i, t) => Number((t as HTMLElement).dataset.w) / 100 });
         q('[data-count]').forEach((n) => { const h = n as HTMLElement; h.textContent = Number(h.dataset.count).toFixed(Number(h.dataset.decimals || 0)); });
         gsap.set(q('[data-grade],[data-status],[data-beam]'), { opacity: 1 });
+        const hc = q('[data-human-count]')[0] as HTMLElement | undefined;
+        if (hc) hc.textContent = '96.4';
         gsap.set(q('[data-beam]'), { top: '104%', opacity: 0 });
         gsap.set(q('[data-chapter]'), { opacity: 1, y: 0, position: 'relative' });
         gsap.set(q('[data-after]'), { opacity: 1 });
@@ -248,7 +250,7 @@ export const LandingPage: React.FC = () => {
       <section data-scanner className="relative z-[2]" style={tall(320)}>
         <div data-scanner-pin className={`${pinH} flex items-center py-16 md:py-0`}>
           <div className="wrap w-full">
-            <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-8 lg:gap-12 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-8 lg:gap-12 items-center [&>*]:min-w-0">
               {/* documento */}
               <div data-doc className="relative rounded-[6px] bg-surface border hair-2 shadow-panel overflow-hidden px-8 sm:px-12 py-10 sm:py-12" style={{ aspectRatio: '1 / 1.18' }}>
                 <div data-beam className="absolute left-0 right-0 h-[18%] pointer-events-none z-[2] opacity-0"
@@ -282,7 +284,7 @@ export const LandingPage: React.FC = () => {
                       Autenticidad verificada
                     </span>
                   </div>
-                  <h2 className="text-d-5 font-semibold break-words">Ensayo_Metodologia_Investigacion_2026.docx</h2>
+                  <h2 className="text-d-5 font-semibold break-words">{'Ensayo_Metodologia_Investigacion_2026.docx'.split('_').map((part, i, arr) => (<React.Fragment key={i}>{part}{i < arr.length - 1 && <>_<wbr /></>}</React.Fragment>))}</h2>
                   <span className="font-mono text-xs text-low">4 812 palabras · 26 párrafos · analizado en 1.4 s</span>
                 </div>
 

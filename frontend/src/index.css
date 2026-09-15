@@ -26,6 +26,12 @@
   --hair: 0 0 0;
   --hair-a: 0.08;
   --hair-a2: 0.14;
+  --card: 255 255 255;
+  --card-a: 1;
+  --card-hover: 0 0 0;
+  --card-hover-a: 0.025;
+  --on-accent: 255 255 255;
+  --azure-hover: 9 105 165;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   color-scheme: light;
 }
@@ -46,6 +52,12 @@
   --hair: 255 255 255;
   --hair-a: 0.075;
   --hair-a2: 0.13;
+  --card: 255 255 255;
+  --card-a: 0.025;
+  --card-hover: 255 255 255;
+  --card-hover-a: 0.045;
+  --on-accent: 5 32 46;
+  --azure-hover: 121 208 255;
   color-scheme: dark;
 }
 
@@ -78,8 +90,8 @@
   /* Regla de cápsula: sólo lo que se pulsa */
   .btn { @apply inline-flex items-center justify-center gap-2.5 h-[54px] px-[30px] rounded-full font-sans text-[15px] font-semibold cursor-pointer border border-transparent transition-all duration-450 ease-out select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none; }
   .btn-sm { @apply h-10 px-5 text-[13.5px]; }
-  .btn-primary { @apply bg-azure text-[#05202e] shadow-azure hover:shadow-azure-lg hover:-translate-y-0.5; }
-  .dark .btn-primary:hover { background: #79d0ff; }
+  .btn-primary { @apply bg-azure shadow-azure hover:shadow-azure-lg hover:-translate-y-0.5; color: rgb(var(--on-accent)); }
+  .btn-primary:hover { background-color: rgb(var(--azure-hover)); }
   .btn-ghost { @apply bg-hair text-hi border hair-2 hover:bg-hair-2; }
   .btn-quiet { @apply text-mid hover:text-hi; }
 
@@ -90,8 +102,8 @@
   .field-label { @apply text-xs font-semibold text-mid tracking-[0.02em]; }
 
   /* Tarjeta de contenido (estructura, no rótulo) */
-  .card { @apply rounded-[18px] border hair bg-hair transition-all duration-600 ease-out; }
-  .card-hover:hover { border-color: rgb(var(--hair) / var(--hair-a2)); background: rgb(var(--hair) / 0.045); transform: translateY(-3px); }
+  .card { @apply rounded-[18px] border hair transition-all duration-600 ease-out; background-color: rgb(var(--card) / var(--card-a)); }
+  .card-hover:hover { border-color: rgb(var(--hair) / var(--hair-a2)); background-color: rgb(var(--card-hover) / var(--card-hover-a)); transform: translateY(-3px); }
 
   /* Punto indicador de estado (sustituye a la pastilla) */
   .status-dot { @apply inline-block h-[5px] w-[5px] rounded-full; box-shadow: 0 0 0 3px currentColor; opacity: 1; }

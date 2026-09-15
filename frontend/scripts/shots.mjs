@@ -1,6 +1,7 @@
 /**
  * Capturas de todas las rutas a 1440 y 390 px con Chromium (Playwright).
- * Requiere Vite en :5173 y el API simulado en :5000.
+ * Requiere Vite en :5173, el API simulado en :5000 y `npm i -D playwright`
+ * (Chromium por CHROMIUM=/ruta/al/binario si no está descargado).
  *   node scripts/shots.mjs [dir-salida]
  */
 import { chromium } from 'playwright';
@@ -17,7 +18,7 @@ const routes = [
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined });
 for (const [w, h, tag] of [[1440, 900, 'desktop'], [390, 844, 'mobile']]) {
-  const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, reducedMotion: 'no-preference' });
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, reducedMotion: 'no-preference', ignoreHTTPSErrors: true });
   for (const [name, path, auth] of routes) {
     const page = await ctx.newPage();
     const errors = [];
@@ -30,7 +31,10 @@ for (const [w, h, tag] of [[1440, 900, 'desktop'], [390, 844, 'mobile']]) {
       await page.evaluate(async (isAdmin) => { await fetch('http://localhost:5000/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: isAdmin ? 'admin@veritas.ai' : 'usuario@veritas.ai', password: 'x' }) }); }, auth === 'admin');
     }
     await page.goto(base + path, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(1800);
+    await page.waitForTimeout(1200);
+    // Recorre la página para que los revelados por scroll se disparen antes de la captura completa
+    await page.evaluate(async () => { const H = document.documentElement.scrollHeight; for (let y = 0; y < H; y += 400) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 60)); } window.scrollTo(0, 0); });
+    await page.waitForTimeout(900);
     await page.screenshot({ path: `${out}/${name}-${tag}.png`, fullPage: true });
     if (name === 'landing' && tag === 'desktop') {
       // Estados del escáner al hacer scroll

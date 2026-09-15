@@ -148,7 +148,7 @@ veritas-ai/
 
 ## 🛠️ Tecnologías Empleadas
 
-- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, Lucide Icons, React Router DOM v6.
+- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, GSAP + ScrollTrigger (coreografía de scroll), Lucide Icons, React Router DOM v6.
 - **Backend**: Node.js, Express, TypeScript, Prisma ORM, JSON Web Tokens (JWT), Bcryptjs, Multer.
 - **Base de Datos**: PostgreSQL (Nativo local).
 - **Procesamiento de Documentos DOCX**:

@@ -37,7 +37,7 @@ export default {
       },
       fontSize: {
         // Escala de display fluida
-        'd-1': ['clamp(46px, 8.6vw, 118px)', { lineHeight: '0.93', letterSpacing: '-0.045em' }],
+        'd-1': ['clamp(44px, 8vw, 104px)', { lineHeight: '0.93', letterSpacing: '-0.045em' }],
         'd-2': ['clamp(38px, 6.6vw, 76px)', { lineHeight: '1', letterSpacing: '-0.045em' }],
         'd-3': ['clamp(34px, 5.4vw, 62px)', { lineHeight: '1.02', letterSpacing: '-0.04em' }],
         'd-4': ['clamp(28px, 4vw, 44px)', { lineHeight: '1.06', letterSpacing: '-0.035em' }],
@@ -69,10 +69,10 @@ export default {
         },
       },
       animation: {
-        rise: 'rise 1.1s cubic-bezier(0.16, 1, 0.3, 1) both',
+        rise: 'rise 1.1s cubic-bezier(0.16, 1, 0.3, 1) backwards',
         breathe: 'breathe 7s ease-in-out infinite',
         beam: 'beam 7s cubic-bezier(0.16, 1, 0.3, 1) 1s infinite',
-        'page-in': 'page-in .7s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'page-in': 'page-in .7s cubic-bezier(0.16, 1, 0.3, 1) backwards',
       },
     },
   },

@@ -134,11 +134,11 @@ export const AdminDashboard: React.FC = () => {
           <div className="py-16 text-[13px] text-mid">Cargando usuarios…</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[860px]">
+            <table className="w-full text-left border-collapse min-w-[760px]">
               <thead>
                 <tr className="border-b hair-2">
                   {['Usuario', 'Rol', 'Estado', 'Licencia', 'Análisis', 'Registro', ''].map((h, i) => (
-                    <th key={i} className={`eyebrow font-bold py-3.5 ${i === 0 ? 'pl-1' : ''} ${i === 6 ? 'text-right pr-1' : 'pr-4'}`}>{h}</th>
+                    <th key={i} className={`eyebrow font-bold py-3.5 ${i === 0 ? 'pl-1' : ''} ${i === 6 ? 'text-right pr-1' : 'pr-3'}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -153,18 +153,18 @@ export const AdminDashboard: React.FC = () => {
                           <span className="font-mono text-[11px] text-low">{u.email}</span>
                         </span>
                       </td>
-                      <td className="py-4 pr-4"><span className={`text-[11px] font-bold uppercase tracking-[0.14em] ${u.role === 'ADMIN' ? 'text-gold' : 'text-low'}`}>{u.role === 'ADMIN' ? 'Admin' : 'Usuario'}</span></td>
-                      <td className="py-4 pr-4">
+                      <td className="py-4 pr-3"><span className={`text-[11px] font-bold uppercase tracking-[0.14em] ${u.role === 'ADMIN' ? 'text-gold' : 'text-low'}`}>{u.role === 'ADMIN' ? 'Admin' : 'Usuario'}</span></td>
+                      <td className="py-4 pr-3">
                         <span className={`inline-flex items-center gap-2.5 text-[12.5px] font-semibold ${u.is_active ? 'text-human' : 'text-ai'}`}>
                           <span className="status-dot" style={{ color: `rgb(var(--${u.is_active ? 'human' : 'ai'}) / .18)`, background: `rgb(var(--${u.is_active ? 'human' : 'ai'}))` }} />
                           {u.is_active ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>
-                      <td className="py-4 pr-4">
+                      <td className="py-4 pr-3">
                         {u.is_premium ? <span className="inline-flex items-center gap-2 text-[12.5px] font-semibold text-gold"><Crown className="w-3.5 h-3.5" strokeWidth={1.8} /> Vitalicia</span> : <span className="text-[12.5px] text-low">Gratuita</span>}
                       </td>
-                      <td className="py-4 pr-4"><span className="num text-[13px] text-hi">{u.totalAnalyses}</span> <span className="font-mono text-[11px] text-low">· {u.dailyAnalysisCount}/5 hoy</span></td>
-                      <td className="py-4 pr-4 font-mono text-[11.5px] text-low whitespace-nowrap">{new Date(u.createdAt).toLocaleDateString('es-ES')}</td>
+                      <td className="py-4 pr-3"><span className="num text-[13px] text-hi">{u.totalAnalyses}</span> <span className="font-mono text-[11px] text-low">· {u.dailyAnalysisCount}/5 hoy</span></td>
+                      <td className="py-4 pr-3 font-mono text-[11.5px] text-low whitespace-nowrap">{new Date(u.createdAt).toLocaleDateString('es-ES')}</td>
                       <td className="py-4 pr-1 text-right whitespace-nowrap">
                         <span className="inline-flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                           <button type="button" disabled={isSelf} onClick={() => handleToggleActive(u.id)} title={u.is_active ? 'Desactivar cuenta' : 'Activar cuenta'} className={`p-2 rounded-full transition-colors disabled:opacity-30 ${u.is_active ? 'text-low hover:text-mixed hover:bg-mixed/10' : 'text-human hover:bg-human/10'}`}><Power className="w-4 h-4" strokeWidth={1.7} /></button>

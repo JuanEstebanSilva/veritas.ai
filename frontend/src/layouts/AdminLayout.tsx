@@ -25,7 +25,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <div className="glow" style={{ width: 900, height: 700, top: -380, right: -260, background: 'rgb(var(--gold) / .08)' }} />
       </div>
-      <div className="wrap relative flex flex-1">
+      <div className="wrap !max-w-[1440px] relative flex flex-1">
         <Sidebar />
         <main key={location.pathname} className="flex-1 min-w-0 py-8 md:pl-8 lg:pl-10 animate-page-in">
           {children}

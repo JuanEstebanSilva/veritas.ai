@@ -16,7 +16,7 @@ export interface ScoreMood {
   description: string;
   /** Color de texto y de punto indicador */
   textClass: string;
-  /** Filete lateral / borde de énfasis */
+  /** Filete izquierdo de énfasis (sólo ese lado; el resto conserva el filete de .card) */
   borderClass: string;
   /** Fondo tenue para superficies que lo necesiten */
   bgClass: string;
@@ -32,7 +32,7 @@ const MOODS: Record<Tone, Omit<ScoreMood, 'tone'>> = {
     shortStatus: 'Alta probabilidad IA',
     description: 'Regularidad sintáctica y patrones algorítmicos predominantes',
     textClass: 'text-ai',
-    borderClass: 'border-ai',
+    borderClass: 'border-l-ai',
     bgClass: 'bg-ai/10',
     barClass: 'bg-ai',
     cssVar: 'var(--ai)',
@@ -42,7 +42,7 @@ const MOODS: Record<Tone, Omit<ScoreMood, 'tone'>> = {
     shortStatus: 'Patrones mixtos',
     description: 'Rasgos orgánicos combinados con uniformidad estilométrica',
     textClass: 'text-mixed',
-    borderClass: 'border-mixed',
+    borderClass: 'border-l-mixed',
     bgClass: 'bg-mixed/10',
     barClass: 'bg-mixed',
     cssVar: 'var(--mixed)',
@@ -52,7 +52,7 @@ const MOODS: Record<Tone, Omit<ScoreMood, 'tone'>> = {
     shortStatus: 'Alta autenticidad',
     description: 'Cadencia natural, perplejidad variada y autoría humana',
     textClass: 'text-human',
-    borderClass: 'border-human',
+    borderClass: 'border-l-human',
     bgClass: 'bg-human/10',
     barClass: 'bg-human',
     cssVar: 'var(--human)',

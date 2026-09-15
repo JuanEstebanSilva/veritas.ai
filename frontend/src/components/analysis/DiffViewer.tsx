@@ -103,7 +103,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <button type="button" onClick={handleCopy} className={`btn ${copied ? 'bg-human text-[#052e1a]' : 'btn-primary'}`}>
+          <button type="button" onClick={handleCopy} className={`btn ${copied ? 'bg-human text-[rgb(var(--on-accent))]' : 'btn-primary'}`}>
             {copied ? (<><Check className="w-4 h-4" strokeWidth={2.5} /> Copiado</>) : (<><Copy className="w-4 h-4" strokeWidth={1.8} /> Copiar texto</>)}
           </button>
           <div className="flex flex-wrap items-center gap-2">

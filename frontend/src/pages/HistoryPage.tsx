@@ -56,12 +56,32 @@ export const HistoryPage: React.FC = () => {
           <button type="button" onClick={() => navigate('/analyzer')} className="btn btn-primary btn-sm">Analizar un texto <ArrowRight className="w-4 h-4" strokeWidth={2} /></button>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[760px]">
+        <>
+        {/* Móvil: lista apilada, sin scroll horizontal */}
+        <div className="sm:hidden flex flex-col">
+          {filtered.map((item, i) => {
+            const aiScore = Math.round(item.ai_score ?? item.aiScore ?? 0);
+            const m = getScoreMood(aiScore);
+            const impAi = item.improved_ai_score !== null && item.improved_ai_score !== undefined ? Math.round(item.improved_ai_score) : null;
+            return (
+              <button key={item.id} type="button" onClick={() => navigate(`/analyzer?id=${item.id}`)}
+                className={`flex items-center gap-4 py-4 border-b hair text-left ${i === 0 ? 'border-t' : ''}`}>
+                <span className={`num text-[20px] w-14 shrink-0 ${m.textClass}`}>{aiScore}%</span>
+                <span className="flex flex-col gap-1 min-w-0 flex-1">
+                  <span className="text-[13.5px] font-semibold text-hi truncate">{item.title_or_filename || item.title}</span>
+                  <span className="font-mono text-[11px] text-low">{item.type === 'DOCX' ? '.docx' : 'texto'} · sim {item.similarity_score ?? item.similarityScore}%{impAi !== null ? ` · reescrito a ${impAi}%` : ''} · {new Date(item.created_at || item.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</span>
+                </span>
+                <button type="button" disabled={deletingId === item.id} onClick={(e) => handleDelete(item.id, e)} title="Eliminar" className="p-2 rounded-full text-low hover:text-ai transition-colors disabled:opacity-40"><Trash2 className="w-4 h-4" strokeWidth={1.7} /></button>
+              </button>
+            );
+          })}
+        </div>
+        <div className="hidden sm:block overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[680px]">
             <thead>
               <tr className="border-b hair-2">
                 {['Documento', 'Formato', 'IA', 'Similitud', 'Reescritura', 'Fecha', ''].map((h, i) => (
-                  <th key={i} className={`eyebrow font-bold py-3.5 ${i === 0 ? 'pl-1' : ''} ${i === 6 ? 'text-right pr-1' : 'pr-4'}`}>{h}</th>
+                  <th key={i} className={`eyebrow font-bold py-3.5 ${i === 0 ? 'pl-1' : ''} ${i === 6 ? 'text-right pr-1' : 'pr-3'}`}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -79,21 +99,21 @@ export const HistoryPage: React.FC = () => {
                         <span className="truncate text-[13.5px] font-semibold text-hi">{item.title_or_filename || item.title}</span>
                       </span>
                     </td>
-                    <td className="py-4 pr-4 font-mono text-[11.5px] text-low">{isDocx ? '.docx' : 'texto'}</td>
-                    <td className="py-4 pr-4">
+                    <td className="py-4 pr-3 font-mono text-[11.5px] text-low">{isDocx ? '.docx' : 'texto'}</td>
+                    <td className="py-4 pr-3">
                       <span className={`inline-flex items-center gap-2.5 num text-[13.5px] ${m.textClass}`} title={m.shortStatus}>
                         <span className="status-dot" style={{ color: `rgb(${m.cssVar} / .18)`, background: `rgb(${m.cssVar})` }} />{aiScore}%
                       </span>
                     </td>
-                    <td className="py-4 pr-4 num text-[13.5px] text-azure">{item.similarity_score ?? item.similarityScore}%</td>
-                    <td className="py-4 pr-4">
+                    <td className="py-4 pr-3 num text-[13.5px] text-azure">{item.similarity_score ?? item.similarityScore}%</td>
+                    <td className="py-4 pr-3">
                       {impAi !== null ? (
                         <span className="num text-[12.5px] text-mid">IA {impAi}% <span className="text-low">·</span> sim {item.improved_similarity_score}%</span>
                       ) : (
                         <span className="text-[12px] text-low italic">No generada</span>
                       )}
                     </td>
-                    <td className="py-4 pr-4 font-mono text-[11.5px] text-low whitespace-nowrap">
+                    <td className="py-4 pr-3 font-mono text-[11.5px] text-low whitespace-nowrap">
                       {new Date(item.created_at || item.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </td>
                     <td className="py-4 pr-1 text-right whitespace-nowrap">
@@ -108,6 +128,7 @@ export const HistoryPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

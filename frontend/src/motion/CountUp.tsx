@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { gsap, ScrollTrigger, prefersReducedMotion } from './gsap';
+import { gsap, prefersReducedMotion } from './gsap';
 
 interface CountUpProps {
   value: number;
@@ -13,11 +13,12 @@ interface CountUpProps {
 }
 
 /**
- * Cifra que cuenta de 0 al valor cuando entra en pantalla. Escribe en el DOM
- * directamente para no re-renderizar el árbol en cada fotograma.
+ * Cifra que cuenta de 0 al valor en cuanto se monta (o cuando cambia el valor).
+ * Escribe en el DOM directamente para no re-renderizar el árbol en cada fotograma.
+ * No depende del scroll: en una herramienta las cifras deben estar cuando se mira.
  */
 export const CountUp: React.FC<CountUpProps> = ({
-  value, decimals = 0, duration = 1.4, suffix = '', className = '', animate = true,
+  value, decimals = 0, duration = 1.2, suffix = '', className = '', animate = true,
 }) => {
   const ref = useRef<HTMLSpanElement>(null);
   const fmt = (n: number) => n.toFixed(decimals) + suffix;
@@ -26,15 +27,9 @@ export const CountUp: React.FC<CountUpProps> = ({
     const el = ref.current;
     if (!el) return;
     if (!animate || prefersReducedMotion()) { el.textContent = fmt(value); return; }
-
     const obj = { n: 0 };
-    el.textContent = fmt(0);
-    const tween = gsap.to(obj, {
-      n: value, duration, ease: 'power3.out', paused: true,
-      onUpdate: () => { el.textContent = fmt(obj.n); },
-    });
-    const st = ScrollTrigger.create({ trigger: el, start: 'top 92%', once: true, onEnter: () => tween.play() });
-    return () => { st.kill(); tween.kill(); };
+    const tween = gsap.to(obj, { n: value, duration, ease: 'power3.out', onUpdate: () => { el.textContent = fmt(obj.n); } });
+    return () => { tween.kill(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, decimals, duration, suffix, animate]);
 

@@ -351,8 +351,8 @@ export const ModalCheckout: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-3 py-3 border-y hair">
             <span className="text-[12px] font-semibold text-mid">Tarjetas de prueba</span>
             <div className="flex gap-2">
-              <button type="button" onClick={() => fillTestCard('success')} className={`btn btn-sm h-8 px-3.5 text-[12px] ${testScenario === 'success' && cardNumber.startsWith('4242') ? 'bg-human text-[#052e1a]' : 'btn-ghost'}`}><Check className="w-3.5 h-3.5" strokeWidth={2.4} /> Aprobada</button>
-              <button type="button" onClick={() => fillTestCard('fail')} className={`btn btn-sm h-8 px-3.5 text-[12px] ${cardNumber.startsWith('5555') ? 'bg-ai text-[#3a0c09]' : 'btn-ghost'}`}>Declinada</button>
+              <button type="button" onClick={() => fillTestCard('success')} className={`btn btn-sm h-8 px-3.5 text-[12px] ${testScenario === 'success' && cardNumber.startsWith('4242') ? 'bg-human text-[rgb(var(--on-accent))]' : 'btn-ghost'}`}><Check className="w-3.5 h-3.5" strokeWidth={2.4} /> Aprobada</button>
+              <button type="button" onClick={() => fillTestCard('fail')} className={`btn btn-sm h-8 px-3.5 text-[12px] ${cardNumber.startsWith('5555') ? 'bg-ai text-[rgb(var(--on-accent))]' : 'btn-ghost'}`}>Declinada</button>
             </div>
           </div>
 

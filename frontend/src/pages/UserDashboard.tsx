@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { analysisApi } from '../services/api';
 import { sound } from '../utils/soundEffects';
 import { getScoreMood } from '../utils/scoreMood';
-import { CountUp, useReveal } from '../motion';
+import { CountUp } from '../motion';
 import { ArrowRight, FileText, FileType, ShieldCheck, Crown, Loader2 } from 'lucide-react';
 
 export const UserDashboard: React.FC = () => {
@@ -12,7 +12,6 @@ export const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [allAnalyses, setAllAnalyses] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
-  const revealRef = useReveal<HTMLDivElement>([loadingHistory]);
 
   useEffect(() => {
     const fetchRecent = async () => {
@@ -56,9 +55,9 @@ export const UserDashboard: React.FC = () => {
   );
 
   return (
-    <div ref={revealRef} className="max-w-[1100px] flex flex-col gap-9 pb-16">
+    <div className="max-w-[1100px] flex flex-col gap-9 pb-16">
       {/* Cabecera */}
-      <div data-reveal className="flex flex-wrap items-end justify-between gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-6">
         <div className="flex flex-col gap-3">
           <span className="eyebrow">Panel</span>
           <h1 className="text-d-4 font-light">Hola, <span className="serif text-azure">{user?.name}.</span></h1>
@@ -70,7 +69,7 @@ export const UserDashboard: React.FC = () => {
       </div>
 
       {/* Cifras del día */}
-      <div data-reveal className="grid grid-cols-2 md:grid-cols-4 gap-x-6 border-y hair">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 border-y hair">
         <Stat label="Usados hoy">{isPremium ? <span className="text-[18px] text-hi">Sin cuota</span> : <><CountUp value={usedToday} /><span className="text-low text-[16px]"> / 5</span></>}</Stat>
         <Stat label="Disponibles" tone={availableToday === 0 && !isPremium ? 'text-ai' : 'text-human'}>{isPremium ? <span className="text-[18px]">Ilimitados</span> : <CountUp value={availableToday} />}</Stat>
         <Stat label="Licencia" tone={isPremium ? 'text-gold' : 'text-mid'}><span className="text-[18px]">{isPremium ? 'Vitalicia' : 'Estándar'}</span></Stat>
@@ -79,7 +78,7 @@ export const UserDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-6">
         {/* Estilometría acumulada */}
-        <div data-reveal className="card p-7 flex flex-col gap-7">
+        <div className="card p-7 flex flex-col gap-7">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <div className="flex flex-col gap-1.5">
               <span className="eyebrow">Tu estilometría</span>
@@ -88,13 +87,13 @@ export const UserDashboard: React.FC = () => {
             <span className="font-mono text-[11.5px] text-low">{loadingHistory ? 'cargando…' : `${n} analizados`}</span>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               { label: 'Índice humano', value: avgHumanScore, tone: 'text-human' },
               { label: 'Probabilidad IA', value: avgAiScore, tone: getScoreMood(avgAiScore).textClass },
               { label: 'Similitud', value: avgSimilarityScore, tone: 'text-azure' },
             ].map((s) => (
-              <div key={s.label} className="flex flex-col gap-2">
+              <div key={s.label} className="flex sm:flex-col items-baseline sm:items-start justify-between sm:justify-start gap-2">
                 <span className={`text-[34px] leading-none ${s.tone}`}><CountUp value={s.value} suffix="%" animate={!loadingHistory} /></span>
                 <span className="eyebrow">{s.label}</span>
               </div>
@@ -123,14 +122,14 @@ export const UserDashboard: React.FC = () => {
 
         {/* Formatos y consejos */}
         <div className="flex flex-col gap-6">
-          <div data-reveal className="card p-7 flex flex-col gap-5">
+          <div className="card p-7 flex flex-col gap-5">
             <span className="eyebrow">Formatos</span>
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between"><span className="flex items-center gap-3 text-[14px] text-mid"><FileText className="w-4 h-4 text-low" strokeWidth={1.6} /> Texto plano</span><span className="num text-[16px] text-hi">{textCount}</span></div>
               <div className="flex items-center justify-between"><span className="flex items-center gap-3 text-[14px] text-mid"><FileType className="w-4 h-4 text-low" strokeWidth={1.6} /> Documentos .docx</span><span className="num text-[16px] text-hi">{docxCount}</span></div>
             </div>
           </div>
-          <div data-reveal className="card p-7 flex flex-col gap-4">
+          <div className="card p-7 flex flex-col gap-4">
             <span className="eyebrow">Buenas prácticas</span>
             <ul className="flex flex-col gap-3 text-[13.5px] leading-[1.6] text-mid">
               {['Cita con formato APA: las coincidencias atribuidas no cuentan como plagio.', 'Analiza párrafos largos: menos de 15 palabras no permiten inferir estilometría.', 'Reescribe y vuelve a analizar para comprobar la reducción real.'].map((t) => (
@@ -143,7 +142,7 @@ export const UserDashboard: React.FC = () => {
 
       {/* Licencia vitalicia para cuentas estándar */}
       {!isPremium && (
-        <div data-reveal className="relative overflow-hidden rounded-[18px] border border-azure/30 p-7 sm:p-8 flex flex-wrap items-center justify-between gap-6"
+        <div className="relative overflow-hidden rounded-[18px] border border-azure/30 p-7 sm:p-8 flex flex-wrap items-center justify-between gap-6"
           style={{ background: 'linear-gradient(165deg, rgb(var(--azure) / .09), rgb(var(--azure) / .015) 60%)' }}>
           <div className="flex flex-col gap-2 max-w-[560px]">
             <span className="eyebrow text-azure">Licencia vitalicia</span>
@@ -154,11 +153,11 @@ export const UserDashboard: React.FC = () => {
         </div>
       )}
       {isPremium && (
-        <div data-reveal className="flex items-center gap-4 py-5 border-y border-gold/30 text-[13.5px] text-mid"><ShieldCheck className="w-5 h-5 text-gold shrink-0" strokeWidth={1.6} /> Licencia vitalicia activa desde {user?.premium_since ? new Date(user.premium_since).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) : 'hoy'}.</div>
+        <div className="flex items-center gap-4 py-5 border-y border-gold/30 text-[13.5px] text-mid"><ShieldCheck className="w-5 h-5 text-gold shrink-0" strokeWidth={1.6} /> Licencia vitalicia activa desde {user?.premium_since ? new Date(user.premium_since).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) : 'hoy'}.</div>
       )}
 
       {/* Recientes */}
-      <div data-reveal className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div className="flex flex-col gap-1.5"><span className="eyebrow">Recientes</span><h2 className="text-d-5 font-light">Últimas <span className="serif">verificaciones.</span></h2></div>
           <Link to="/history" onClick={() => sound.playClick()} className="text-[13px] text-azure hover:text-hi transition-colors inline-flex items-center gap-1.5">Ver historial <ArrowRight className="w-3.5 h-3.5" strokeWidth={2} /></Link>
