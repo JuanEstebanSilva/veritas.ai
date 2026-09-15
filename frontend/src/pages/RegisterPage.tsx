@@ -1,24 +1,32 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { sound } from '../utils/soundEffects';
-import { VeritasLogo } from '../components/brand';
-import { Lock, Mail, User, ArrowRight, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
+import { AuthShell } from '../components/auth/AuthShell';
+import { Mail, Lock, ArrowRight, AlertCircle, Loader2, Check } from 'lucide-react';
+
+/** Fortaleza orientativa: longitud y variedad de clases de caracteres. */
+const strengthOf = (pw: string) => {
+  if (!pw) return { score: 0, label: '' };
+  let s = 0;
+  if (pw.length >= 8) s++;
+  if (pw.length >= 12) s++;
+  if (/[A-ZÁÉÍÓÚÑ]/.test(pw) && /[a-záéíóúñ]/.test(pw)) s++;
+  if (/\d/.test(pw) && /[^\w\s]/.test(pw)) s++;
+  return { score: s, label: ['Muy débil', 'Débil', 'Aceptable', 'Sólida', 'Muy sólida'][s] };
+};
 
 export const RegisterPage: React.FC = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    name: '',
-    last_name: '',
-    email: '',
-    password: '',
-    confirm_password: '',
-  });
-
+  const [formData, setFormData] = useState({ name: '', last_name: '', email: '', password: '', confirm_password: '' });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const strength = useMemo(() => strengthOf(formData.password), [formData.password]);
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
+  const matchOk = formData.confirm_password.length > 0 && formData.confirm_password === formData.password;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -29,180 +37,104 @@ export const RegisterPage: React.FC = () => {
     e.preventDefault();
     sound.playClick();
 
-    if (
-      !formData.name ||
-      !formData.last_name ||
-      !formData.email ||
-      !formData.password ||
-      !formData.confirm_password
-    ) {
-      sound.playError();
-      setError('Todos los campos son obligatorios.');
-      return;
+    if (!formData.name || !formData.last_name || !formData.email || !formData.password || !formData.confirm_password) {
+      sound.playError(); setError('Todos los campos son obligatorios.'); return;
     }
-
-    if (formData.password !== formData.confirm_password) {
-      sound.playError();
-      setError('Las contraseñas ingresadas no coinciden.');
-      return;
-    }
-
-    if (formData.password.length < 8) {
-      sound.playError();
-      setError('La contraseña debe contener al menos 8 caracteres.');
-      return;
-    }
+    if (formData.password !== formData.confirm_password) { sound.playError(); setError('Las contraseñas ingresadas no coinciden.'); return; }
+    if (formData.password.length < 8) { sound.playError(); setError('La contraseña debe contener al menos 8 caracteres.'); return; }
 
     setLoading(true);
     setError(null);
-
     const res = await register(formData);
     setLoading(false);
 
-    if (res.success) {
-      sound.playSuccess();
-      navigate('/dashboard');
-    } else {
-      sound.playError();
-      setError(res.message || 'Error al completar el registro.');
-    }
+    if (res.success) { sound.playSuccess(); navigate('/dashboard'); }
+    else { sound.playError(); setError(res.message || 'Error al completar el registro.'); }
   };
 
+  const strengthColor = strength.score >= 3 ? 'bg-human' : strength.score === 2 ? 'bg-mixed' : 'bg-ai';
+  const strengthText = strength.score >= 3 ? 'text-human' : strength.score === 2 ? 'text-mixed' : 'text-ai';
+
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
-      <div className="w-full max-w-md space-y-8 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl">
-        <div className="text-center space-y-2">
-          <div className="flex justify-center mb-3">
-            <VeritasLogo variant="full" size="lg" />
+    <AuthShell
+      tone="human"
+      headline={<>Cinco análisis<br /><span className="serif text-human">al día, gratis.</span></>}
+      lede="Sin tarjeta y sin período de prueba que caduque. Informe completo de perplejidad, burstiness y similitud para texto y documentos .docx."
+      aside={
+        <ul className="flex flex-col gap-4 max-w-[520px]">
+          {['Tus documentos no se usan para entrenar nada', 'Reescritura editorial que respeta citas y referencias', 'La licencia vitalicia quita la cuota diaria por un solo pago de $2'].map((t) => (
+            <li key={t} className="flex items-start gap-3.5 text-[15px] leading-[1.55] text-mid">
+              <Check className="w-[18px] h-[18px] text-human shrink-0 mt-0.5" strokeWidth={2.1} /><span>{t}</span>
+            </li>
+          ))}
+        </ul>
+      }
+    >
+      <div className="flex flex-col gap-2.5">
+        <h2 className="text-d-4 font-medium">Crear cuenta</h2>
+        <p className="text-sm text-low">¿Ya tienes una? <Link to="/login" onClick={() => sound.playClick()} className="text-azure hover:text-hi transition-colors">Inicia sesión</Link></p>
+      </div>
+
+      {error && (
+        <div className="flex items-center gap-3 py-3.5 border-y border-ai/30 text-[13px] text-ai animate-page-in">
+          <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={1.8} /><span>{error}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="reg-name" className="field-label">Nombre</label>
+            <input id="reg-name" name="name" type="text" required autoComplete="given-name" value={formData.name} onChange={handleChange} placeholder="Carlos" className="field" />
           </div>
-          <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            Crear Cuenta
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Regístrate en Veritas AI para iniciar auditorías de integridad académica
-          </p>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="reg-last" className="field-label">Apellido</label>
+            <input id="reg-last" name="last_name" type="text" required autoComplete="family-name" value={formData.last_name} onChange={handleChange} placeholder="Mendoza" className="field" />
+          </div>
         </div>
 
-        {error && (
-          <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
-            <span>{error}</span>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="reg-email" className="field-label">Correo electrónico</label>
+          <div className="relative">
+            <Mail className={`w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none ${emailOk ? 'text-human' : 'text-low'}`} strokeWidth={1.6} />
+            <input id="reg-email" name="email" type="email" required autoComplete="email" value={formData.email} onChange={handleChange}
+              placeholder="carlos@universidad.edu" className={`field pl-11 pr-11 ${emailOk ? 'border-human/40' : ''}`} />
+            {emailOk && <Check className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-human" strokeWidth={2.2} />}
           </div>
-        )}
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Nombre
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="Carlos"
-                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Apellido
-              </label>
-              <input
-                type="text"
-                name="last_name"
-                required
-                value={formData.last_name}
-                onChange={handleChange}
-                placeholder="Mendoza"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="reg-password" className="field-label">Contraseña</label>
+          <div className="relative">
+            <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-low pointer-events-none" strokeWidth={1.6} />
+            <input id="reg-password" name="password" type="password" required autoComplete="new-password" value={formData.password} onChange={handleChange} placeholder="••••••••" className="field pl-11" />
           </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Correo Electrónico
-            </label>
-            <div className="relative">
-              <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-              <input
-                type="email"
-                name="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="carlos@universidad.edu"
-                className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+          <div className="flex items-center gap-3 mt-0.5">
+            <div className="flex-1 flex gap-1">
+              {[1, 2, 3, 4].map((n) => (
+                <span key={n} className={`h-[3px] flex-1 rounded-full transition-colors duration-450 ${strength.score >= n ? strengthColor : 'bg-hair'}`} />
+              ))}
             </div>
+            <span className={`text-[11.5px] font-semibold min-w-[70px] text-right ${strength.label ? strengthText : 'text-low'}`}>{strength.label || 'Mínimo 8'}</span>
           </div>
+        </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Contraseña (mínimo 8 caracteres)
-            </label>
-            <div className="relative">
-              <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-              <input
-                type="password"
-                name="password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="••••••••"
-                className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="reg-confirm" className="field-label">Repetir contraseña</label>
+          <div className="relative">
+            <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-low pointer-events-none" strokeWidth={1.6} />
+            <input id="reg-confirm" name="confirm_password" type="password" required autoComplete="new-password" value={formData.confirm_password} onChange={handleChange}
+              placeholder="••••••••" className={`field pl-11 pr-11 ${matchOk ? 'border-human/40' : ''}`} />
+            {matchOk && <Check className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-human" strokeWidth={2.2} />}
           </div>
+        </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Confirmar Contraseña
-            </label>
-            <div className="relative">
-              <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-              <input
-                type="password"
-                name="confirm_password"
-                required
-                value={formData.confirm_password}
-                onChange={handleChange}
-                placeholder="••••••••"
-                className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
+        <button type="submit" disabled={loading} className="btn btn-primary w-full mt-1">
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (<>Crear cuenta <ArrowRight className="w-4 h-4" strokeWidth={2} /></>)}
+        </button>
+      </form>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.01]"
-          >
-            {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <span>Crear Cuenta y Comenzar</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
-        </form>
-
-        <p className="text-center text-xs text-slate-500 dark:text-slate-400">
-          ¿Ya tienes cuenta registrada?{' '}
-          <Link to="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-            Inicia sesión aquí
-          </Link>
-        </p>
-      </div>
-    </div>
+      <p className="text-[11.5px] leading-[1.6] text-low text-center">Al crear tu cuenta aceptas los términos y la política de privacidad.</p>
+    </AuthShell>
   );
 };
