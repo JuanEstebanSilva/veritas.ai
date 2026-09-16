@@ -10,14 +10,14 @@ const startServer = async () => {
 
     app.listen(ENV.PORT, () => {
       console.log(`===================================================`);
-      console.log(`🚀 Servidor Veritas AI activo en puerto ${ENV.PORT}`);
+      console.log(`🚀 Servidor Plagelio activo en puerto ${ENV.PORT}`);
       console.log(`🔗 API Base: http://localhost:${ENV.PORT}/api`);
       console.log(`⚙  Modo: ${ENV.NODE_ENV}`);
       console.log(`💳 Pasarela: ${ENV.STRIPE_SECRET_KEY ? 'Stripe Test Mode' : 'Sandbox Local Activo'}`);
       console.log(`===================================================`);
     });
   } catch (error) {
-    console.error('❌ Error al iniciar el servidor Veritas AI:', error);
+    console.error('❌ Error al iniciar el servidor Plagelio:', error);
     process.exit(1);
   }
 };

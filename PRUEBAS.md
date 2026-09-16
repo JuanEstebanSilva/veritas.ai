@@ -1,7 +1,7 @@
-# Informe Integral de Seguridad y Pruebas de Software — Veritas AI
+# Informe Integral de Seguridad y Pruebas de Software — Plagelio
 ## Auditoría DevSecOps: SCA + SAST + DAST
 
-**Plataforma**: Veritas AI — Detección de Inteligencia Artificial, Similitud Académica y Asistente de Reescritura Ética  
+**Plataforma**: Plagelio — Detección de Inteligencia Artificial, Similitud Académica y Asistente de Reescritura Ética  
 **Fecha de Evaluación**: 15 de Septiembre de 2026  
 **Entorno de Pruebas**: Fullstack Node.js / Express (TypeScript 5.8) + React 18 / Vite + PostgreSQL 14+ / Prisma ORM 6.4  
 **Estándares de Referencia**: OWASP Top 10 (2021/2025), CWE (Common Weakness Enumeration), NIST SP 800-115, CVSS v3.1  
@@ -50,7 +50,7 @@
 
 ## 1. Resumen Ejecutivo y Matriz de Riesgos
 
-El presente documento expone los resultados de la auditoría de seguridad integral practicada sobre la arquitectura de **Veritas AI**, abarcando sus capas de Backend (Node.js/Express con Prisma ORM) y Frontend (React 18 con Vite).
+El presente documento expone los resultados de la auditoría de seguridad integral practicada sobre la arquitectura de **Plagelio**, abarcando sus capas de Backend (Node.js/Express con Prisma ORM) y Frontend (React 18 con Vite).
 
 La auditoría se estructuró bajo el paradigma **DevSecOps en tres dimensiones complementarias**:
 1. **SCA (Software Composition Analysis)**: Análisis de la cadena de suministro de software, dependencias directas y transitivas, y evaluación de CVEs conocidas.
@@ -133,7 +133,7 @@ Ejecutado con: `npm audit --json` en el directorio `frontend`:
 
 ### 2.4 Detalle de Vulnerabilidades Detectadas en Dependencias
 
-| Paquete Afectado | Tipo / CVE | Severidad | Módulo | Ruta de Dependencia | Impacto en Veritas AI |
+| Paquete Afectado | Tipo / CVE | Severidad | Módulo | Ruta de Dependencia | Impacto en Plagelio |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`deepmerge-ts`** | `GHSA-ggr8-5vv4-36mx`<br>CWE-674 | **ALTA** | Backend | `prisma` ➔ `@prisma/config` ➔ `deepmerge-ts` | Agotamiento de pila (Stack Exhaustion) al fusionar grafos recursivos en tiempo de compilación o configuración de Prisma. **Riesgo en producción: Bajo**, ya que ocurre en la CLI de Prisma y no en el runtime de peticiones web de Express. |
 | **`prisma`** | Vía `@prisma/config` | **ALTA** | Backend | `devDependencies.prisma` | Paquete dev de línea de comandos para migraciones y generación de cliente. No afecta el procesamiento HTTP del cliente. |
@@ -141,8 +141,7 @@ Ejecutado con: `npm audit --json` en el directorio `frontend`:
 | **`qs`** | `GHSA-x5fp-wj9c-mxmx`<br>`GHSA-4mjr-xmp4-gh2g`<br>CWE-770 / CWE-248 | **MODERADA** (CVSS 5.3) | Backend | `express` ➔ `body-parser` ➔ `qs` | Omisión de límite de array mediante formato de corchetes y DoS condicional al parsear query strings. **Riesgo en producción: Bajo-Medio**, mitigado por el uso de endpoints POST con JSON estricto y sin uso de queries de corchetes complejas. |
 | **`body-parser`** | Vía `qs` | **MODERADA** | Backend | `express` ➔ `body-parser` | Parseador estándar embebido en Express. |
 | **`express`** | Vía `qs` | **MODERADA** | Backend | `dependencies.express` | Requiere actualización menor cuando el árbol de Express publique el pinneo del parser `qs >= 6.16.0`. |
-| **`react-router`** | `GHSA-wrjc-x8rr-h8h6`<br>CWE-601 | **MODERADA** | Frontend | `react-router-dom` ➔ `react-router` | Posible redirección abierta al usar caracteres de barra invertida (`\`) en enlaces `<Link>` o `useNavigate`. **Riesgo en producción: Mínimo**, dado que Veritas AI no toma URLs de redirección desde query params de terceros no validados. |
-| **`react-router`** | `GHSA-337j-9hxr-rhxg`<br>CWE-470 (CVSS 6.1) | **MODERADA** | Frontend | `react-router-dom` ➔ `react-router` | Inyección arbitraria de constructores en la des-serialización de errores durante la hidratación SSR. **Riesgo en producción: Nulo**, debido a que Veritas AI es una SPA pura basada en Vite Client-Side Rendering (CSR), no una aplicación Server-Side Rendering (SSR). |
+| **`react-router`** | `GHSA-337j-9hxr-rhxg`<br>CWE-470 (CVSS 6.1) | **MODERADA** | Frontend | `react-router-dom` ➔ `react-router` | Inyección arbitraria de constructores en la des-serialización de errores durante la hidratación SSR. **Riesgo en producción: Nulo**, debido a que Plagelio es una SPA pura basada en Vite Client-Side Rendering (CSR), no una aplicación Server-Side Rendering (SSR). |
 
 ---
 
@@ -165,7 +164,7 @@ Se verificaron los metadatos de licenciamiento de la totalidad del árbol de dep
 | `lucide-react` | ISC | Permisiva | Ninguno |
 
 > [!TIP]
-> **Conformidad Legal**: No se encontraron dependencias sujetas a licencias con cláusulas virales o recíprocas (como GPL-3.0 o AGPL-3.0) que comprometan la propiedad intelectual del código fuente de Veritas AI.
+> **Conformidad Legal**: No se encontraron dependencias sujetas a licencias con cláusulas virales o recíprocas (como GPL-3.0 o AGPL-3.0) que comprometan la propiedad intelectual del código fuente de Plagelio.
 
 ---
 
@@ -275,7 +274,7 @@ Ambos entornos compilan al 100% de manera limpia, garantizando la integridad de 
   - Extracción segura de texto plano mediante `mammoth` sin procesar macros ejecutables ni scripts embebidos.
 
 #### A09: Security Logging and Monitoring Failures
-- Manejador centralizado de excepciones que registra errores con identificador contextual `[Error Veritas AI]:`.
+- Manejador centralizado de excepciones que registra errores con identificador contextual `[Error Plagelio]:`.
 - Manejo de rutas no encontradas con respuesta 404 estandarizada en formato JSON, evitando mensajes de error genéricos del servidor web que revelen versiones de software.
 
 #### A10: Server-Side Request Forgery (SSRF) y ReDoS
@@ -294,7 +293,7 @@ Ambos entornos compilan al 100% de manera limpia, garantizando la integridad de 
   - **Resultado**: `0` instancias de `eval()`, `Function()`, o manipulación directa de `document.innerHTML`.
   - React escapa automáticamente cualquier contenido renderizado en JSX, neutralizando la inyección de etiquetas `<script>` o eventos en línea.
 - **Gestión del Token de Sesión**:
-  - El token JWT se almacena en `localStorage` bajo la clave `veritas_token` y se adjunta de forma transparente en el cliente HTTP (`client.ts`).
+  - El token JWT se almacena en `localStorage` bajo la clave `plagelio_token` (con fallback de compatibilidad a `veritas_token`) y se adjunta de forma transparente en el cliente HTTP (`client.ts`).
   - *Recomendación*: En despliegues de máxima seguridad, se sugiere migrar a cookies `httpOnly` con flags `Secure` y `SameSite=Strict` para mitigar cualquier riesgo de lectura ante hipotéticos ataques XSS de dependencias de terceros.
 
 ---
@@ -352,11 +351,11 @@ Para garantizar la reproducibilidad continua en entornos de integración continu
 Ejecución verificada mediante: `npm run test:dast` en `backend`:
 
 ```text
-> veritas-ai-backend@1.0.0 test:dast
+> plagelio-backend@1.0.0 test:dast
 > jest tests/security.dast.test.ts --detectOpenHandles --runInBand
 
 PASS tests/security.dast.test.ts (11.441 s)
-  Suite DAST — Dynamic Application Security Testing (Veritas AI)
+  Suite DAST — Dynamic Application Security Testing (Plagelio)
     1. DAST - Autenticación y Gestión de Sesiones
       √ DAST-AUTH-01: Rechazar acceso sin token Bearer (401) (49 ms)
       √ DAST-AUTH-02: Rechazar token JWT malformado o truncado (401) (10 ms)
@@ -405,7 +404,7 @@ Además, el conjunto completo de **21 pruebas unitarias y de integración de neg
 
 ## 5. Plan de Acción y Recomendaciones de Seguridad
 
-Para elevar la postura de seguridad de Veritas AI al nivel más riguroso de la industria, se propone el siguiente cronograma de mejoras:
+Para elevar la postura de seguridad de Plagelio al nivel más riguroso de la industria, se propone el siguiente cronograma de mejoras:
 
 ### 5.1 Acciones Inmediatas (Corto Plazo)
 1. **Adición de Cabeceras HTTP de Seguridad con Helmet**:
@@ -440,7 +439,7 @@ Para elevar la postura de seguridad de Veritas AI al nivel más riguroso de la i
 
 ## 6. Conclusión y Certificación del Informe
 
-La arquitectura de **Veritas AI** demostró un **alto estándar de seguridad y madurez técnica** a lo largo de las pruebas realizadas:
+La arquitectura de **Plagelio** demostró un **alto estándar de seguridad y madurez técnica** a lo largo de las pruebas realizadas:
 
 1. **SCA**: Dependencias directas limpias y de licenciamiento permisivo (MIT/Apache/BSD). Las vulnerabilidades detectadas corresponden exclusivamente a paquetes secundarios o herramientas de línea de comandos en desarrollo, con rutas de actualización claras y sin impacto crítico en producción.
 2. **SAST**: Código fuente desarrollado bajo tipado estricto en TypeScript sin errores de compilación, libre de vulnerabilidades de inyección SQL (gracias a Prisma ORM), con control de acceso por roles (RBAC) exhaustivo, prevención estricta de IDOR y hashing criptográfico reforzado con bcrypt (12 rondas). En el frontend no se encontraron inyecciones inseguras de HTML.
@@ -457,4 +456,4 @@ La arquitectura de **Veritas AI** demostró un **alto estándar de seguridad y m
 └──────────────────────────────────┴─────────────────────────────────────┘
 ```
 
-**Documento elaborado para el equipo de desarrollo, auditoría y operaciones de Veritas AI.**
+**Documento elaborado para el equipo de desarrollo, auditoría y operaciones de Plagelio.**

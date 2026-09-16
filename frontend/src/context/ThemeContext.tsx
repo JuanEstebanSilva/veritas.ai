@@ -9,12 +9,13 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-const STORAGE_KEY = 'veritas_theme';
+const STORAGE_KEY = 'plagelio_theme';
+const LEGACY_STORAGE_KEY = 'veritas_theme';
 const META_COLOR: Record<Theme, string> = { dark: '#06070a', light: '#f7f7f9' };
 
 const readStored = (): Theme => {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
     if (saved === 'light' || saved === 'dark') return saved;
   } catch { /* almacenamiento no disponible */ }
   return 'dark';

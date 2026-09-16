@@ -1,7 +1,7 @@
 {
-  "name": "veritas-ai-backend",
+  "name": "plagelio-backend",
   "version": "1.0.0",
-  "description": "Backend API para Veritas AI - Detección de IA, Similitud y Mejora de Redacción",
+  "description": "Backend API para Plagelio - Detección de IA, Similitud y Mejora de Redacción",
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
@@ -21,7 +21,7 @@
     "docx",
     "writing-assistant"
   ],
-  "author": "Veritas AI Team",
+  "author": "Plagelio Team",
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^6.4.1",

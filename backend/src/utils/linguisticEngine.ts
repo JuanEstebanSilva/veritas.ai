@@ -40,22 +40,52 @@ export class LinguisticEngine {
     { pattern: /\bt[eé]cnicas\s+de\s+procesamiento\s+de\s+lenguaje\s+natural\b/i, label: 'Metadato de procesamiento de lenguaje natural' }
   ];
 
-  // Conectores y frases cliché altamente frecuentes en textos generados por IA
-  private static AI_CLICHE_PHRASES = [
-    'en conclusión', 'es crucial destacar', 'es fundamental señalar', 'cabe destacar',
-    'en primer lugar', 'por consiguiente', 'en resumen', 'un papel fundamental',
-    'desempeña un papel clave', 'un tapiz de', 'en este sentido', 'por otro lado',
-    'asimismo', 'no solo..., sino también', 'es importante tener en cuenta',
-    'en última instancia', 'a fin de cuentas', 'it is important to note',
-    'delve into', 'testament to', 'furthermore', 'moreover', 'in conclusion',
-    'plays a pivotal role', 'tapestry of', 'seamlessly', 'en este orden de ideas',
-    'cabe señalar que', 'es menester destacar', 'un amplio abanico', 'un mosaico de',
-    'de vital importancia', 'en resumidas cuentas', 'por ende', 'a modo de resumen',
-    'desempeña un rol', 'juega un papel', 'no cabe duda de que', 'sin duda alguna',
-    'es de suma importancia', 'con el fin de', 'a través de', 'en la actualidad',
-    'debido al hecho de que', 'con el propósito de', 'modelo de lenguaje',
-    'inteligencia artificial', 'fui entrenado', 'corte temporal', 'procesamiento de lenguaje natural'
+  // Conectores y frases cliché altamente frecuentes en textos generados por modelos de lenguaje (LLM)
+  private static AI_CLICHE_PHRASES_HEAVY: string[] = [
+    'en el vertiginoso mundo', 'a lo largo de la historia de la humanidad', 'un papel fundamental',
+    'desempeña un papel crucial', 'juega un rol decisivo', 'es crucial entender',
+    'es fundamental destacar', 'cabe destacar que', 'resulta imperativo', 'es menester destacar',
+    'no cabe duda de que', 'un amplio abanico', 'un mosaico de', 'un tapiz de',
+    'un testimonio de', 'en este orden de ideas', 'navegar por las complejidades',
+    'marcar un antes y un después', 'sinergia transformadora', 'paradigma emergente',
+    'un catalizador para', 'es de vital importancia', 'en última instancia',
+    'piedra angular', 'un recordatorio constante', 'no se puede subestimar',
+    'delve into', 'plays a pivotal role', 'testament to', 'tapestry of',
+    'beacon of', 'seamlessly integrated', 'in today\'s fast-paced world',
+    'it is worth noting', 'a testament to the fact that', 'serves as a reminder',
+    'multifaceted nature', 'holistic approach'
   ];
+
+  private static AI_CLICHE_PHRASES_MODERATE: string[] = [
+    'en conclusión', 'en resumen', 'en este sentido', 'por consiguiente',
+    'asimismo', 'por otro lado', 'no solo..., sino también', 'es de suma importancia',
+    'a fin de cuentas', 'en resumidas cuentas', 'en la actualidad', 'con el fin de',
+    'a través de este', 'vale la pena señalar', 'en síntesis', 'a modo de resumen',
+    'cabe señalar que', 'por ende', 'a modo de colofón', 'sin duda alguna',
+    'es importante tener en cuenta', 'como se mencionó anteriormente', 'a continuación se presentan',
+    'ofrece una perspectiva', 'in conclusion', 'moreover', 'furthermore',
+    'in summary', 'consequently', 'it is important to note', 'on the other hand'
+  ];
+
+  // Señales directas de voz humana orgánica (primera persona, subjetividad, oralidad y afecto)
+  private static HUMAN_VOICE_PATTERNS: { pattern: RegExp; weight: number; label: string }[] = [
+    { pattern: /\b(?:yo|mi|mis|mío|mía|míos|mías|conmigo)\b/i, weight: 14, label: 'Perspectiva personal en primera persona' },
+    { pattern: /\b(?:creo|pienso|opino|noté|observé|descubrí|escribí|sentí|viví|aprendí|recuerdo|considero|intento|busco|quiero|espero|prefiero|dudo|me parece|me di cuenta|a mi juicio|para mí)\b/i, weight: 16, label: 'Verbos de subjetividad y vivencia personal' },
+    { pattern: /\b(?:la verdad|o sea|por cierto|a ver|ojo|fíjate|bueno|en fin|vamos|tal cual|de hecho|digamos|sinceramente|la verdad es que|en mi opinión)\b/i, weight: 12, label: 'Locuciones coloquiales y oralidad auténtica' },
+    { pattern: /—|--|¡|!|\?|¿|\.{3}/, weight: 8, label: 'Puntuación expresiva y pausas enfáticas' }
+  ];
+
+  /**
+   * Genera un hash determinista a partir del texto para micro-variación orgánica consistente
+   */
+  private static deterministicHash(str: string): number {
+    let hash = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+      hash ^= str.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return Math.abs(hash);
+  }
 
   /**
    * Detecta si el texto contiene afirmaciones de auto-identificación o metadatos de IA
@@ -109,6 +139,40 @@ export class LinguisticEngine {
   }
 
   /**
+   * Calcula el ratio de Hapax Legomena (palabras que aparecen exactamente una sola vez)
+   */
+  public static calculateHapaxRatio(words: string[]): number {
+    if (words.length === 0) return 1.0;
+    const freq: Record<string, number> = {};
+    for (const w of words) {
+      freq[w] = (freq[w] || 0) + 1;
+    }
+    const uniqueWords = Object.keys(freq);
+    const hapaxCount = uniqueWords.filter((w) => freq[w] === 1).length;
+    return hapaxCount / Math.max(uniqueWords.length, 1);
+  }
+
+  /**
+   * Calcula la entropía de Shannon a nivel de caracteres
+   */
+  public static calculateShannonEntropy(text: string): number {
+    const clean = text.replace(/\s+/g, '').toLowerCase();
+    if (clean.length === 0) return 0;
+    const freqs: Record<string, number> = {};
+    for (let i = 0; i < clean.length; i++) {
+      const c = clean[i];
+      freqs[c] = (freqs[c] || 0) + 1;
+    }
+    let entropy = 0;
+    const total = clean.length;
+    for (const c of Object.keys(freqs)) {
+      const p = freqs[c] / total;
+      entropy -= p * Math.log2(p);
+    }
+    return entropy;
+  }
+
+  /**
    * Calcula la 'burstiness' (variabilidad en la longitud de oraciones).
    * Los textos de IA suelen tener oraciones de longitud muy uniforme (baja burstiness),
    * mientras que los humanos alternan oraciones muy cortas con oraciones complejas.
@@ -120,11 +184,10 @@ export class LinguisticEngine {
     burstinessScore: number; // 0 (muy uniforme) a 1 (alta variación)
   } {
     if (sentences.length <= 1) {
-      return { meanLength: sentences[0]?.split(/\s+/).length || 0, variance: 0, stdDev: 0, burstinessScore: 0.5 };
+      const count = sentences[0]?.split(/\s+/).filter(Boolean).length || 0;
+      return { meanLength: count, variance: 0, stdDev: 0, burstinessScore: 0.5 };
     }
 
-    // Filtrar oraciones de solo 1 o 2 palabras (como "Hola.", "Sí.") para evitar que
-    // un saludo aislado distorsione artificialmente la desviación típica de un texto
     const substantive = sentences.filter((s) => s.split(/\s+/).filter(Boolean).length > 2);
     const targetSentences = substantive.length >= 2 ? substantive : sentences;
 
@@ -136,7 +199,7 @@ export class LinguisticEngine {
 
     // Coeficiente de variación (stdDev / mean) normalizado
     const cv = mean > 0 ? stdDev / mean : 0;
-    const burstinessScore = Math.min(Math.max(cv / 0.60, 0), 1);
+    const burstinessScore = Math.min(Math.max(cv / 0.55, 0), 1);
 
     return { meanLength: mean, variance, stdDev, burstinessScore };
   }
@@ -144,19 +207,27 @@ export class LinguisticEngine {
   /**
    * Analiza la densidad de frases cliché y patrones predecibles
    */
-  public static checkCliches(text: string): { count: number; found: string[]; density: number } {
+  public static checkCliches(text: string): { count: number; found: string[]; density: number; heavyCount: number } {
     const lower = text.toLowerCase();
     const found: string[] = [];
+    let heavyCount = 0;
 
-    for (const phrase of this.AI_CLICHE_PHRASES) {
+    for (const phrase of this.AI_CLICHE_PHRASES_HEAVY) {
       if (lower.includes(phrase)) {
+        found.push(phrase);
+        heavyCount++;
+      }
+    }
+
+    for (const phrase of this.AI_CLICHE_PHRASES_MODERATE) {
+      if (lower.includes(phrase) && !found.includes(phrase)) {
         found.push(phrase);
       }
     }
 
     const wordCount = this.tokenizeWords(text).length;
-    const density = wordCount > 0 ? (found.length * 35) / wordCount : 0;
-    return { count: found.length, found, density: Math.min(density, 1) };
+    const density = wordCount > 0 ? (found.length * 30) / wordCount : 0;
+    return { count: found.length, found, density: Math.min(density, 1), heavyCount };
   }
 
   /**
@@ -172,6 +243,24 @@ export class LinguisticEngine {
     const uniqueStarters = new Set(starters);
     const repetitionRatio = 1 - uniqueStarters.size / starters.length;
     return Math.max(0, Math.min(repetitionRatio, 1));
+  }
+
+  /**
+   * Evalúa presencia de voz y autenticidad humana (primera persona, subjetividad, coloquialismos)
+   */
+  public static evaluateHumanVoice(text: string): { humanScoreBonus: number; detectedMarkers: string[] } {
+    let scoreBonus = 0;
+    const detectedMarkers: string[] = [];
+
+    for (const item of this.HUMAN_VOICE_PATTERNS) {
+      const matches = text.match(new RegExp(item.pattern.source, 'gi'));
+      if (matches && matches.length > 0) {
+        scoreBonus += Math.min(matches.length * item.weight, item.weight * 2.5);
+        detectedMarkers.push(item.label);
+      }
+    }
+
+    return { humanScoreBonus: scoreBonus, detectedMarkers };
   }
 
   /**
@@ -196,87 +285,103 @@ export class LinguisticEngine {
     const sentences = this.splitSentences(paragraph);
     const words = this.tokenizeWords(paragraph);
 
-    if (words.length < 8) {
+    if (words.length < 7) {
       return {
         paragraphIndex: index,
         paragraphText: paragraph,
-        paragraphAiScore: 6,
-        indicators: ['Longitud insuficiente para inferencia estadística'],
-        explanation: 'El párrafo contiene muy pocas palabras para inferir características estilométricas significativas.',
+        paragraphAiScore: 5,
+        indicators: ['Longitud breve'],
+        explanation: 'El párrafo contiene muy pocas palabras para inferir características estilométricas completas.',
       };
     }
 
     const { burstinessScore, meanLength, stdDev } = this.calculateBurstiness(sentences);
     const ttr = this.calculateTTR(words);
-    const { count: clicheCount, found, density } = this.checkCliches(paragraph);
+    const hapaxRatio = this.calculateHapaxRatio(words);
+    const entropy = this.calculateShannonEntropy(paragraph);
+    const { count: clicheCount, found, density, heavyCount } = this.checkCliches(paragraph);
     const startUniformity = this.checkSentenceStartUniformity(sentences);
+    const { humanScoreBonus, detectedMarkers } = this.evaluateHumanVoice(paragraph);
+    const textHash = this.deterministicHash(paragraph);
 
     const indicators: string[] = [];
-    // Base de partida calibrada
-    let probabilityPoints = 20;
 
-    // 1. Clichés y conectores sintéticos predecibles (peso primordial en detección de IA)
-    if (clicheCount >= 4) {
-      probabilityPoints += 50;
+    // Base inicial balanceada
+    let probabilityPoints = 28;
+
+    // 1. Detección de giros y fórmulas de IA
+    if (heavyCount >= 2 || clicheCount >= 4) {
+      probabilityPoints += 48;
       indicators.push('Fuerte presencia de fórmulas de IA');
-      indicators.push('Transiciones estereotipadas');
-    } else if (clicheCount >= 2 || density > 0.15) {
-      probabilityPoints += 34;
+      indicators.push('Transiciones sintéticas estereotipadas');
+    } else if (heavyCount === 1 || clicheCount >= 2 || density > 0.12) {
+      probabilityPoints += 30;
       indicators.push('Conectores sintéticos detectados');
-      indicators.push('Transiciones predecibles');
     } else if (clicheCount === 1) {
-      probabilityPoints += 18;
+      probabilityPoints += 14;
       indicators.push('Conector formal reiterado');
     } else {
-      // Ausencia total de fórmulas de IA: fuerte indicio de redacción orgánica
-      probabilityPoints -= 16;
+      // Ausencia total de fórmulas de IA
+      probabilityPoints -= 12;
     }
 
-    // 2. Uniformidad de longitud de oraciones (baja burstiness / simetría métrica)
+    // 2. Inmunidad o atenuación por voz humana genuina (primera persona, afecto, oralidad)
+    if (humanScoreBonus > 0) {
+      probabilityPoints -= Math.min(humanScoreBonus, 42);
+      for (const m of detectedMarkers) {
+        indicators.push(m);
+      }
+    }
+
+    // 3. Cadencia y burstiness (longitud y variabilidad de oraciones)
     if (sentences.length >= 2) {
-      if (burstinessScore < 0.38) {
-        probabilityPoints += 24;
-        indicators.push('Cadencia uniforme');
-      } else if (burstinessScore > 0.58) {
-        probabilityPoints -= 18;
-      }
-    }
-
-    // 3. Ventana típica de regularidad de IA (~15 a 28 palabras con poca desviación típica)
-    if (sentences.length >= 3) {
-      if (meanLength >= 14 && meanLength <= 28 && stdDev < 4.8) {
+      if (burstinessScore < 0.28) {
+        // Altamente uniforme (típico de IA)
         probabilityPoints += 20;
-        indicators.push('Simetría estructural sintética');
-      } else if (stdDev > 6.5) {
+        indicators.push('Cadencia métrica uniforme');
+      } else if (burstinessScore > 0.55) {
+        // Variación rítmica orgánica (típico humano)
         probabilityPoints -= 16;
+        indicators.push('Alternancia rítmica natural');
       }
     }
 
-    // 4. Variedad léxica (Type-Token Ratio)
-    if (words.length > 20) {
-      if (ttr < 0.48) {
+    // 4. Ventana de simetría de IA (~16 a 28 palabras por oración con baja desviación)
+    if (sentences.length >= 2) {
+      if (meanLength >= 15 && meanLength <= 28 && stdDev < 4.0) {
         probabilityPoints += 16;
+        indicators.push('Simetría estructural sintética');
+      } else if (stdDev > 7.0) {
+        probabilityPoints -= 14;
+      }
+    }
+
+    // 5. Variedad léxica (Type-Token Ratio) y Hapax Legomena
+    if (words.length > 25) {
+      if (ttr < 0.45 && hapaxRatio < 0.55) {
+        probabilityPoints += 14;
         indicators.push('Baja variación léxica');
-      } else if (ttr > 0.68 && clicheCount === 0) {
-        probabilityPoints -= 12;
+      } else if (ttr > 0.70 && hapaxRatio > 0.75 && clicheCount === 0) {
+        probabilityPoints -= 14;
+        indicators.push('Riqueza léxica orgánica');
       }
     }
 
-    // 5. Inicios de oración repetitivos
+    // 6. Repetición de inicios sintácticos
     if (startUniformity > 0.35) {
-      probabilityPoints += 16;
+      probabilityPoints += 14;
       indicators.push('Patrones sintácticos repetitivos');
-    } else if (startUniformity === 0 && sentences.length >= 3 && clicheCount === 0) {
-      probabilityPoints -= 10;
     }
 
-    // Indicador positivo si el texto es limpio de IA
-    if (indicators.length === 0) {
-      if (probabilityPoints > 40) {
-        indicators.push('Lenguaje formal estándar');
-      } else {
-        indicators.push('Variación estilística natural');
-      }
+    // 7. Micro-variación determinista para reflejar la unicidad de cada texto (±2%)
+    const jitter = (textHash % 5) - 2;
+    probabilityPoints += jitter;
+
+    // Indicadores positivos de naturalidad si el puntaje es bajo
+    if (probabilityPoints < 25 && indicators.length === 0) {
+      indicators.push('Cadencia natural y autoría humana');
+    } else if (probabilityPoints >= 65 && indicators.length === 0) {
+      indicators.push('Estructura formal altamente predecible');
     }
 
     // Clampear la puntuación a un rango realista entre 4% y 98%
@@ -284,9 +389,9 @@ export class LinguisticEngine {
 
     let explanation = '';
     if (finalScore >= 70) {
-      explanation = `Presenta una alta concentración de giros de IA (${clicheCount} detectados) y simetría cadencial (desviación típica de ${stdDev.toFixed(1)} palabras) típica de modelos generativos.`;
+      explanation = `Presenta una alta concentración de giros de modelos generativos (${clicheCount} detectados), uniformidad en la longitud de oraciones (${meanLength.toFixed(0)} palabras promedio) y cadencia sintética.`;
     } else if (finalScore >= 35) {
-      explanation = `Muestra características híbridas: cierta uniformidad estructural combinada con modulaciones de ritmo de redacción humana.`;
+      explanation = `Muestra características híbridas: cierta uniformidad estructural combinada con modulaciones de ritmo de redacción natural.`;
     } else {
       explanation = `Estructura orgánica con alternancia rítmica marcada, ausencia de muletillas de IA y rica variedad léxica propia de la redacción humana.`;
     }
@@ -295,7 +400,7 @@ export class LinguisticEngine {
       paragraphIndex: index,
       paragraphText: paragraph,
       paragraphAiScore: finalScore,
-      indicators: Array.from(new Set(indicators)),
+      indicators: Array.from(new Set(indicators)).slice(0, 5),
       explanation,
     };
   }
@@ -327,7 +432,11 @@ export class LinguisticEngine {
       weightedScore += p.paragraphAiScore * weight;
     }
 
-    const overallAiScore = Math.max(4, Math.min(Math.round(weightedScore), 99));
+    // Micro-ajuste determinista global para evitar agrupamientos artificiales en números fijos
+    const docHash = this.deterministicHash(text);
+    const globalJitter = (docHash % 3) - 1;
+
+    const overallAiScore = Math.max(4, Math.min(Math.round(weightedScore + globalJitter), 99));
 
     // Recopilar todos los indicadores globales observados
     const indicatorFrequency: Record<string, number> = {};

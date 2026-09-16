@@ -5,8 +5,8 @@
  */
 import http from 'node:http';
 
-const admin = { id: 'u-admin', name: 'Administradora', last_name: 'Sistema', email: 'admin@veritas.ai', role: 'ADMIN', is_active: true, is_premium: true, premium_since: '2026-01-10T10:00:00Z', daily_analysis_count: 0, total_analyses: 9, available_today: 'Ilimitados', created_at: '2025-11-02T09:00:00Z' };
-const demo = { id: 'u-demo', name: 'Carlos', last_name: 'Mendoza', email: 'usuario@veritas.ai', role: 'USER', is_active: true, is_premium: false, premium_since: null, daily_analysis_count: 2, total_analyses: 6, available_today: 3, created_at: '2026-03-14T09:00:00Z' };
+const admin = { id: 'u-admin', name: 'Administradora', last_name: 'Sistema', email: 'admin@plagelio.com', role: 'ADMIN', is_active: true, is_premium: true, premium_since: '2026-01-10T10:00:00Z', daily_analysis_count: 0, total_analyses: 9, available_today: 'Ilimitados', created_at: '2025-11-02T09:00:00Z' };
+const demo = { id: 'u-demo', name: 'Carlos', last_name: 'Mendoza', email: 'usuario@plagelio.com', role: 'USER', is_active: true, is_premium: false, premium_since: null, daily_analysis_count: 2, total_analyses: 6, available_today: 3, created_at: '2026-03-14T09:00:00Z' };
 let current = demo;
 
 const history = [
@@ -38,8 +38,8 @@ const analysis = {
 };
 
 const users = [
-  { id: 'u-admin', name: 'Administradora', last_name: 'Sistema', fullName: 'Administradora Sistema', email: 'admin@veritas.ai', role: 'ADMIN', is_active: true, is_premium: true, premium_since: '2026-01-10', totalAnalyses: 9, dailyAnalysisCount: 0, lastAccess: '2026-09-15', createdAt: '2025-11-02' },
-  { id: 'u-demo', name: 'Carlos', last_name: 'Mendoza', fullName: 'Carlos Mendoza', email: 'usuario@veritas.ai', role: 'USER', is_active: true, is_premium: false, premium_since: null, totalAnalyses: 6, dailyAnalysisCount: 2, lastAccess: '2026-09-14', createdAt: '2026-03-14' },
+  { id: 'u-admin', name: 'Administradora', last_name: 'Sistema', fullName: 'Administradora Sistema', email: 'admin@plagelio.com', role: 'ADMIN', is_active: true, is_premium: true, premium_since: '2026-01-10', totalAnalyses: 9, dailyAnalysisCount: 0, lastAccess: '2026-09-15', createdAt: '2025-11-02' },
+  { id: 'u-demo', name: 'Carlos', last_name: 'Mendoza', fullName: 'Carlos Mendoza', email: 'usuario@plagelio.com', role: 'USER', is_active: true, is_premium: false, premium_since: null, totalAnalyses: 6, dailyAnalysisCount: 2, lastAccess: '2026-09-14', createdAt: '2026-03-14' },
   { id: 'u-3', name: 'Lucía', last_name: 'Ferrer', fullName: 'Lucía Ferrer', email: 'lucia@universidad.edu', role: 'USER', is_active: true, is_premium: true, premium_since: '2026-06-01', totalAnalyses: 31, dailyAnalysisCount: 4, lastAccess: '2026-09-15', createdAt: '2026-04-22' },
   { id: 'u-4', name: 'Tomás', last_name: 'Ibáñez', fullName: 'Tomás Ibáñez', email: 'tomas@correo.com', role: 'USER', is_active: false, is_premium: false, premium_since: null, totalAnalyses: 2, dailyAnalysisCount: 0, lastAccess: '2026-07-01', createdAt: '2026-06-30' },
 ];

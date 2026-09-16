@@ -1,6 +1,6 @@
 # Canvas de diseño — rediseño del frontend
 
-Propuesta visual del nuevo frontend de Veritas AI. Dirección: dark premium
+Propuesta visual del nuevo frontend de Plagelio. Dirección: dark premium
 cinematográfico. Sin emojis; toda la iconografía es SVG de trazo sobre rejilla
 de 24px.
 
@@ -14,7 +14,7 @@ de 24px.
 | `LandingMobile.dc.html` | Landing a 390px, verificación responsive |
 | `canvas.json`           | Posición de cada artboard y notas        |
 
-El archivo ensamblado (`rediseno-veritas-ai.html`, ~2.5 MB) no se versiona:
+El archivo ensamblado (`rediseno-plagelio.html`, ~2.5 MB) no se versiona:
 se regenera a partir de los anteriores.
 
 ## Sistema de diseño
@@ -113,8 +113,8 @@ Requiere la skill `design` (el script y la plantilla viven en su directorio base
 cd design
 node "<base>/seed-canvas.mjs" \
   --template "<base>/payload.template.html" \
-  --out rediseno-veritas-ai.html \
-  --title "Rediseño Veritas AI" \
+  --out rediseno-plagelio.html \
+  --title "Rediseño Plagelio" \
   --artboard Main.dc.html --artboard Login.dc.html \
   --artboard Register.dc.html --artboard LandingMobile.dc.html \
   --canvas canvas.json

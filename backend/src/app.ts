@@ -38,7 +38,7 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 app.get('/api/health', (_req: Request, res: Response) => {
   res.status(200).json({
     status: 'online',
-    platform: 'Veritas AI',
+    platform: 'Plagelio',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
   });

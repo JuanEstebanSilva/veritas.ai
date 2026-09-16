@@ -5,7 +5,7 @@ import { AdminStats, AdminUserListItem } from '../types';
 import { CountUp } from '../motion';
 import { Dialog, Skeleton, SkeletonRows, useConfirm, useToast } from '../components/ui';
 import { sound } from '../utils/soundEffects';
-import { Crown, UserPlus, Edit2, Trash2, Power, Search, AlertCircle, X, RefreshCw, Loader2 } from 'lucide-react';
+import { Crown, UserPlus, Pencil, Trash2, Power, Search, AlertCircle, X, RefreshCw, Loader2 } from 'lucide-react';
 
 const emptyForm = { name: '', last_name: '', email: '', password: '', is_premium: false, is_active: true };
 
@@ -188,13 +188,64 @@ export const AdminDashboard: React.FC = () => {
                       </td>
                       <td className="py-4 pr-3"><span className="num text-[13px] text-hi">{u.totalAnalyses}</span> <span className="font-mono text-[11px] text-low">· {u.dailyAnalysisCount}/5 hoy</span></td>
                       <td className="py-4 pr-3 font-mono text-[11.5px] text-low whitespace-nowrap">{new Date(u.createdAt).toLocaleDateString('es-ES')}</td>
-                      <td className="py-4 pr-1 text-right whitespace-nowrap">
-                        <span className="inline-flex items-center gap-0.5 opacity-70 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                          <button type="button" disabled={isSelf || busy} onClick={() => handleToggleActive(u)} aria-label={u.is_active ? `Desactivar la cuenta de ${u.fullName}` : `Activar la cuenta de ${u.fullName}`} title={u.is_active ? 'Desactivar cuenta' : 'Activar cuenta'} className={`btn-icon disabled:opacity-30 ${u.is_active ? 'hover:!text-mixed hover:!bg-mixed/10' : '!text-human hover:!bg-human/10'}`}><Power className="w-4 h-4" strokeWidth={1.7} /></button>
-                          <button type="button" disabled={busy} onClick={() => handleTogglePremium(u)} aria-label={u.is_premium ? `Revocar la licencia de ${u.fullName}` : `Otorgar licencia a ${u.fullName}`} title={u.is_premium ? 'Revocar licencia' : 'Otorgar licencia'} className={`btn-icon ${u.is_premium ? '!text-gold hover:!bg-gold/10' : 'hover:!text-gold'}`}><Crown className="w-4 h-4" strokeWidth={1.7} /></button>
-                          <button type="button" disabled={busy} onClick={() => openEditModal(u)} aria-label={`Editar a ${u.fullName}`} title="Editar" className="btn-icon hover:!text-azure hover:!bg-azure/10"><Edit2 className="w-4 h-4" strokeWidth={1.7} /></button>
-                          <button type="button" disabled={isSelf || u.role === 'ADMIN' || busy} onClick={() => handleDeleteUser(u)} aria-label={`Eliminar a ${u.fullName}`} title="Eliminar" className="btn-icon hover:!text-ai hover:!bg-ai/10 disabled:opacity-20"><Trash2 className="w-4 h-4" strokeWidth={1.7} /></button>
-                        </span>
+                      <td className="py-3.5 pr-1 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center gap-1.5 p-1 rounded-xl bg-hair/40 border hair shadow-xs backdrop-blur-xs">
+                          {/* 1. Estado de cuenta (Activar / Desactivar) */}
+                          <button
+                            type="button"
+                            disabled={isSelf || busy}
+                            onClick={() => handleToggleActive(u)}
+                            aria-label={u.is_active ? `Desactivar la cuenta de ${u.fullName}` : `Activar la cuenta de ${u.fullName}`}
+                            title={u.is_active ? 'Cuenta activa (clic para desactivar)' : 'Cuenta inactiva (clic para activar)'}
+                            className={`group/btn relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${
+                              u.is_active
+                                ? 'bg-human/15 text-human border border-human/30 hover:bg-human/25 hover:border-human/50 hover:shadow-xs active:scale-95'
+                                : 'bg-ai/12 text-ai border border-ai/30 hover:bg-ai/20 hover:border-ai/50 active:scale-95'
+                            }`}
+                          >
+                            <Power className={`w-3.5 h-3.5 transition-transform duration-200 group-hover/btn:scale-110 ${u.is_active ? 'stroke-[2.2]' : 'stroke-[1.8]'}`} />
+                          </button>
+
+                          {/* 2. Licencia Premium Vitalicia */}
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => handleTogglePremium(u)}
+                            aria-label={u.is_premium ? `Revocar la licencia de ${u.fullName}` : `Otorgar licencia a ${u.fullName}`}
+                            title={u.is_premium ? 'Licencia vitalicia activa (clic para revocar)' : 'Cuenta gratuita (clic para otorgar vitalicia)'}
+                            className={`group/btn relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${
+                              u.is_premium
+                                ? 'bg-gold/18 text-gold border border-gold/40 hover:bg-gold/30 hover:border-gold/60 hover:shadow-xs active:scale-95'
+                                : 'bg-hair/50 text-low border border-hair hover:text-gold hover:bg-gold/10 hover:border-gold/30 active:scale-95'
+                            }`}
+                          >
+                            <Crown className={`w-3.5 h-3.5 transition-transform duration-200 group-hover/btn:scale-110 ${u.is_premium ? 'fill-gold/25 stroke-[2]' : 'stroke-[1.8]'}`} />
+                          </button>
+
+                          {/* 3. Editar usuario */}
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => openEditModal(u)}
+                            aria-label={`Editar a ${u.fullName}`}
+                            title="Editar usuario"
+                            className="group/btn relative w-8 h-8 rounded-lg flex items-center justify-center bg-hair/50 text-mid border border-hair hover:text-azure hover:bg-azure/10 hover:border-azure/30 hover:shadow-xs transition-all duration-200 cursor-pointer active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            <Pencil className="w-3.5 h-3.5 stroke-[2] transition-transform duration-200 group-hover/btn:scale-110" />
+                          </button>
+
+                          {/* 4. Eliminar usuario */}
+                          <button
+                            type="button"
+                            disabled={isSelf || u.role === 'ADMIN' || busy}
+                            onClick={() => handleDeleteUser(u)}
+                            aria-label={`Eliminar a ${u.fullName}`}
+                            title={isSelf ? 'No puedes eliminar tu propia cuenta' : u.role === 'ADMIN' ? 'No se puede eliminar a un administrador' : 'Eliminar usuario'}
+                            className="group/btn relative w-8 h-8 rounded-lg flex items-center justify-center bg-hair/50 text-low border border-hair hover:text-ai hover:bg-ai/10 hover:border-ai/30 hover:shadow-xs transition-all duration-200 cursor-pointer active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 stroke-[2] transition-transform duration-200 group-hover/btn:scale-110" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

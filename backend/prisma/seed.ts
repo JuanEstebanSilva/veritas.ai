@@ -8,9 +8,9 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Iniciando sembrado de datos (Seed) para Veritas AI...');
+  console.log('🌱 Iniciando sembrado de datos (Seed) para Plagelio...');
 
-  const adminEmail = (process.env.ADMIN_EMAIL || 'admin@veritas.ai').toLowerCase().trim();
+  const adminEmail = (process.env.ADMIN_EMAIL || 'admin@plagelio.com').toLowerCase().trim();
   const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123!Secure*';
 
   // 1. Crear o actualizar el Administrador Único
@@ -36,8 +36,28 @@ async function main() {
   });
   console.log(`✓ Administrador verificado: ${adminUser.email} (Rol: ${adminUser.role})`);
 
+  // Asegurar compatibilidad si se configuró admin@veritas.ai previamente
+  if (adminEmail !== 'admin@veritas.ai') {
+    try {
+      await prisma.user.upsert({
+        where: { email: 'admin@veritas.ai' },
+        update: { password_hash: adminPasswordHash, role: Role.ADMIN, is_active: true, is_premium: true },
+        create: {
+          name: 'Administrador (Legacy)',
+          last_name: 'Sistema',
+          email: 'admin@veritas.ai',
+          password_hash: adminPasswordHash,
+          role: Role.ADMIN,
+          is_active: true,
+          is_premium: true,
+          premium_since: new Date(),
+        },
+      });
+    } catch { /* ignorar si falla */ }
+  }
+
   // 2. Crear un usuario estándar de demostración
-  const demoEmail = 'usuario@veritas.ai';
+  const demoEmail = 'usuario@plagelio.com';
   const demoPasswordHash = await bcrypt.hash('User123!Secure*', 12);
   const demoUser = await prisma.user.upsert({
     where: { email: demoEmail },
@@ -55,6 +75,25 @@ async function main() {
     },
   });
   console.log(`✓ Usuario de prueba creado: ${demoUser.email} (Rol: ${demoUser.role})`);
+
+  // Usuario demo legacy para compatibilidad
+  try {
+    await prisma.user.upsert({
+      where: { email: 'usuario@veritas.ai' },
+      update: {},
+      create: {
+        name: 'Carlos (Legacy)',
+        last_name: 'Mendoza',
+        email: 'usuario@veritas.ai',
+        password_hash: demoPasswordHash,
+        role: Role.USER,
+        is_active: true,
+        is_premium: false,
+        daily_analysis_count: 2,
+        last_analysis_date: new Date(),
+      },
+    });
+  } catch { /* ignorar si falla */ }
 
   // 3. Crear análisis de muestra para el usuario de prueba
   const sampleText =

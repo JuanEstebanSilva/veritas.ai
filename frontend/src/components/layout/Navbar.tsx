@@ -2,7 +2,7 @@ import React, { startTransition, useCallback, useEffect, useRef, useState } from
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { VeritasLogo } from '../brand/VeritasLogo';
+import { PlagelioLogo } from '../brand';
 import { sound } from '../../utils/soundEffects';
 import { Sun, Moon, LogOut, Volume2, VolumeX, Menu, X } from 'lucide-react';
 
@@ -101,8 +101,8 @@ export const Navbar: React.FC = () => {
       }`}
     >
       <div className="wrap h-full flex items-center justify-between gap-6">
-        <Link to="/" onClick={click} className="shrink-0 rounded-md" aria-label="Inicio de Veritas AI">
-          <VeritasLogo variant="compact" size="md" />
+        <Link to="/" onClick={click} className="shrink-0 rounded-md" aria-label="Inicio de Plagelio">
+          <PlagelioLogo variant="compact" size="md" />
         </Link>
 
         {links && <nav aria-label="Principal" className="hidden md:flex items-center gap-8">{links}</nav>}

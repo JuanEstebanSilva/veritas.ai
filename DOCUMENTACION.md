@@ -1,4 +1,4 @@
-# Documentación Técnica Integral — Veritas AI
+# Documentación Técnica Integral — Plagelio
 
 Plataforma Web de Detección de Inteligencia Artificial, Análisis de Similitud Académica y Asistente de Reescritura Ética de Documentos.
 
@@ -24,8 +24,8 @@ Plataforma Web de Detección de Inteligencia Artificial, Análisis de Similitud 
 
 ## 1. Información General del Proyecto
 
-### 1.1 ¿Qué es Veritas AI?
-**Veritas AI** es una solución de software web de extremo a extremo diseñada para evaluar la autenticidad, originalidad y calidad estilística de textos y documentos digitales en formato **Microsoft Word (.DOCX)** y texto plano. 
+### 1.1 ¿Qué es Plagelio?
+**Plagelio** es una solución de software web de extremo a extremo diseñada para evaluar la autenticidad, originalidad y calidad estilística de textos y documentos digitales en formato **Microsoft Word (.DOCX)** y texto plano. 
 
 El proyecto combina las capacidades clave de tres referentes de la industria educativa y editorial:
 - **Turnitin**: Detección de similitud contra corpus académicos y verificación de citas bibliográficas legítimas versus presunto plagio.
@@ -44,7 +44,7 @@ El proyecto combina las capacidades clave de tres referentes de la industria edu
 
 El proyecto está diseñado bajo el paradigma **Fullstack TypeScript**, lo que garantiza seguridad de tipos estricta desde la base de datos hasta la interfaz visual:
 
-| Lenguaje | Ámbito de Aplicación | Versión | Propósito en Veritas AI |
+| Lenguaje | Ámbito de Aplicación | Versión | Propósito en Plagelio |
 | :--- | :--- | :--- | :--- |
 | **TypeScript** | **Backend y Frontend** (100% del código de negocio) | `^5.8.2` | Tipado estático completo, interfaces para DTOs, validación de contratos entre cliente y servidor, modelos de datos Prisma, estados reactivos y prevención de errores en tiempo de compilación. |
 | **JavaScript (ES6+)** | **Runtime y Bundling** | Node.js 18+ | Entorno de ejecución en servidor (V8) y código transpilado de alto rendimiento generado por Vite para el navegador. |
@@ -111,7 +111,7 @@ El proyecto está diseñado bajo el paradigma **Fullstack TypeScript**, lo que g
 
 ## 4. Ecosistema de APIs
 
-En Veritas AI conviven dos niveles de APIs:
+En Plagelio conviven dos niveles de APIs:
 1. **APIs Externas y Servicios de Terceros** (servicios integrados en el backend para pagos, IA y corpus de referencia).
 2. **API REST Interna Propia** (la interfaz de servicios web que el backend expone para ser consumida por el frontend).
 
@@ -124,7 +124,7 @@ En Veritas AI conviven dos niveles de APIs:
 | **API Externa de Pagos** | **Stripe API** | 1 | REST / Webhooks HTTPS | Procesamiento de Checkout Sessions y eventos asíncronos para compra de membresía Premium. |
 | **API Externa de IA** | **OpenAI / GenAI Provider** | 1 | REST HTTPS (JSON) | Integración modular plug-and-play con degradación resiliente (fallback) al motor lingüístico local. |
 | **Corpus de Referencia** | **Fuentes Abiertas Académicas** | 5 | Repositorios Indexados | Cotejo de similitud contra Wikipedia, Dialnet, SciELO, UNESCO y BOE. |
-| **API REST Propia** | **Veritas AI Backend API** | **27 Endpoints** | RESTful JSON / Multipart | Control de salud, autenticación, análisis, redacción, usuarios y pagos. |
+| **API REST Propia** | **Plagelio Backend API** | **27 Endpoints** | RESTful JSON / Multipart | Control de salud, autenticación, análisis, redacción, usuarios y pagos. |
 
 ---
 
@@ -160,7 +160,7 @@ En Veritas AI conviven dos niveles de APIs:
 
 ### 4.3 API REST Propia del Sistema (27 Endpoints Detallados)
 
-El backend de Veritas AI expone una API REST organizada en **6 módulos principales**:
+El backend de Plagelio expone una API REST organizada en **6 módulos principales**:
 
 ```
 Base URL: http://localhost:5000/api
@@ -225,7 +225,7 @@ Base URL: http://localhost:5000/api
 ## 5. Estructura del Proyecto y Directorios
 
 ```
-veritas-ai/
+plagelio/
 │
 ├── backend/                                 # SERVIDOR Y API REST
 │   ├── prisma/
@@ -289,7 +289,8 @@ veritas-ai/
 │   │   │   │   ├── DiffViewer.tsx           # Visor comparativo de dos columnas (Original vs. Mejorado)
 │   │   │   │   └── ResultScoreCard.tsx      # Tarjetas de puntajes, advertencias y desglose por párrafos
 │   │   │   ├── brand/
-│   │   │   │   └── Logo.tsx                 # Imagotipo vectorial de Veritas AI
+│   │   │   │   ├── PlagelioLogo.tsx         # Imagotipo vectorial de Plagelio
+│   │   │   │   └── VeritasLogo.tsx          # Wrapper de retrocompatibilidad
 │   │   │   ├── checkout/
 │   │   │   │   └── ModalCheckout.tsx        # Modal interactivo de pasarela Sandbox / Stripe
 │   │   │   ├── layout/
@@ -398,7 +399,7 @@ graph TD
 
 ## 7. Motor Lingüístico y Algoritmos de Detección
 
-El motor de Veritas AI no requiere necesariamente llamadas a servicios externos costosos para inferir características estilométricas. Implementa un motor analítico avanzado basado en procesamiento de lenguaje natural (NLP) en `linguisticEngine.ts`:
+El motor de Plagelio no requiere necesariamente llamadas a servicios externos costosos para inferir características estilométricas. Implementa un motor analítico avanzado basado en procesamiento de lenguaje natural (NLP) en `linguisticEngine.ts`:
 
 ### 7.1 Detección Categórica de Auto-Identificación y Metadatos
 El motor escanea el texto en busca de patrones semánticos inequívocos de generación sintética:
@@ -532,7 +533,7 @@ erDiagram
 - Los usuarios con `is_premium = true` omiten esta comprobación y gozan de análisis ilimitados.
 
 ### 9.3 Salvaguardas Administrativas (Inmutabilidad del Administrador)
-- En `UserController.deleteUser` y `UserController.toggleActive`, el sistema comprueba activamente si el objetivo es la cuenta del Administrador maestro (`admin@veritas.ai`).
+- En `UserController.deleteUser` y `UserController.toggleActive`, el sistema comprueba activamente si el objetivo es la cuenta del Administrador maestro (`admin@plagelio.com`).
 - Si se intenta desactivar o eliminar al Administrador, la operación es abortada con **`HTTP 400 Bad Request`**, garantizando que el sistema nunca quede huérfano de gestión.
 
 ---
@@ -541,7 +542,7 @@ erDiagram
 
 ### 10.1 Prerrequisitos
 - **Node.js**: Versión 18 o superior.
-- **PostgreSQL**: Versión 14 o superior corriendo en el puerto local predeterminado `5432` con una base de datos creada llamada `veritas_ai`.
+- **PostgreSQL**: Versión 14 o superior corriendo en el puerto local predeterminado `5432` con una base de datos creada llamada `plagelio`.
 
 ### 10.2 Inicialización del Backend
 ```powershell
@@ -579,8 +580,8 @@ npm run dev
 ### 10.4 Credenciales Predeterminadas (Sembradas en Base de Datos)
 | Rol | Correo Electrónico | Contraseña | Privilegios y Capacidades |
 | :--- | :--- | :--- | :--- |
-| 👑 **ADMIN** | `admin@veritas.ai` | `Admin123!Secure*` | Acceso al panel `/admin`, visualización de métricas globales del sistema, auditoría de pagos y gestión completa (CRUD) de usuarios. |
-| 👤 **USER (Demo)** | `usuario@veritas.ai` | `User123!Secure*` | 5 análisis diarios gratuitos con contador en tiempo real, analizador de texto/DOCX y simulación de compra Premium. |
+| 👑 **ADMIN** | `admin@plagelio.com` | `Admin123!Secure*` | Acceso al panel `/admin`, visualización de métricas globales del sistema, auditoría de pagos y gestión completa (CRUD) de usuarios. |
+| 👤 **USER (Demo)** | `usuario@plagelio.com` | `User123!Secure*` | 5 análisis diarios gratuitos con contador en tiempo real, analizador de texto/DOCX y simulación de compra Premium. |
 
 ### 10.5 Ejecución de Pruebas Automatizadas (21 Tests)
 Para verificar la estabilidad y robustez de todos los componentes y casos de borde:

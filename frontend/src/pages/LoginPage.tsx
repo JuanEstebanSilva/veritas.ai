@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { sound } from '../utils/soundEffects';
-import { VeritasLogo } from '../components/brand';
+import { PlagelioLogo } from '../components/brand';
 import { AuthShell } from '../components/auth/AuthShell';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Loader2, Crown, User as UserIcon } from 'lucide-react';
 
@@ -42,8 +42,8 @@ export const LoginPage: React.FC = () => {
 
   const fillDemoUser = (type: 'admin' | 'user') => {
     sound.playClick();
-    if (type === 'admin') { setEmail('admin@veritas.ai'); setPassword('Admin123!Secure*'); }
-    else { setEmail('usuario@veritas.ai'); setPassword('User123!Secure*'); }
+    if (type === 'admin') { setEmail('admin@plagelio.com'); setPassword('Admin123!Secure*'); }
+    else { setEmail('usuario@plagelio.com'); setPassword('User123!Secure*'); }
     setError(null);
   };
 
@@ -116,8 +116,8 @@ export const LoginPage: React.FC = () => {
 
       <div className="flex flex-col">
         {[
-          { key: 'admin' as const, Icon: Crown, tone: 'text-gold', title: 'Administrador', mail: 'admin@veritas.ai' },
-          { key: 'user' as const, Icon: UserIcon, tone: 'text-azure', title: 'Usuario de prueba', mail: 'usuario@veritas.ai' },
+          { key: 'admin' as const, Icon: Crown, tone: 'text-gold', title: 'Administrador', mail: 'admin@plagelio.com' },
+          { key: 'user' as const, Icon: UserIcon, tone: 'text-azure', title: 'Usuario de prueba', mail: 'usuario@plagelio.com' },
         ].map((d, i) => (
           <button key={d.key} type="button" onClick={() => fillDemoUser(d.key)}
             className={`group flex items-center justify-between gap-4 h-14 border-b hair text-left transition-colors duration-240 hover:bg-hair -mx-2 px-2 rounded-lg ${i === 0 ? 'border-t' : ''}`}>
@@ -134,7 +134,7 @@ export const LoginPage: React.FC = () => {
       </div>
 
       <p className="text-[11.5px] leading-[1.6] text-low text-center">Al continuar aceptas los términos y la política de privacidad.</p>
-      <div className="sm:hidden flex justify-center pt-2"><VeritasLogo variant="compact" size="sm" /></div>
+      <div className="sm:hidden flex justify-center pt-2"><PlagelioLogo variant="compact" size="sm" /></div>
     </AuthShell>
   );
 };

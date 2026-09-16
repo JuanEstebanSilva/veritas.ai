@@ -1,4 +1,4 @@
-# Veritas AI — Plataforma Integral de Detección de IA, Similitud y Mejora de Redacción
+# Plagelio — Plataforma Integral de Detección de IA, Similitud y Mejora de Redacción
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
@@ -11,9 +11,9 @@
 
 ---
 
-## 💡 ¿Qué es Veritas AI? (En Breve)
+## 💡 ¿Qué es Plagelio? (En Breve)
 
-**Veritas AI** es una solución web integral y funcional de extremo a extremo inspirada en herramientas líderes del sector educativo y editorial como **Turnitin**, **Grammarly** y **QuillBot**. 
+**Plagelio** es una solución web integral y funcional de extremo a extremo inspirada en herramientas líderes del sector educativo y editorial como **Turnitin**, **Grammarly** y **QuillBot**. 
 
 Evalúa la autenticidad estilística y académica de textos y documentos **.DOCX**, estimando la probabilidad de generación por inteligencia artificial mediante análisis estilométrico (perplejidad y burstiness), indexando coincidencias contra fuentes de acceso abierto distinguiendo citas legítimas de presunto plagio, y ofreciendo un asistente de reescritura ética que permite descargar el documento optimizado en formato nativo de Microsoft Word.
 
@@ -24,7 +24,7 @@ Evalúa la autenticidad estilística y académica de textos y documentos **.DOCX
 > [!IMPORTANT]
 > **Prerrequisitos del Sistema:**
 > - **Node.js**: Versión 18 o superior instalada.
-> - **PostgreSQL**: Versión 14 o superior en ejecución en el puerto local predeterminado `5432` con una base de datos llamada `veritas_ai` (o las credenciales configuradas en tu `.env`).
+> - **PostgreSQL**: Versión 14 o superior en ejecución en el puerto local predeterminado `5432` con una base de datos llamada `plagelio` (o las credenciales configuradas en tu `.env`).
 
 ---
 
@@ -91,8 +91,8 @@ El comando `npm run seed` inicializa de forma determinista las siguientes cuenta
 
 | Rol | Correo Electrónico | Contraseña | Privilegios y Funcionalidades |
 | :--- | :--- | :--- | :--- |
-| 👑 **ADMIN** | `admin@veritas.ai` | `Admin123!Secure*` | Panel administrativo exclusivo (`/admin`), métricas globales en tiempo real, auditoría de transacciones y gestión completa (CRUD) de usuarios del sistema. |
-| 👤 **USER (Demo)** | `usuario@veritas.ai` | `User123!Secure*` | 5 análisis diarios gratuitos con contador en tiempo real, analizador de texto y archivos DOCX, y simulación de pase Premium Vitalicio por US$2. |
+| 👑 **ADMIN** | `admin@plagelio.com` | `Admin123!Secure*` | Panel administrativo exclusivo (`/admin`), métricas globales en tiempo real, auditoría de transacciones y gestión completa (CRUD) de usuarios del sistema. |
+| 👤 **USER (Demo)** | `usuario@plagelio.com` | `User123!Secure*` | 5 análisis diarios gratuitos con contador en tiempo real, analizador de texto y archivos DOCX, y simulación de pase Premium Vitalicio por US$2. |
 
 > [!TIP]
 > En la página de **Inicio de Sesión** (`/login`) del Frontend, puedes hacer clic en los botones de acceso rápido o navegar a `/login?demo=admin` o `/login?demo=user` para que las credenciales se completen automáticamente.
@@ -102,7 +102,7 @@ El comando `npm run seed` inicializa de forma determinista las siguientes cuenta
 ## 📂 Estructura del Repositorio
 
 ```
-veritas-ai/
+plagelio/
 ├── backend/
 │   ├── prisma/
 │   │   ├── schema.prisma            # Modelos de datos: User, Analysis, AnalysisResult, AnalysisSource, Payment
@@ -201,7 +201,7 @@ PASS tests/payments.test.ts (5 tests)
 ## 📋 Guía de Escenarios para Probar las Funcionalidades
 
 ### 1. Probar el límite de 5 análisis diarios (Usuario Gratuito)
-1. Inicia sesión con el usuario demo: `usuario@veritas.ai` / `User123!Secure*`.
+1. Inicia sesión con el usuario demo: `usuario@plagelio.com` / `User123!Secure*`.
 2. Ingresa a **Analizar Contenido** (`/analyzer`).
 3. Realiza análisis sucesivos pegando fragmentos de texto.
 4. Observa cómo el contador en el Navbar y la pantalla avanza (ej. `1/5`, `2/5`, ..., `5/5`).
@@ -236,7 +236,7 @@ PASS tests/payments.test.ts (5 tests)
 4. Presiona **"Descargar .DOCX"**: el sistema generará y descargará automáticamente el archivo `documento_mejorado.docx` listo para ser abierto en Microsoft Word o LibreOffice.
 
 ### 6. Probar el Panel Administrativo (ADMIN)
-1. Cierra sesión e ingresa con las credenciales del Administrador: `admin@veritas.ai` / `Admin123!Secure*`.
+1. Cierra sesión e ingresa con las credenciales del Administrador: `admin@plagelio.com` / `Admin123!Secure*`.
 2. Dirígete a **Panel Admin** (`/admin`).
 3. Inspecciona las métricas globales del sistema (total de usuarios, análisis del día, suscripciones activas).
 4. En la tabla de gestión de usuarios puedes crear usuarios, editar información, activar/desactivar accesos y alternar el estado Premium de cualquier cuenta. El sistema cuenta con protección activa para evitar que el Administrador sea eliminado o desactivado.

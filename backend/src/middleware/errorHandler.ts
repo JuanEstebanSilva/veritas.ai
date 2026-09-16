@@ -7,7 +7,7 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ): void => {
-  console.error('[Error Veritas AI]:', err);
+  console.error('[Error Plagelio]:', err);
 
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {

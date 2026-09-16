@@ -12,7 +12,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Veritas AI — error no capturado:', error, errorInfo);
+    console.error('Plagelio — error no capturado:', error, errorInfo);
   }
 
   public render() {

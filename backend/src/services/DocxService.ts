@@ -55,7 +55,7 @@ export class DocxService {
     // Título Principal
     docChildren.push(
       new Paragraph({
-        text: options.title || 'Documento Mejorado - Veritas AI',
+        text: options.title || 'Documento Mejorado - Plagelio',
         heading: HeadingLevel.HEADING_1,
         alignment: AlignmentType.CENTER,
         spacing: { after: 200, before: 100 },
@@ -69,7 +69,7 @@ export class DocxService {
         spacing: { after: 300 },
         children: [
           new TextRun({
-            text: `Generado por Veritas AI Writing Assistant  |  ${new Date().toLocaleDateString('es-ES', {
+            text: `Generado por Plagelio Writing Assistant  |  ${new Date().toLocaleDateString('es-ES', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
@@ -151,7 +151,7 @@ export class DocxService {
                   alignment: AlignmentType.RIGHT,
                   children: [
                     new TextRun({
-                      text: 'Veritas AI - Documento Optimizado',
+                      text: 'Plagelio - Documento Optimizado',
                       size: 16,
                       color: '888888',
                     }),

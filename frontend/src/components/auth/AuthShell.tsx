@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { VeritasLogo } from '../brand/VeritasLogo';
+import { PlagelioLogo } from '../brand';
 import { sound } from '../../utils/soundEffects';
 
 interface AuthShellProps {
@@ -43,7 +43,7 @@ export const AuthShell: React.FC<AuthShellProps> = ({ tone, headline, lede, asid
         <div className="grain" aria-hidden="true" />
 
         <Link to="/" onClick={() => sound.playClick()} className="relative self-start animate-rise rounded-md" aria-label="Inicio">
-          <VeritasLogo variant="compact" size="md" />
+          <PlagelioLogo variant="compact" size="md" />
         </Link>
 
         <div className="relative grid grid-cols-[1fr_auto] items-end gap-10 max-w-[760px]">

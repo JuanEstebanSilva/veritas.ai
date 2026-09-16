@@ -20,8 +20,8 @@ mkdirSync(out, { recursive: true });
 const base = process.env.QA_BASE || 'http://localhost:5173';
 const api = process.env.QA_API || 'http://localhost:5000/api';
 const creds = {
-  user: ['usuario@veritas.ai', 'User123!Secure*'],
-  admin: ['admin@veritas.ai', 'Admin123!Secure*'],
+  user: ['usuario@plagelio.com', 'User123!Secure*'],
+  admin: ['admin@plagelio.com', 'Admin123!Secure*'],
 };
 const routes = [
   ['landing', '/', null], ['login', '/login', null], ['register', '/register', null],
@@ -37,7 +37,7 @@ async function loginByApi(page, who) {
   const r = await page.request.post(`${api}/auth/login`, { data: { email, password } });
   const j = await r.json();
   await page.goto(base + '/login', { waitUntil: 'domcontentloaded' });
-  await page.evaluate((t) => localStorage.setItem('veritas_token', t), j.token);
+  await page.evaluate((t) => localStorage.setItem('plagelio_token', t), j.token);
 }
 const collect = (page, logs) => {
   page.on('pageerror', (e) => logs.push('PAGEERROR ' + e.message));
@@ -47,7 +47,7 @@ const collect = (page, logs) => {
 for (const theme of ['dark', 'light']) {
   for (const [w, h, tag] of [[1440, 900, 'desktop'], [390, 844, 'mobile']]) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
-    await ctx.addInitScript((t) => { try { localStorage.setItem('veritas_theme', t); } catch { /* sin almacenamiento */ } }, theme);
+    await ctx.addInitScript((t) => { try { localStorage.setItem('plagelio_theme', t); } catch { /* sin almacenamiento */ } }, theme);
     for (const [name, path, auth] of routes) {
       const page = await ctx.newPage();
       const logs = [];

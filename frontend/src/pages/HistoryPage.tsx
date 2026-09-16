@@ -147,11 +147,28 @@ export const HistoryPage: React.FC = () => {
                         )}
                       </td>
                       <td className="py-4 pr-3 font-mono text-[11.5px] text-low whitespace-nowrap">{fmtDate(item.created_at || item.createdAt, true)}</td>
-                      <td className="py-4 pr-1 text-right whitespace-nowrap">
-                        <span className="inline-flex items-center gap-0.5 opacity-70 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                          <button type="button" onClick={(e) => { e.stopPropagation(); open(item.id); }} aria-label={`Ver informe de ${title}`} title="Ver informe" className="btn-icon hover:!text-azure hover:!bg-azure/10"><Eye className="w-4 h-4" strokeWidth={1.7} /></button>
-                          <button type="button" disabled={deletingId === item.id} onClick={(e) => { e.stopPropagation(); handleDelete(item.id, title); }} aria-label={`Eliminar ${title}`} title="Eliminar" className="btn-icon hover:!text-ai hover:!bg-ai/10 disabled:opacity-40"><Trash2 className="w-4 h-4" strokeWidth={1.7} /></button>
-                        </span>
+                      <td className="py-3.5 pr-1 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center gap-1.5 p-1 rounded-xl bg-hair/40 border hair shadow-xs backdrop-blur-xs">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); open(item.id); }}
+                            aria-label={`Ver informe de ${title}`}
+                            title="Ver informe"
+                            className="group/btn relative w-8 h-8 rounded-lg flex items-center justify-center bg-hair/50 text-mid border border-hair hover:text-azure hover:bg-azure/10 hover:border-azure/30 hover:shadow-xs transition-all duration-200 cursor-pointer active:scale-95"
+                          >
+                            <Eye className="w-3.5 h-3.5 stroke-[2] transition-transform duration-200 group-hover/btn:scale-110" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={deletingId === item.id}
+                            onClick={(e) => { e.stopPropagation(); handleDelete(item.id, title); }}
+                            aria-label={`Eliminar ${title}`}
+                            title="Eliminar informe"
+                            className="group/btn relative w-8 h-8 rounded-lg flex items-center justify-center bg-hair/50 text-low border border-hair hover:text-ai hover:bg-ai/10 hover:border-ai/30 hover:shadow-xs transition-all duration-200 cursor-pointer active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 stroke-[2] transition-transform duration-200 group-hover/btn:scale-110" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

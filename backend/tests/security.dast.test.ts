@@ -5,7 +5,7 @@ import { Role, AnalysisType } from '@prisma/client';
 import { createTestToken } from './helpers';
 import bcrypt from 'bcryptjs';
 
-describe('Suite DAST — Dynamic Application Security Testing (Veritas AI)', () => {
+describe('Suite DAST — Dynamic Application Security Testing (Plagelio)', () => {
   let user1Token: string;
   let user1Id: string;
   let user2Token: string;

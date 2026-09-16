@@ -122,7 +122,7 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
                 <span className="serif text-azure">de lo generado.</span>
               </h1>
               <p className="text-lede text-mid max-w-[520px] animate-rise" style={{ animationDelay: '.18s' }}>
-                <span className="lead-in">Un documento, tres lecturas.</span> Veritas mide la perplejidad y el burstiness de cada párrafo, coteja su similitud contra fuentes abiertas y reescribe el estilo sin tocar tus citas.
+                <span className="lead-in">Un documento, tres lecturas.</span> Plagelio mide la perplejidad y el burstiness de cada párrafo, coteja su similitud contra fuentes abiertas y reescribe el estilo sin tocar tus citas.
               </p>
               <div className="flex flex-wrap items-center gap-3 animate-rise" style={{ animationDelay: '.3s' }}>
                 <button ref={ctaMagnet} type="button" onClick={handleStart} className="btn btn-primary">
@@ -401,9 +401,9 @@ const PricingAndClose: React.FC<{ onStart: () => void; onPremium: () => void; cl
       <footer className="border-t hair">
         <div className="wrap py-12 flex flex-wrap justify-between gap-10">
           <div className="flex flex-col gap-4 max-w-[340px]">
-            <span className="text-[13px] font-extrabold tracking-[0.16em] text-mid">VERITAS <span className="serif text-[16px] text-low">AI</span></span>
+            <span className="text-[14px] font-extrabold tracking-[0.14em] text-mid">PLAGELIO</span>
             <p className="text-[12.5px] leading-[1.65] text-low">Análisis estilométrico, cotejo de similitud y reescritura editorial para trabajo académico.</p>
-            <span className="text-xs text-low">© {new Date().getFullYear()} Veritas AI</span>
+            <span className="text-xs text-low">© {new Date().getFullYear()} Plagelio</span>
           </div>
           <div className="flex gap-12 sm:gap-20">
             <div className="flex flex-col gap-3 text-[13px] text-mid">

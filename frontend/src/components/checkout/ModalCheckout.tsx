@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { paymentApi } from '../../services/api';
 import { sound } from '../../utils/soundEffects';
-import { VeritasLogo } from '../brand/VeritasLogo';
+import { PlagelioLogo } from '../brand';
 import { Dialog } from '../ui/Dialog';
 import { hasFinePointer } from '../../motion';
 import {
@@ -565,7 +565,7 @@ export const ModalCheckout: React.FC = () => {
               <div className="lg:col-span-5 p-7 sm:p-8 border-b lg:border-b-0 lg:border-r hair flex flex-col justify-between gap-8" style={{ background: 'linear-gradient(180deg, rgb(var(--base)), rgb(var(--ground)))' }}>
                 <div className="flex flex-col gap-7">
                   <div className="flex items-center justify-between">
-                    <VeritasLogo variant="compact" size="md" />
+                    <PlagelioLogo variant="compact" size="md" />
                     <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-human"><span className="status-dot" style={{ color: 'rgb(var(--human) / .18)', background: 'rgb(var(--human))' }} />En línea</span>
                   </div>
                   <div className="flex flex-col gap-2 py-5 border-y hair">

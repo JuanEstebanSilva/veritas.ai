@@ -25,7 +25,7 @@ export class PaymentService {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: 'Veritas AI Premium - Acceso Vitalicio',
+              name: 'Plagelio Premium - Acceso Vitalicio',
               description: 'Análisis ilimitados de IA, similitud y mejoras de redacción de por vida.',
             },
             unit_amount: Math.round(this.PREMIUM_PRICE_USD * 100), // $2.00 en centavos

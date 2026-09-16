@@ -1,5 +1,5 @@
 /**
- * Veritas AI — Motor de Micro-interacciones Sonoras
+ * Plagelio — Motor de Micro-interacciones Sonoras
  * Desarrollado con Web Audio API nativo (0 dependencias externas, 0ms latencia).
  * Diseñado con estética acústica sutil y táctil (Stripe / Apple / Linear).
  */
@@ -11,7 +11,9 @@ class SoundEngine {
   constructor() {
     // Recuperar preferencia de sonido (habilitado por defecto)
     let stored: string | null = null;
-    try { stored = localStorage.getItem('veritas_sound_enabled'); } catch { /* almacenamiento no disponible */ }
+    try {
+      stored = localStorage.getItem('plagelio_sound_enabled') || localStorage.getItem('veritas_sound_enabled');
+    } catch { /* almacenamiento no disponible */ }
     this.enabled = stored !== null ? stored === 'true' : true;
   }
 
@@ -35,7 +37,9 @@ class SoundEngine {
 
   public setEnabled(val: boolean) {
     this.enabled = val;
-    try { localStorage.setItem('veritas_sound_enabled', String(val)); } catch { /* sin almacenamiento */ }
+    try {
+      localStorage.setItem('plagelio_sound_enabled', String(val));
+    } catch { /* sin almacenamiento */ }
   }
 
   public toggle(): boolean {

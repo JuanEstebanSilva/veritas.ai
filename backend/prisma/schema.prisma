@@ -1,4 +1,4 @@
-// Prisma Schema para Veritas AI
+// Prisma Schema para Plagelio
 
 datasource db {
   provider = "postgresql"
