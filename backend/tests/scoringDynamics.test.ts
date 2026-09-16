@@ -23,9 +23,9 @@ describe('Verificación de Dinamismo en LinguisticEngine y SimilarityEngine', ()
     expect(humanReport.overallAiScore).not.toBe(14);
   });
 
-  it('debe generar porcentajes de similitud variados según contenido, tema y longitud', () => {
+  it('debe calcular porcentajes de similitud coherentes y dinámicos según el vocabulario', async () => {
     const techText =
-      'Las arquitecturas de redes neuronales profundas y mecanismos de atención han transformado radicalmente el procesamiento del lenguaje natural y la visión computacional.';
+      'El modelo de machine learning analiza hiperparámetros y gradientes para optimizar la convergencia del algoritmo en redes neuronales.';
 
     const casualText =
       'Mañana vamos al cine a ver la película nueva que acaban de estrenar y luego cenamos con los primos.';
@@ -33,9 +33,9 @@ describe('Verificación de Dinamismo en LinguisticEngine y SimilarityEngine', ()
     const legalText =
       'Es lícita la inclusión en una obra propia de fragmentos de otras ajenas siempre que se trate de obras ya divulgadas a título de cita bibliográfica según la Ley de Propiedad Intelectual.';
 
-    const techSim = SimilarityEngine.analyzeSimilarity(techText);
-    const casualSim = SimilarityEngine.analyzeSimilarity(casualText);
-    const legalSim = SimilarityEngine.analyzeSimilarity(legalText);
+    const techSim = await SimilarityEngine.analyzeSimilarity(techText);
+    const casualSim = await SimilarityEngine.analyzeSimilarity(casualText);
+    const legalSim = await SimilarityEngine.analyzeSimilarity(legalText);
 
     // Ninguno debe estar atascado en 7% o 14%
     expect(casualSim.overallSimilarityScore).not.toBe(7);
@@ -47,5 +47,5 @@ describe('Verificación de Dinamismo en LinguisticEngine y SimilarityEngine', ()
 
     // Deben variar entre sí
     expect(casualSim.overallSimilarityScore).not.toBe(legalSim.overallSimilarityScore);
-  });
+  }, 20000);
 });

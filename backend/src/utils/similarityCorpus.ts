@@ -534,9 +534,9 @@ export class SimilarityEngine {
   }
 
   /**
-   * Compara el texto de entrada con el corpus público indexado de forma dinámica y contextual
+   * Compara el texto de entrada con fuentes reales de internet (Wikipedia, Crossref) y corpus indexado
    */
-  public static analyzeSimilarity(userText: string): SimilarityReport {
+  public static async analyzeSimilarity(userText: string): Promise<SimilarityReport> {
     const userWords = this.normalizeWords(userText);
 
     if (userWords.length < 10) {
@@ -546,6 +546,26 @@ export class SimilarityEngine {
         disclaimer:
           'El texto es demasiado breve para identificar coincidencias significativas con fuentes públicas.',
       };
+    }
+
+    // 1. Intentar búsqueda en tiempo real en internet (Wikipedia + Crossref)
+    try {
+      const { LiveSearchService } = await import('../services/LiveSearchService');
+      const liveSources = await LiveSearchService.searchInternetSources(userText);
+      if (liveSources && liveSources.length > 0) {
+        const topScores = liveSources.map((s) => s.similarityPercentage);
+        const combined = topScores.reduce((acc, score, idx) => acc + score / (idx + 1.2), 0);
+        const overallSimilarityScore = Math.max(8, Math.min(Math.round(combined), 88));
+
+        return {
+          overallSimilarityScore,
+          sources: liveSources,
+          disclaimer:
+            'Importante: El porcentaje obtenido representa un "Índice de similitud" verificado contra fuentes públicas de internet y repositorios académicos indexados. Una coincidencia textual no implica necesariamente plagio, ya que puede corresponder a citas legítimas, referencias bibliográficas, terminología técnica o frases de uso corriente.',
+        };
+      }
+    } catch (liveErr) {
+      console.warn('LiveSearchService no disponible, utilizando corpus local de respaldo:', liveErr);
     }
 
     const matchedSources: MatchedSource[] = [];
