@@ -88,9 +88,11 @@ El movimiento está en `frontend/src/motion`:
 | `usePointerParallax` / `useMagnetic` | Parallax de puntero y botón magnético, sólo con puntero fino. |
 | `CountUp` / `Odometer` | Cifras que cuentan y rodillo de dígitos, en mono tabular. |
 
-La landing (`frontend/src/pages/LandingPage.tsx` + `landing.css`) sigue los
-momentos de `PRINCIPIOS.md`. Por debajo de 760 px o con movimiento reducido no
-hay pin: `--p` se fija en 1 y los capítulos se apilan en su estado final.
+La landing (`frontend/src/pages/LandingPage.tsx` + `landing.css`) recorre sus
+capítulos en este orden: héroe con el campo de lectura, banda de cifras,
+escáner fijado, la frase de honestidad, tres lecturas, reescritura, precios y
+cierre. Por debajo de 760 px o con movimiento reducido no hay pin: `--p` se
+fija en 1 y los capítulos se apilan en su estado final.
 
 La prueba visual y funcional se ejecuta con `node frontend/scripts/qa.mjs`
 (Playwright, ambos temas, ambos anchos, flujos y movimiento reducido).
