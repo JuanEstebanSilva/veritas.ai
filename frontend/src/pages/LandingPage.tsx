@@ -20,9 +20,9 @@ const BEFORE = 'En conclusión, es crucial destacar que la inteligencia artifici
 const AFTER  = 'En definitiva, conviene reparar en que la inteligencia artificial resulta determinante en la transformación del sector educativo contemporáneo. A su vez, importa advertir que su implementación requiere un enfoque integral.';
 
 const READINGS = [
-  { tone: 'azure', Icon: BarChart3, title: 'Análisis estilométrico', lead: 'Mide cómo está escrito.', body: 'Perplejidad, burstiness, riqueza léxica y uniformidad sintáctica, párrafo a párrafo. Cada sección recibe su puntuación y los indicadores que la justifican.', Instrument: CadenceInstrument },
-  { tone: 'gold', Icon: Search, title: 'Cotejo de similitud', lead: 'Busca de dónde viene.', body: 'Compara el documento con repositorios de acceso abierto y muestra los fragmentos coincidentes en paralelo. Separa la cita legítima y la terminología estándar del plagio sin atribución.', Instrument: SimilarityInstrument },
-  { tone: 'human', Icon: PenLine, title: 'Reescritura editorial', lead: 'Cambia la voz, no la idea.', body: 'Rompe la cadencia uniforme y sustituye las fórmulas de IA sin tocar citas, cifras ni referencias. Descarga directa en .docx.', Instrument: RewriteInstrument },
+  { tone: 'azure', Icon: BarChart3, title: 'Detección de IA', lead: 'Mide cómo está escrito.', body: 'Perplejidad, burstiness, riqueza léxica y uniformidad sintáctica, párrafo a párrafo. Cada sección recibe su puntuación y los indicadores que la justifican.', Instrument: CadenceInstrument },
+  { tone: 'gold', Icon: Search, title: 'Detección de plagio', lead: 'Verifica que no sea copia de otro lugar.', body: 'Compara el documento con repositorios de acceso abierto y muestra los fragmentos coincidentes en paralelo. Separa la cita legítima y la terminología estándar del plagio sin atribución.', Instrument: SimilarityInstrument },
+  { tone: 'human', Icon: PenLine, title: 'Humanizador de texto', lead: 'Humaniza la voz, no la idea.', body: 'Rompe la cadencia uniforme y sustituye las fórmulas de IA sin tocar citas, cifras ni referencias. Descarga directa en .docx.', Instrument: RewriteInstrument },
 ] as const;
 
 const useWide = () => {
@@ -122,7 +122,7 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
                 <span className="serif text-azure">de lo generado.</span>
               </h1>
               <p className="text-lede text-mid max-w-[520px] animate-rise" style={{ animationDelay: '.18s' }}>
-                <span className="lead-in">Un documento, tres lecturas.</span> Plagelio mide la perplejidad y el burstiness de cada párrafo, coteja su similitud contra fuentes abiertas y reescribe el estilo sin tocar tus citas.
+                <span className="lead-in">Un documento, tres lecturas.</span> Plagelio detecta plagio cotejando similitud con fuentes abiertas, analiza probabilidad de IA y humaniza el texto eliminando fórmulas sintéticas sin tocar tus citas.
               </p>
               <div className="flex flex-wrap items-center gap-3 animate-rise" style={{ animationDelay: '.3s' }}>
                 <button ref={ctaMagnet} type="button" onClick={handleStart} className="btn btn-primary">
@@ -279,8 +279,8 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
           <div className="wrap w-full flex flex-col gap-10">
             <div className="flex flex-wrap items-end justify-between gap-6">
               <div className="flex flex-col gap-5 max-w-[620px]">
-                <h2 className="text-d-3 font-light">Misma idea.<br /><span className="serif">Otra voz.</span></h2>
-                <p className="text-[15.5px] leading-[1.7] text-mid max-w-[460px]"><span className="lead-in">La reescritura no inventa.</span> Sustituye las fórmulas de IA por giros propios y rompe la cadencia simétrica, con las citas y las cifras intactas.</p>
+                <h2 className="text-d-3 font-light">Misma idea.<br /><span className="serif">Voz humana.</span></h2>
+                <p className="text-[15.5px] leading-[1.7] text-mid max-w-[460px]"><span className="lead-in">El humanizador no inventa.</span> Sustituye las fórmulas de IA por giros orgánicos y rompe la cadencia simétrica, manteniendo citas, datos y cifras intactas.</p>
               </div>
               <div className="flex items-end gap-4">
                 <span className="relative num text-[72px] sm:text-[96px] leading-none">

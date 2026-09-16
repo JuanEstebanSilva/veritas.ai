@@ -66,7 +66,7 @@ export const UserDashboard: React.FC = () => {
             {isPremium ? 'Licencia vitalicia activa: análisis y descargas sin límite.' : availableToday === 0 ? 'Has usado tus 5 análisis gratuitos de hoy.' : `Te quedan ${availableToday} análisis gratuitos hoy.`}
           </p>
         </div>
-        <Link to="/analyzer" onClick={() => sound.playClick()} className="btn btn-primary btn-sm">Analizar un texto <ArrowRight className="w-4 h-4" strokeWidth={2} /></Link>
+        <Link to="/analyzer" onClick={() => sound.playClick()} className="btn btn-primary btn-sm">Verificar plagio o humanizar <ArrowRight className="w-4 h-4" strokeWidth={2} /></Link>
       </div>
 
       {/* Cifras del día */}

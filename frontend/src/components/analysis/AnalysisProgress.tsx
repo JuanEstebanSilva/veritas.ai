@@ -9,8 +9,8 @@ interface AnalysisProgressProps {
 }
 
 const STEPS = {
-  analyze: ['Leyendo el documento párrafo a párrafo', 'Midiendo perplejidad y cadencia', 'Cotejando similitud con fuentes abiertas'],
-  rewrite: ['Leyendo el texto', 'Rompiendo la cadencia uniforme', 'Sustituyendo fórmulas de IA sin tocar citas'],
+  analyze: ['Leyendo el documento párrafo a párrafo', 'Midiendo perplejidad y cadencia', 'Cotejando similitud con fuentes abiertas para descartar plagio'],
+  rewrite: ['Leyendo el texto', 'Rompiendo la cadencia uniforme', 'Humanizando y eliminando fórmulas de IA sin tocar citas'],
 };
 
 /**
@@ -32,7 +32,7 @@ export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ stage, mode 
       </div>
       <div className="flex flex-col gap-5 min-w-0 flex-1">
         <div className="flex flex-col gap-2">
-          <span className={`eyebrow text-${tone}`}>{mode === 'rewrite' ? 'Reescribiendo' : 'Analizando'}</span>
+          <span className={`eyebrow text-${tone}`}>{mode === 'rewrite' ? 'Humanizando texto' : 'Verificando plagio e IA'}</span>
           <h3 className="text-d-5 font-semibold">{stage}</h3>
         </div>
         <ul className="flex flex-col">

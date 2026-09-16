@@ -171,10 +171,45 @@ export const AnalyzerPage: React.FC = () => {
   const showForm = !analysis && !improvedResult;
   const busy = loading || improving;
 
-  const Segment: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode }> = ({ active, onClick, children }) => (
-    <button type="button" role="tab" aria-selected={active} onClick={onClick}
-      className={`h-10 px-5 rounded-full text-[13px] font-semibold transition-[background-color,color] duration-240 ease-out ${active ? 'bg-hair-2 text-hi' : 'text-mid hover:text-hi'}`}>
-      {children}
+  const ModeTab: React.FC<{
+    active: boolean;
+    onClick: () => void;
+    icon: React.ReactNode;
+    title: string;
+    accentTone: 'azure' | 'human';
+  }> = ({ active, onClick, icon, title, accentTone }) => (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={`group relative flex items-center gap-2.5 h-11 px-5 rounded-full text-[13.5px] font-semibold transition-all duration-200 ease-out select-none ${
+        active
+          ? 'bg-white dark:bg-surface-2 text-hi shadow-[0_2px_12px_-2px_rgba(0,0,0,0.08),0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.4)] ring-1 ring-black/[0.04] dark:ring-white/[0.08]'
+          : 'text-mid hover:text-hi hover:bg-black/[0.03] dark:hover:bg-white/[0.04]'
+      } active:scale-[0.98]`}
+    >
+      <span
+        className={`flex items-center justify-center w-6 h-6 rounded-full transition-colors duration-200 ${
+          active
+            ? accentTone === 'azure'
+              ? 'bg-azure/10 text-azure'
+              : 'bg-human/10 text-human'
+            : 'text-low group-hover:text-mid'
+        }`}
+      >
+        {icon}
+      </span>
+      <span>{title}</span>
+      {active && (
+        <span
+          className={`w-1.5 h-1.5 rounded-full ${
+            accentTone === 'azure'
+              ? 'bg-azure shadow-[0_0_6px_rgba(var(--azure),0.8)]'
+              : 'bg-human shadow-[0_0_6px_rgba(var(--human),0.8)]'
+          }`}
+        />
+      )}
     </button>
   );
 
@@ -184,9 +219,17 @@ export const AnalyzerPage: React.FC = () => {
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div className="flex flex-col gap-3">
           <h1 className="text-d-4 font-light">
-            {mode === 'humanizer' && showForm ? <>Reescribe <span className="serif text-human">con otra voz.</span></> : <>Verifica <span className="serif text-azure">un texto.</span></>}
+            {mode === 'humanizer' && showForm ? (
+              <>Humaniza <span className="serif text-human">tu texto.</span></>
+            ) : (
+              <>Verifica plagio <span className="serif text-azure">y originalidad.</span></>
+            )}
           </h1>
-          <p className="text-[14px] text-low max-w-[560px]">Estilometría de perplejidad, cotejo de similitud y reescritura editorial que respeta tus citas.</p>
+          <p className="text-[14px] text-low max-w-[560px]">
+            {mode === 'humanizer' && showForm
+              ? 'Elimina la huella de IA, transforma la cadencia y obtén una redacción 100% orgánica y humana.'
+              : 'Cotejo contra fuentes académicas para certificar que no haya plagio, junto a métricas estilométricas de IA.'}
+          </p>
         </div>
         {(analysis || improvedResult) && (
           <button type="button" onClick={() => { sound.playClick(); resetForm(); }} className="btn btn-ghost btn-sm">
@@ -197,23 +240,53 @@ export const AnalyzerPage: React.FC = () => {
 
       {/* Selector de modo */}
       {showForm && !busy && (
-        <div className="inline-flex self-start p-1 rounded-full border hair bg-hair" role="tablist" aria-label="Modo">
-          <Segment active={mode === 'analyzer'} onClick={() => { sound.playToggle(); setMode('analyzer'); setError(null); }}>Análisis de originalidad</Segment>
-          <Segment active={mode === 'humanizer'} onClick={() => { sound.playToggle(); setMode('humanizer'); setActiveTab('text'); setError(null); }}>Reescritura editorial</Segment>
+        <div
+          className="inline-flex items-center self-start p-1.5 rounded-full border border-line/80 dark:border-white/10 bg-surface/90 dark:bg-surface/50 backdrop-blur-md shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] gap-1"
+          role="tablist"
+          aria-label="Modo de operación"
+        >
+          <ModeTab
+            active={mode === 'analyzer'}
+            onClick={() => {
+              sound.playToggle();
+              setMode('analyzer');
+              setError(null);
+            }}
+            icon={<ShieldCheck className="w-3.5 h-3.5" strokeWidth={2.2} />}
+            title="Detector de Plagio & IA"
+            accentTone="azure"
+          />
+          <ModeTab
+            active={mode === 'humanizer'}
+            onClick={() => {
+              sound.playToggle();
+              setMode('humanizer');
+              setActiveTab('text');
+              setError(null);
+            }}
+            icon={<Sparkles className="w-3.5 h-3.5" strokeWidth={2.2} />}
+            title="Humanizador de Texto"
+            accentTone="human"
+          />
         </div>
       )}
 
       {/* Proceso en curso */}
-      {busy && showForm && <AnalysisProgress stage={loading ? (loadingStage || 'Procesando') : 'Optimizando cadencia y variedad léxica'} mode={loading ? 'analyze' : 'rewrite'} />}
+      {busy && showForm && (
+        <AnalysisProgress
+          stage={loading ? (loadingStage || 'Verificando plagio y métricas de IA') : 'Humanizando texto y erradicando huella de IA'}
+          mode={loading ? 'analyze' : 'rewrite'}
+        />
+      )}
 
-      {/* Resultado directo de reescritura */}
+      {/* Resultado directo de humanización */}
       {improvedResult && !analysis && (
         <div className="card p-7 sm:p-9 flex flex-col gap-7 page-in">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="flex flex-col gap-2">
-              <span className="eyebrow text-human">Reescritura lista</span>
-              <h3 className="text-d-5 font-semibold">Texto reescrito para usar</h3>
-              <p className="text-[13px] text-low">Cadencia natural, conectores diversificados y tus ideas intactas.</p>
+              <span className="eyebrow text-human">Texto Humanizado</span>
+              <h3 className="text-d-5 font-semibold">Texto humanizado listo para usar</h3>
+              <p className="text-[13px] text-low">Cadencia orgánica, eliminación de clichés de IA y tus ideas intactas.</p>
             </div>
             {improvedResult.originalAiScore !== undefined && improvedResult.improvedAiScore !== undefined && (
               <div className="flex items-center gap-4">
@@ -232,7 +305,7 @@ export const AnalyzerPage: React.FC = () => {
 
           <div className="rounded-xl border hair bg-ground/60 overflow-hidden">
             <div className="flex items-center justify-between px-5 h-10 border-b hair">
-              <label htmlFor="improved-direct" className="text-[12px] font-semibold text-mid">Texto final</label>
+              <label htmlFor="improved-direct" className="text-[12px] font-semibold text-mid">Texto final humanizado</label>
               <span className="font-mono text-[11px] text-low">{improvedResult.improvedText.split(/\s+/).filter(Boolean).length} palabras · {improvedResult.improvedText.length} caracteres</span>
             </div>
             <textarea id="improved-direct" readOnly rows={11} value={improvedResult.improvedText}
@@ -241,11 +314,11 @@ export const AnalyzerPage: React.FC = () => {
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <button type="button" onClick={handleCopyDirectText} className={`btn ${copiedDirect ? 'bg-human text-[rgb(var(--on-accent))]' : 'btn-primary'}`}>
-              {copiedDirect ? (<><Check className="w-4 h-4" strokeWidth={2.5} /> Copiado</>) : (<><Copy className="w-4 h-4" strokeWidth={1.8} /> Copiar texto</>)}
+              {copiedDirect ? (<><Check className="w-4 h-4" strokeWidth={2.5} /> Copiado</>) : (<><Copy className="w-4 h-4" strokeWidth={1.8} /> Copiar texto humanizado</>)}
             </button>
             <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={handleDownloadDirectDocx} className="btn btn-ghost btn-sm"><Download className="w-4 h-4" strokeWidth={1.7} /> Word (.docx)</button>
-              <button type="button" onClick={resetForm} className="btn btn-quiet btn-sm">Reescribir otro texto</button>
+              <button type="button" onClick={handleDownloadDirectDocx} className="btn btn-ghost btn-sm"><Download className="w-4 h-4" strokeWidth={1.7} /> Word (.docx) humanizado</button>
+              <button type="button" onClick={resetForm} className="btn btn-quiet btn-sm">Humanizar otro texto</button>
             </div>
           </div>
         </div>
@@ -255,25 +328,65 @@ export const AnalyzerPage: React.FC = () => {
       {showForm && !busy && (
         <div className="card p-7 sm:p-9 flex flex-col gap-7">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="inline-flex p-1 rounded-full border hair" role="tablist" aria-label="Origen del texto">
-              <Segment active={activeTab === 'text'} onClick={() => { setActiveTab('text'); setError(null); }}>Texto</Segment>
-              {mode === 'analyzer' && <Segment active={activeTab === 'docx'} onClick={() => { setActiveTab('docx'); setError(null); }}>Documento .docx</Segment>}
+            <div
+              className="inline-flex items-center p-1 rounded-full border border-line/70 dark:border-white/10 bg-surface-2/70 dark:bg-surface/60 backdrop-blur-sm gap-1"
+              role="tablist"
+              aria-label="Origen del texto"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'text'}
+                onClick={() => {
+                  sound.playToggle();
+                  setActiveTab('text');
+                  setError(null);
+                }}
+                className={`flex items-center gap-2 h-9 px-4 rounded-full text-[12.5px] font-semibold transition-all duration-200 ${
+                  activeTab === 'text'
+                    ? 'bg-white dark:bg-surface-2 text-hi shadow-sm ring-1 ring-black/[0.04] dark:ring-white/[0.08]'
+                    : 'text-mid hover:text-hi hover:bg-black/[0.02] dark:hover:bg-white/[0.02]'
+                }`}
+              >
+                <FileText className={`w-3.5 h-3.5 ${activeTab === 'text' ? 'text-azure' : 'text-low'}`} strokeWidth={1.8} />
+                Texto directo
+              </button>
+              {mode === 'analyzer' && (
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'docx'}
+                  onClick={() => {
+                    sound.playToggle();
+                    setActiveTab('docx');
+                    setError(null);
+                  }}
+                  className={`flex items-center gap-2 h-9 px-4 rounded-full text-[12.5px] font-semibold transition-all duration-200 ${
+                    activeTab === 'docx'
+                      ? 'bg-white dark:bg-surface-2 text-hi shadow-sm ring-1 ring-black/[0.04] dark:ring-white/[0.08]'
+                      : 'text-mid hover:text-hi hover:bg-black/[0.02] dark:hover:bg-white/[0.02]'
+                  }`}
+                >
+                  <UploadCloud className={`w-3.5 h-3.5 ${activeTab === 'docx' ? 'text-azure' : 'text-low'}`} strokeWidth={1.8} />
+                  Documento .docx
+                </button>
+              )}
             </div>
             {activeTab === 'text' && <span className="font-mono text-[11px] text-low" aria-live="polite">{wordCount} palabras · {textInput.length} caracteres</span>}
           </div>
 
           <div className="flex flex-col gap-2">
             <label htmlFor="analysis-title" className="field-label">Título o referencia <span className="text-low font-normal">(opcional)</span></label>
-            <input id="analysis-title" type="text" value={titleInput} onChange={(e) => setTitleInput(e.target.value)} placeholder="Ensayo de filosofía contemporánea" className="field" />
+            <input id="analysis-title" type="text" value={titleInput} onChange={(e) => setTitleInput(e.target.value)} placeholder="Ensayo o documento académico" className="field" />
           </div>
 
           {activeTab === 'text' && (
             <div className="flex flex-col gap-2">
-              <label htmlFor="analysis-text" className="field-label">{mode === 'humanizer' ? 'Texto a reescribir' : 'Texto a evaluar'}</label>
+              <label htmlFor="analysis-text" className="field-label">{mode === 'humanizer' ? 'Texto a humanizar' : 'Texto a evaluar'}</label>
               <textarea id="analysis-text" rows={11} value={textInput} onChange={(e) => { setTextInput(e.target.value); if (error) setError(null); }}
                 placeholder={mode === 'humanizer'
-                  ? 'Pega el texto. Se reestructura la cadencia, se diversifica el vocabulario y se eliminan clichés sin tocar citas ni cifras.'
-                  : 'Pega el texto. Recibirás la probabilidad estimada de IA, el índice de similitud y el desglose párrafo a párrafo.'}
+                  ? 'Pega el texto aquí. Eliminaremos patrones y clichés de IA para devolver cadencia natural y riqueza léxica, respetando tus citas y datos.'
+                  : 'Pega el texto aquí. Verificaremos que no haya plagio de fuentes públicas y calcularemos la probabilidad de IA con desglose párrafo a párrafo.'}
                 className="field h-auto py-4 leading-[1.7] resize-y" />
             </div>
           )}
@@ -328,16 +441,16 @@ export const AnalyzerPage: React.FC = () => {
             </div>
           )}
 
-          <div className={`grid grid-cols-1 gap-3 ${mode === 'analyzer' ? 'sm:grid-cols-2' : ''}`}>
-            {mode === 'analyzer' && (
-              <button type="button" disabled={busy} onClick={handleAnalyze} className="btn btn-primary w-full">
-                Analizar <ArrowRight className="w-4 h-4" strokeWidth={2} />
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            {mode === 'analyzer' ? (
+              <button type="button" disabled={busy} onClick={handleAnalyze} className="btn btn-primary min-w-[200px]">
+                <ShieldCheck className="w-4 h-4" strokeWidth={2} /> Verificar plagio e IA <ArrowRight className="w-4 h-4" strokeWidth={2} />
+              </button>
+            ) : (
+              <button type="button" disabled={busy || activeTab !== 'text'} onClick={handleDirectHumanize} className="btn btn-primary min-w-[200px] bg-human hover:bg-human/90">
+                <Sparkles className="w-4 h-4" strokeWidth={2} /> Humanizar texto <ArrowRight className="w-4 h-4" strokeWidth={2} />
               </button>
             )}
-            <button type="button" disabled={busy || activeTab !== 'text'} onClick={handleDirectHumanize}
-              className={`btn w-full ${mode === 'humanizer' ? 'btn-primary' : 'btn-ghost'}`}>
-              <Sparkles className="w-4 h-4" strokeWidth={1.7} /> Reescritura editorial
-            </button>
           </div>
         </div>
       )}
@@ -365,19 +478,19 @@ export const AnalyzerPage: React.FC = () => {
             </div>
           )}
 
-          {/* Llamada a la reescritura */}
+          {/* Llamada al Humanizador */}
           {!improvedResult && (improving ? (
-            <AnalysisProgress stage="Reescribiendo con otra voz" mode="rewrite" />
+            <AnalysisProgress stage="Humanizando texto y erradicando huella de IA..." mode="rewrite" />
           ) : (
             <div className="relative overflow-hidden rounded-[20px] border border-human/30 p-7 sm:p-8 flex flex-wrap items-center justify-between gap-6"
               style={{ background: 'linear-gradient(165deg, rgb(var(--human) / .09), rgb(var(--human) / .015) 60%)' }}>
               <div className="flex flex-col gap-2 max-w-[560px]">
-                <span className="eyebrow text-human">Reescritura editorial</span>
-                <h3 className="text-d-5 font-semibold">Misma idea, <span className="serif">otra voz.</span></h3>
-                <p className="text-[13.5px] leading-[1.65] text-mid">Rompe la cadencia uniforme, sustituye más de 40 fórmulas de IA y conserva citas, cifras y sentido.</p>
+                <span className="eyebrow text-human">Humanizador de IA</span>
+                <h3 className="text-d-5 font-semibold">Humaniza este texto para <span className="serif">cero detección.</span></h3>
+                <p className="text-[13.5px] leading-[1.65] text-mid">Rompe la cadencia uniforme, sustituye más de 130 fórmulas de IA y conserva citas, cifras y sentido original.</p>
               </div>
-              <button type="button" disabled={improving} onClick={handleImproveWriting} className="btn btn-primary shrink-0">
-                Aplicar reescritura <ArrowRight className="w-4 h-4" strokeWidth={2} />
+              <button type="button" disabled={improving} onClick={handleImproveWriting} className="btn btn-primary bg-human hover:bg-human/90 shrink-0">
+                <Sparkles className="w-4 h-4" strokeWidth={2} /> Humanizar este texto <ArrowRight className="w-4 h-4" strokeWidth={2} />
               </button>
             </div>
           ))}
