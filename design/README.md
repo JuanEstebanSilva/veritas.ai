@@ -71,12 +71,37 @@ Lo que no, y cómo se resuelve en su lugar:
 Al pasarlo a React esto se codifica igual: `rounded-full` queda reservado a
 `<button>`, `<input>` y filas interactivas.
 
+## Cómo está construido en el frontend
+
+El sistema del canvas vive en `frontend/src/index.css` (tokens en `rgb` por
+canal, papel y tinta constantes en los dos temas, luces como degradados
+radiales sin `filter`) y en `frontend/tailwind.config.js` (escala de display
+fluida cuyo tracking cambia de signo con el tamaño). Las fuentes están
+autoalojadas en `frontend/public/fonts`.
+
+El movimiento está en `frontend/src/motion`:
+
+| Primitivo | Qué hace |
+| --- | --- |
+| `useScrollGroup` | Escribe el progreso 0–1 del capítulo en la variable CSS `--p` (pin por ScrollTrigger); el CSS deriva de ahí umbrales y cruces con `clamp()`. El JS nunca escribe colores, así el tema cambia entero. |
+| `useReveal` | Revelado por IntersectionObserver con escalonado por `--i`; oculto sólo con `html.js`. Sólo en la landing. |
+| `usePointerParallax` / `useMagnetic` | Parallax de puntero y botón magnético, sólo con puntero fino. |
+| `CountUp` / `Odometer` | Cifras que cuentan y rodillo de dígitos, en mono tabular. |
+
+La landing (`frontend/src/pages/LandingPage.tsx` + `landing.css`) sigue los
+momentos de `PRINCIPIOS.md`. Por debajo de 760 px o con movimiento reducido no
+hay pin: `--p` se fija en 1 y los capítulos se apilan en su estado final.
+
+La prueba visual y funcional se ejecuta con `node frontend/scripts/qa.mjs`
+(Playwright, ambos temas, ambos anchos, flujos y movimiento reducido).
+
 ## Pendiente de decisión
 
 - Las cifras del panel izquierdo del login son marcadores `[TU CIFRA]`.
 - Razón social y ciudad del pie, igual.
 - Los datos del informe son de muestra, elegidos para enseñar los tres estados.
-- Falta decidir si se mantiene el tema claro; ahora mismo esto es sólo oscuro.
+- El tema claro se mantiene: es el inverso cuidado del oscuro y todo el
+  movimiento es compatible con él.
 
 ## Regenerar el canvas
 

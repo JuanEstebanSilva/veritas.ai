@@ -3,20 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/veritas-logo.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#06070a" />
+    <meta name="color-scheme" content="dark light" />
     <title>Veritas AI — Detección estilométrica, similitud y reescritura</title>
     <meta name="description" content="Veritas mide la perplejidad y el burstiness de cada párrafo, coteja su similitud contra fuentes abiertas y reescribe el estilo sin tocar tus citas." />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="preload" href="/fonts/manrope.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/instrument-serif-italic.woff2" as="font" type="font/woff2" crossorigin />
     <script>
       // Evita el destello de tema: aplica la preferencia guardada antes de pintar.
+      // Marca html.js para que el revelado por scroll sólo oculte cuando hay script.
       (function () {
+        var d = document.documentElement;
+        d.classList.add('js');
         try {
           var t = localStorage.getItem('veritas_theme');
-          if (t === 'light') document.documentElement.classList.remove('dark');
-          else document.documentElement.classList.add('dark');
+          var dark = t === 'light' ? false : true;
+          d.classList.toggle('dark', dark);
+          d.setAttribute('data-theme', dark ? 'dark' : 'light');
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute('content', dark ? '#06070a' : '#f7f7f9');
         } catch (e) {}
       })();
     </script>

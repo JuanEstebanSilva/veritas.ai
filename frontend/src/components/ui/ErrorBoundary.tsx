@@ -1,58 +1,39 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
-interface Props {
-  children: ReactNode;
-}
-
-interface State {
-  hasError: boolean;
-  error: Error | null;
-}
+interface Props { children: ReactNode; }
+interface State { hasError: boolean; error: Error | null; }
 
 export class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: null,
-  };
+  public state: State = { hasError: false, error: null };
 
   public static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Veritas AI — Uncaught error:', error, errorInfo);
+    console.error('Veritas AI — error no capturado:', error, errorInfo);
   }
 
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-          <div className="max-w-md w-full p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl text-center space-y-5">
-            <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/60 text-red-500 mx-auto flex items-center justify-center">
-              <AlertCircle className="w-8 h-8" />
+        <div className="min-h-screen flex items-center justify-center p-6 bg-ground text-hi">
+          <div className="w-full max-w-md card p-8 flex flex-col items-center text-center gap-6">
+            <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-ai/10 text-ai">
+              <AlertCircle className="h-6 w-6" strokeWidth={1.6} />
+            </span>
+            <div className="flex flex-col gap-2">
+              <h2 className="text-d-5 font-semibold">Algo se rompió <span className="serif">al pintar la página.</span></h2>
+              <p className="text-[13px] leading-[1.6] text-low font-mono break-words">{this.state.error?.message || 'Error desconocido al renderizar la interfaz.'}</p>
             </div>
-            <div className="space-y-2">
-              <h2 className="text-xl font-black">Ocurrió un error inesperado</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {this.state.error?.message || 'Error desconocido al renderizar la interfaz.'}
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                this.setState({ hasError: false, error: null });
-                window.location.reload();
-              }}
-              className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all"
-            >
-              <RefreshCw className="w-4 h-4" />
-              <span>Recargar Aplicación</span>
+            <button type="button" onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload(); }} className="btn btn-primary w-full">
+              <RefreshCw className="h-4 w-4" strokeWidth={1.8} /> Recargar la aplicación
             </button>
           </div>
         </div>
       );
     }
-
     return this.props.children;
   }
 }

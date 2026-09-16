@@ -1,94 +1,149 @@
 # Principios adaptados de Apple para Veritas
 
-## Sobre las fuentes
+## Fuentes de este análisis
 
-Esta sesión no puede abrir apple.com ni ninguna página externa: la política de
-red bloquea el navegador, el fetch de documentos, el Internet Archive y los
-artículos técnicos. Se probaron las cinco vías. Lo que sigue se apoya en dos
-cosas, y conviene leerlo con esa etiqueta:
+Esta vez sí se pudo entrar en apple.com. El análisis se apoya en tres cosas,
+todas hechas en esta sesión y verificables:
 
-1. Los resúmenes técnicos que sí devolvió la búsqueda (CSS-Tricks, GSAP Vault,
-   el análisis de la página de AirPods Pro): canvas alimentado por una
-   secuencia de 100–150 fotogramas pre-renderizados y precargados, índice de
-   fotograma ligado al progreso del scroll, contenedor fijado, `scrub` suave,
-   sin decodificador de vídeo en el bucle; y los tres primitivos —pin, scrub,
-   parallax— como base de casi toda experiencia de scroll.
-2. Conocimiento previo y documentado de las páginas de producto de Apple.
+1. **HTML y CSS reales** de cuatro páginas de producto (MacBook Pro, AirPods
+   Pro, iPhone 17 Pro, Apple Watch Ultra 3): `overview.built.css` (~1 MB por
+   página) y `main.built.js`, descargados y grepeados.
+2. **Chromium** cargando MacBook Pro a 1440×900: alturas de sección, colores
+   de fondo computados, escala tipográfica computada y capturas a distintos
+   puntos del scroll.
+3. Resúmenes de estructura de las páginas de iPhone y MacBook Pro.
 
-## Qué hace Apple, técnicamente
+Lo que no se pudo medir: el motor de scroll de Apple no llegó a activarse en
+el navegador remoto (la página quedó en `html.no-js`), así que las mecánicas
+de pin y de scrub se leen del CSS y del JS, no de una grabación.
 
-| Técnica | Cómo lo hacen | Para qué |
+## Qué hace Apple, medido
+
+### Estructura: capítulos, no secciones
+
+Cada `<section>` lleva `data-anim-scroll-group="Welcome | Highlights |
+Performance | Battery | …"` y un `data-theme-changer`. La página es una
+secuencia de capítulos con un solo pensamiento cada uno. Alturas medidas en
+MacBook Pro (en pantallas de 900 px): héroe 1.0 · highlights 3.6 · visor 0.8 ·
+rendimiento 5.1 · batería 2.1 · IA 2.7 · macOS 4.1 · conectividad 1.3 ·
+compra 4.4 · comparativa 1.8 · entorno 1.0 · valores 1.3. Total: 49 pantallas.
+
+El fondo cambia por capítulo y el cambio es un paso, no un degradado:
+`#000` → `#1d1d1f` (highlights y visor) → `#000` → `#f5f5f7` (a partir de la
+sección de compra). El tema de la página se invierte a mitad de scroll.
+
+### Mecánica de scroll
+
+- Un motor propio calcula el progreso 0–1 de cada grupo a partir de los
+  límites del elemento y lo escribe en una **variable CSS** (`--progress`) o
+  en `video.currentTime`. El código: `this.el.style.setProperty("--progress",
+  e)` y `this.videoEl.currentTime = this.floorDecimal(this.duration * e)`.
+  Las secuencias ya no son imágenes: son vídeos mudos (`muted playsinline`,
+  sin autoplay) que se scrubean. 13 vídeos, 0 canvas en MacBook Pro.
+- **Pin por sticky**, no por JavaScript: `html.enhanced .sticky-container
+  {position:sticky; top:var(--r-localnav-height); height:100vh;
+  overflow:hidden}` dentro de una sección de varias pantallas.
+- **Estado previo oculto** y revelado por lotes: `.pre-animation
+  {visibility:hidden; opacity:0}` y un componente `StaggeredFadeIn` en 14 de
+  las secciones. La transición del revelado: `transform .414s
+  cubic-bezier(.66,0,.1,1) .344s, opacity .344s cubic-bezier(.66,0,.1,1)`.
+- Curvas encontradas en el CSS: `cubic-bezier(.66,0,.1,1)` (entrada/salida
+  fuerte, la más usada), `cubic-bezier(0,0,.5,1)` (salida suave para UI
+  pequeña), `cubic-bezier(.3,2,.5,1)` y `(.34,2.16,.64,1)` (muelles, sólo en
+  iconos). Duraciones: 0.2 s, 0.3 s, 0.344 s, 0.414 s, 0.5 s.
+
+### Tipografía (computada)
+
+Todo titular pesa 600. La escala real de MacBook Pro:
+
+| Uso | Tamaño / interlínea | Tracking |
 | --- | --- | --- |
-| Capítulo fijado + secuencia | Sección de 300–500vh, contenedor `sticky`, canvas que dibuja el fotograma `floor(progreso × N)` | Que el producto gire, se abra o se transforme al ritmo de la mano |
-| Titular fijado, contenido que cambia | El texto queda clavado; debajo van pasando tres o cuatro estados | Explicar varias ideas sin que el lector pierda el hilo |
-| Un solo pensamiento por pantalla | Titular de menos de seis palabras, dos líneas de cuerpo, una cifra enorme | Ritmo. La densidad va al final, en la tabla de especificaciones |
-| Profundidad por capas | Luces radiales enormes y muy tenues, desenfoques, sombras del producto, parallax a dos o tres velocidades | Sensación de espacio sin degradados agresivos |
-| El fondo cambia de capítulo | Negro → grafito → negro, animado con el scroll | Marcar transiciones sin cortes |
-| Tipografía como escenografía | 80–96px, tracking −0.02 a −0.04em, peso 600; cuerpo 17–21px; las cifras como display | La letra es la imagen cuando no hay producto |
-| Microinteracciones contenidas | Hover por color y no por escala; subrayados que se dibujan; botones "+" que se abren en texto | Que nada compita con el capítulo |
-| Encuadres comparativos | "hasta 24 horas", "frente a la generación anterior" | Convertir la cifra en argumento |
+| Display de capítulo | 80 / 84 | −1.2 px (−0.015 em) |
+| Titular grande | 64 / 68 | −0.58 px |
+| Titular | 56 / 60 | −0.28 px |
+| Titular de sección | 48 / 52 | −0.14 px |
+| Subtitular | 28 / 32 | **+0.20 px** |
+| Destacado | 21 / 25 | +0.23 px |
+| Cuerpo | 17 / 25 · 19 / 27 | −0.37 px · +0.23 px |
 
-## Qué NO copiamos
+El dato importante: el tracking **cambia de signo con el tamaño**. Negativo
+por encima de 40 px, positivo por debajo de 28 px. Y el cuerpo usa el patrón
+de **arranque en negrita**: "AI apps on Mac. Born to run." en 600 seguido del
+resto en 400, mismo tamaño.
 
-- La secuencia de fotogramas. No tenemos producto físico ni renders, y una
-  secuencia sin assets buenos se nota más que su ausencia.
-- El blanco luminoso de sus páginas de producto. La dirección de Veritas es
-  oscura y ya está fijada.
-- SF Pro y la neutralidad. Veritas tiene voz editorial: la serif itálica como
-  remate de cada titular es el gesto que Apple nunca haría y por eso es nuestro.
-- La certeza. Apple vende seguridad; Veritas vende duda calibrada. El aviso
-  probabilístico es marca, no letra pequeña.
+Un solo gesto de color en la letra: el titular de capítulo con degradado
+blanco → azul pálido ("Fast runs in the family."). Nunca en cuerpo.
+
+### Composición
+
+- Contenedor de 980–1108 px con márgenes de 90 px a 1440.
+- Tarjetas de 28 px de radio, fondo `#1d1d1f`, padding 36 px, texto arriba a
+  la izquierda y medio debajo. Rejilla de dos columnas con 20 px de canal.
+- Cifras enormes con marco comparativo: "Up to 8x faster AI performance than
+  the M1 family". El número solo no vale; el "hasta" y el "frente a" sí.
+- Nav local de 52 px, `backdrop-filter`, botón cápsula "Buy".
+- Galerías horizontales con paleta y puntos (`scroll-gallery-paddlenav`,
+  `dotnav`), botones "+" que se abren en texto, modales con scrim
+  `rgba(0,0,0,.48)` + `blur(20px)`.
+
+## Qué tomamos y qué no
+
+**Tomamos** el oficio: capítulos con un pensamiento, el progreso como
+variable CSS (más barato y compatible con el tema que animar colores desde
+JS), pin por sticky/scrub, revelado por lotes desde estado previo, el tracking
+que cambia de signo, el arranque en negrita, la cifra con marco comparativo,
+la nav translúcida, y la disciplina de una sola curva fuerte de entrada.
+
+**No tomamos** el blanco, SF Pro, la neutralidad ni los vídeos. Veritas no
+tiene producto físico: el producto es el análisis, y todo movimiento nace de
+un documento que se lee, se mide y se tiñe según el veredicto. La serif
+itálica sigue siendo el remate de marca, y el aviso probabilístico es la frase
+más importante de la página, no letra pequeña.
 
 ## Cómo se traduce a Veritas
 
-**El producto es el análisis.** Donde Apple gira un iPhone, Veritas lee un
-documento. Todo el movimiento nace de esa metáfora: una página que se recorre,
-se mide y se tiñe según el veredicto.
+### El sistema
 
-### Momentos memorables (en orden de scroll)
+- **Progreso como variable.** Cada capítulo con scroll escribe `--p` (0–1)
+  en su raíz; el CSS deriva de ahí transformaciones, opacidades y umbrales
+  (`clamp(0, (var(--p) - var(--at)) * k, 1)`). El JS sólo toca texto (cifras)
+  y nunca colores: los colores siempre vienen de los tokens del tema, así el
+  cambio claro/oscuro es instantáneo y completo.
+- **Fondo por capítulo** con `data-chapter` en la raíz y transición CSS.
+- **Revelado** por IntersectionObserver desde un estado previo oculto sólo
+  cuando hay JS (`html.js`), con escalonado por `--i`. Sin JS, todo visible.
+- **Luces** como degradados radiales, no `filter: blur()`; nada infinito sobre
+  capas grandes. Sólo `transform` y `opacity` en movimiento continuo.
+- **Curvas**: `cubic-bezier(.16,1,.3,1)` para entradas; `cubic-bezier(.66,0,.1,1)`
+  para cambios de estado en pantalla; `cubic-bezier(.32,.72,0,1)` para paneles.
+- **Reduced motion**: sin pin, sin parallax, `--p: 1`, revelado inmediato.
+- **Por debajo de 760 px**: sin pin; los capítulos se apilan en estado final.
 
-1. **Héroe que se aleja.** Titular enorme con remate serif. Al bajar, se
-   desvanece, encoge un 7% y se desenfoca ligado al scroll. Detrás, muy tenue,
-   la silueta de un documento con sus líneas.
+### Los momentos, en orden de scroll
 
-2. **El escáner** — nuestro capítulo fijado. Sustituye a la secuencia de
-   fotogramas por algo que sólo Veritas puede tener: un documento dibujado
-   proceduralmente (SVG, sin imágenes) cuyos párrafos van siendo recorridos por
-   un haz de luz al ritmo del scroll. Cada párrafo, al pasar el haz, recibe su
-   color de veredicto y su cifra; a la derecha, el panel de métricas se va
-   llenando por fases. Tres estados —humano, mixto, IA— en un solo documento.
-   ~320vh, `pin` + `scrub`.
-
-3. **Tres lecturas** — titular fijado a la izquierda; a la derecha van pasando
-   estilometría, similitud y reescritura, cada una con su acento (azure, gold,
-   human). El fondo del capítulo se tiñe sutilmente con cada acento.
-
-4. **Antes y después** — el momento del producto de reescritura. Un párrafo con
-   voz de IA (87%) se transforma en su versión reescrita (9%) mientras la cifra
-   cae en pantalla. Crossfade de texto y contador, sin imágenes.
-
-5. **Una estimación, no un veredicto** — banda de honestidad entre filetes de
-   oro. Se revela sola, sin adornos: es la frase más importante de la página.
-
-6. **Precios** con revelado contenido; el plan vitalicio con un halo que
-   respira.
-
-7. **Cierre** con el titular más grande de la página.
-
-### Sistema
-
-- Fondo de capítulo animado con el scroll: `#06070a` → `#0d0f13` → `#06070a`.
-- Parallax de tres velocidades en los focos de luz, nunca en el contenido.
-- Revelado escalonado por lotes (ScrollTrigger.batch), desde estado visible.
-- Contadores en JetBrains Mono con `tabular-nums` para que no bailen.
-- Una sola curva: `cubic-bezier(.16, 1, .3, 1)` / `power4.out` en GSAP.
-- Todo bajo `prefers-reduced-motion`: sin pin, sin parallax, cifras finales.
-- Por debajo de 760px el pin se desactiva; el escáner se muestra apilado.
-- Regla de cápsula: sólo lo que se pulsa. Estados por punto de color + texto.
-- Iconografía: Lucide (trazo 1.5), nunca emoji.
+1. **Campo de lectura.** El héroe es un instrumento: un lienzo dibuja una
+   página en perspectiva cuyas líneas son recorridas por un haz. Las líneas
+   se tiñen del color del veredicto a su paso. Responde al puntero (parallax
+   de tres capas) y se aleja al bajar.
+2. **Cifras que importan.** Cinco al día, dos dólares una vez, cero
+   documentos almacenados. Cuenta al entrar.
+3. **El escáner.** Capítulo fijado. Una hoja de papel real (es papel en los
+   dos temas) se endereza desde la perspectiva, un haz la recorre y cada
+   párrafo recibe su color y su cifra; a la derecha, el informe se llena por
+   fases. La atmósfera vira a rojo cuando el haz cruza los párrafos de IA.
+4. **Una estimación, no un veredicto.** La frase más grande de la página,
+   en serif itálica, palabra a palabra, entre filetes de oro.
+5. **Tres lecturas.** Titular fijado a la izquierda; a la derecha pasan
+   estilometría, similitud y reescritura, cada una con su instrumento
+   dibujado en SVG (forma de onda de cadencia, columnas cotejadas, líneas
+   que se reescriben) y su acento tiñe la luz.
+6. **Misma idea, otra voz.** Capítulo fijado: el párrafo cambia palabra a
+   palabra y la cifra cae de 87 a 9 en un contador de rodillo.
+7. **Precios**, con el plan vitalicio bajo un filete de luz que gira.
+8. **Cierre** con el titular más grande y un botón magnético.
 
 ### Identidad propia, resumida
 
 Apple es producto y certeza, blanco y sans. Veritas es documento y duda
-calibrada, oscuro y serif-itálica. Compartimos el oficio —pin, ritmo,
-profundidad, restricción— y nada más.
+calibrada, oscuro y serif-itálica. Compartimos el oficio (capítulos, ritmo,
+profundidad, contención) y nada más.
