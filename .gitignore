@@ -39,3 +39,6 @@ Thumbs.db
 tmp/
 temp/
 uploads/
+
+# Canvas de diseño ensamblado (generado desde design/*.dc.html + canvas.json)
+design/rediseno-veritas-ai.html

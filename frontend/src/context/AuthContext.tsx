@@ -9,7 +9,7 @@ interface AuthContextType {
   isPremiumModalOpen: boolean;
   openPremiumModal: () => void;
   closePremiumModal: () => void;
-  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string; user?: User }>;
   register: (data: { name: string; last_name: string; email: string; password: string; confirm_password: string }) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   refreshProfile: () => Promise<void>;
@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('veritas_token', res.data.token);
       setToken(res.data.token);
       setUser(res.data.user);
-      return { success: true };
+      return { success: true, user: res.data.user };
     }
 
     return {

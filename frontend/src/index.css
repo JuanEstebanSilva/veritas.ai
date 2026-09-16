@@ -2,154 +2,175 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   TOKENS — valores oklch calculados y verificados en gamut sRGB.
+   Los acentos de marca comparten L 0.76 / C 0.140; el veredicto
+   comparte L 0.74 / C 0.149. Sólo cambia el tono.
+   El tema oscuro es el principal; el claro es su inverso cuidado,
+   con los acentos oscurecidos para conservar 4.5:1 sobre blanco.
+   ============================================================ */
+:root {
+  --ground: 247 247 249;
+  --base: 255 255 255;
+  --surface: 255 255 255;
+  --surface-2: 240 241 244;
+  --line: 226 228 232;
+  --hi: 13 15 19;
+  --mid: 78 82 90;
+  --low: 112 116 124;
+  --azure: 11 121 190;
+  --gold: 150 105 0;
+  --human: 22 132 74;
+  --mixed: 156 104 0;
+  --ai: 196 60 52;
+  --hair: 0 0 0;
+  --hair-a: 0.08;
+  --hair-a2: 0.14;
+  --card: 255 255 255;
+  --card-a: 1;
+  --card-hover: 0 0 0;
+  --card-hover-a: 0.025;
+  --on-accent: 255 255 255;
+  --azure-hover: 9 105 165;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  color-scheme: light;
+}
+.dark {
+  --ground: 6 7 10;
+  --base: 13 15 19;
+  --surface: 23 25 31;
+  --surface-2: 34 37 43;
+  --line: 50 53 60;
+  --hi: 244 245 248;
+  --mid: 175 178 184;
+  --low: 137 140 147;
+  --azure: 64 190 253;
+  --gold: 221 167 51;
+  --human: 76 198 128;
+  --mixed: 219 158 22;
+  --ai: 251 130 122;
+  --hair: 255 255 255;
+  --hair-a: 0.075;
+  --hair-a2: 0.13;
+  --card: 255 255 255;
+  --card-a: 0.025;
+  --card-hover: 255 255 255;
+  --card-hover-a: 0.045;
+  --on-accent: 5 32 46;
+  --azure-hover: 121 208 255;
+  color-scheme: dark;
+}
+
 @layer base {
-  html {
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  html { font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif; scroll-behavior: smooth; }
+  body { background: rgb(var(--ground)); color: rgb(var(--hi)); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; overflow-x: hidden; }
+  h1, h2, h3, h4 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+  ::selection { background: rgb(var(--azure) / 0.35); }
+  :focus-visible { outline: 2px solid rgb(var(--azure)); outline-offset: 3px; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+}
+
+@layer components {
+  /* Filete: 1px de la mezcla de texto sobre fondo. Sustituye a bordes y cajas. */
+  .hair   { border-color: rgb(var(--hair) / var(--hair-a)); }
+  .hair-2 { border-color: rgb(var(--hair) / var(--hair-a2)); }
+  .bg-hair   { background-color: rgb(var(--hair) / var(--hair-a)); }
+  .bg-hair-2 { background-color: rgb(var(--hair) / var(--hair-a2)); }
+
+  /* Antetítulo en versalitas: 11px es el suelo tipográfico */
+  .eyebrow { @apply text-[11px] font-bold uppercase tracking-eyebrow text-low; }
+
+  /* Remate serif de titular: el gesto de marca */
+  .serif { @apply font-display italic font-normal; }
+
+  /* Cifras: siempre mono y tabulares para que no bailen al animarse */
+  .num { @apply font-mono tabular-nums tracking-[-0.02em]; }
+
+  /* Regla de cápsula: sólo lo que se pulsa */
+  .btn { @apply inline-flex items-center justify-center gap-2.5 h-[54px] px-[30px] rounded-full font-sans text-[15px] font-semibold cursor-pointer border border-transparent transition-all duration-450 ease-out select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none; }
+  .btn-sm { @apply h-10 px-5 text-[13.5px]; }
+  .btn-primary { @apply bg-azure shadow-azure hover:shadow-azure-lg hover:-translate-y-0.5; color: rgb(var(--on-accent)); }
+  .btn-primary:hover { background-color: rgb(var(--azure-hover)); }
+  .btn-ghost { @apply bg-hair text-hi border hair-2 hover:bg-hair-2; }
+  .btn-quiet { @apply text-mid hover:text-hi; }
+
+  /* Campo de formulario */
+  .field { @apply h-[52px] w-full rounded-xl border hair bg-hair px-4 text-[14.5px] text-hi placeholder:text-low outline-none transition-all duration-450 ease-out; }
+  .field:hover { border-color: rgb(var(--hair) / var(--hair-a2)); }
+  .field:focus { border-color: rgb(var(--azure) / 0.55); background: rgb(var(--azure) / 0.05); box-shadow: 0 0 0 4px rgb(var(--azure) / 0.11); }
+  .field-label { @apply text-xs font-semibold text-mid tracking-[0.02em]; }
+
+  /* Tarjeta de contenido (estructura, no rótulo) */
+  .card { @apply rounded-[18px] border hair transition-all duration-600 ease-out; background-color: rgb(var(--card) / var(--card-a)); }
+  .card-hover:hover { border-color: rgb(var(--hair) / var(--hair-a2)); background-color: rgb(var(--card-hover) / var(--card-hover-a)); transform: translateY(-3px); }
+
+  /* Punto indicador de estado (sustituye a la pastilla) */
+  .status-dot { @apply inline-block h-[5px] w-[5px] rounded-full; box-shadow: 0 0 0 3px currentColor; opacity: 1; }
+
+  /* Grano fino, sólo en oscuro */
+  .grain { position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .dark .grain { opacity: .035; }
+
+  /* Foco de luz de atmósfera */
+  .glow { position: absolute; border-radius: 9999px; filter: blur(130px); pointer-events: none; will-change: transform; }
+
+  /* Contenedor de página */
+  .wrap { @apply mx-auto w-full max-w-[1180px] px-5 sm:px-8 lg:px-20; }
+}
+
+/* ============================================================
+   ANIMACIONES HEREDADAS (las usa ModalCheckout)
+   ============================================================ */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(32px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+@keyframes stepEnter { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes stepEnterLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes shimmerSweep { 0% { transform: translateX(-100%) skewX(-12deg); } 100% { transform: translateX(350%) skewX(-12deg); } }
+@keyframes pulseGlow { 0%, 100% { opacity: 0.6; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
+@keyframes pulseSlow { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 15% { transform: translateX(-5px); } 30% { transform: translateX(5px); } 45% { transform: translateX(-4px); } 60% { transform: translateX(4px); } 75% { transform: translateX(-2px); } 90% { transform: translateX(2px); } }
+@keyframes progressBarFill { from { width: 0%; } to { width: 100%; } }
+@keyframes progressPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+@keyframes checkDraw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+@keyframes circleDraw { from { stroke-dashoffset: 283; } to { stroke-dashoffset: 0; } }
+@keyframes confettiFall1 { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1; } 100% { transform: translateY(300px) rotate(720deg); opacity: 0; } }
+@keyframes confettiFall2 { 0% { transform: translateY(-20px) rotate(0deg) translateX(0); opacity: 1; } 100% { transform: translateY(280px) rotate(-540deg) translateX(40px); opacity: 0; } }
+@keyframes confettiFall3 { 0% { transform: translateY(-20px) rotate(0deg) translateX(0); opacity: 1; } 100% { transform: translateY(260px) rotate(600deg) translateX(-30px); opacity: 0; } }
+@keyframes stepLineFill { from { width: 0%; } to { width: 100%; } }
+
+.animate-fadeIn        { animation: fadeIn .3s var(--ease) forwards; }
+.animate-slideUp       { animation: slideUp .4s var(--ease) forwards; }
+.animate-scaleIn       { animation: scaleIn .4s var(--ease) forwards; }
+.animate-stepEnter     { animation: stepEnter .35s var(--ease) forwards; }
+.animate-stepEnterLeft { animation: stepEnterLeft .35s var(--ease) forwards; }
+.animate-shimmer       { animation: shimmerSweep 2.8s ease-in-out infinite; }
+.animate-pulseGlow     { animation: pulseGlow 4s ease-in-out infinite; }
+.animate-pulseSlow     { animation: pulseSlow 2s ease-in-out infinite; }
+.animate-shake         { animation: shake .5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+.animate-checkDraw     { animation: checkDraw .6s var(--ease) .3s forwards; stroke-dasharray: 100; stroke-dashoffset: 100; }
+.animate-circleDraw    { animation: circleDraw .7s var(--ease) forwards; stroke-dasharray: 283; stroke-dashoffset: 283; }
+.animate-confetti-1 { animation: confettiFall1 1.4s ease-in .1s forwards; }
+.animate-confetti-2 { animation: confettiFall2 1.6s ease-in .2s forwards; }
+.animate-confetti-3 { animation: confettiFall3 1.5s ease-in 0s forwards; }
+.animate-confetti-4 { animation: confettiFall1 1.8s ease-in .3s forwards; }
+.animate-confetti-5 { animation: confettiFall2 1.3s ease-in .15s forwards; }
+.animate-confetti-6 { animation: confettiFall3 1.7s ease-in .25s forwards; }
+.animate-confetti-7 { animation: confettiFall1 1.5s ease-in .4s forwards; }
+.animate-confetti-8 { animation: confettiFall2 1.6s ease-in .05s forwards; }
+
+/* Barra de desplazamiento discreta */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgb(var(--hair) / 0.18); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--hair) / 0.3); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
   }
 }
-
-/* ============================================================ */
-/* ANIMACIONES DE ENTRADA Y SALIDA                              */
-/* ============================================================ */
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(32px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.85); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
-@keyframes stepEnter {
-  from { opacity: 0; transform: translateX(20px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes stepEnterLeft {
-  from { opacity: 0; transform: translateX(-20px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-/* ============================================================ */
-/* ANIMACIONES DE FEEDBACK Y ESTADO                             */
-/* ============================================================ */
-
-@keyframes shimmerSweep {
-  0%   { transform: translateX(-100%) skewX(-12deg); }
-  100% { transform: translateX(350%) skewX(-12deg); }
-}
-
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50%       { opacity: 1;   transform: scale(1.05); }
-}
-
-@keyframes pulseSlow {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.6; }
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  15%       { transform: translateX(-5px); }
-  30%       { transform: translateX(5px); }
-  45%       { transform: translateX(-4px); }
-  60%       { transform: translateX(4px); }
-  75%       { transform: translateX(-2px); }
-  90%       { transform: translateX(2px); }
-}
-
-/* ============================================================ */
-/* BARRA DE PROGRESO DE PROCESAMIENTO                          */
-/* ============================================================ */
-
-@keyframes progressBarFill {
-  from { width: 0%; }
-  to   { width: 100%; }
-}
-
-@keyframes progressPulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.7; }
-}
-
-/* ============================================================ */
-/* ANIMACIÓN DE CHECK SVG (ÉXITO)                              */
-/* ============================================================ */
-
-@keyframes checkDraw {
-  from { stroke-dashoffset: 100; }
-  to   { stroke-dashoffset: 0; }
-}
-
-@keyframes circleDraw {
-  from { stroke-dashoffset: 283; }
-  to   { stroke-dashoffset: 0; }
-}
-
-/* ============================================================ */
-/* CONFETTI / PARTÍCULAS DE ÉXITO                              */
-/* ============================================================ */
-
-@keyframes confettiFall1 {
-  0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
-  100% { transform: translateY(300px) rotate(720deg); opacity: 0; }
-}
-@keyframes confettiFall2 {
-  0%   { transform: translateY(-20px) rotate(0deg) translateX(0);    opacity: 1; }
-  100% { transform: translateY(280px) rotate(-540deg) translateX(40px); opacity: 0; }
-}
-@keyframes confettiFall3 {
-  0%   { transform: translateY(-20px) rotate(0deg) translateX(0);     opacity: 1; }
-  100% { transform: translateY(260px) rotate(600deg) translateX(-30px); opacity: 0; }
-}
-
-/* ============================================================ */
-/* INDICADOR DE PASOS — LÍNEA FILL                             */
-/* ============================================================ */
-
-@keyframes stepLineFill {
-  from { width: 0%; }
-  to   { width: 100%; }
-}
-
-/* ============================================================ */
-/* UTILITY CLASSES                                             */
-/* ============================================================ */
-
-.animate-fadeIn       { animation: fadeIn       0.3s  cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-slideUp      { animation: slideUp      0.4s  cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-scaleIn      { animation: scaleIn      0.4s  cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-stepEnter    { animation: stepEnter    0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-stepEnterLeft{ animation: stepEnterLeft 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-shimmer      { animation: shimmerSweep 2.8s  ease-in-out infinite; }
-.animate-pulseGlow    { animation: pulseGlow    4s    ease-in-out infinite; }
-.animate-pulseSlow    { animation: pulseSlow    2s    ease-in-out infinite; }
-.animate-shake        { animation: shake        0.5s  cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
-.animate-checkDraw    { animation: checkDraw    0.6s  cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards; stroke-dasharray: 100; stroke-dashoffset: 100; }
-.animate-circleDraw   { animation: circleDraw   0.7s  cubic-bezier(0.16, 1, 0.3, 1) forwards; stroke-dasharray: 283; stroke-dashoffset: 283; }
-
-.animate-confetti-1   { animation: confettiFall1 1.4s ease-in 0.1s forwards; }
-.animate-confetti-2   { animation: confettiFall2 1.6s ease-in 0.2s forwards; }
-.animate-confetti-3   { animation: confettiFall3 1.5s ease-in 0.0s forwards; }
-.animate-confetti-4   { animation: confettiFall1 1.8s ease-in 0.3s forwards; }
-.animate-confetti-5   { animation: confettiFall2 1.3s ease-in 0.15s forwards; }
-.animate-confetti-6   { animation: confettiFall3 1.7s ease-in 0.25s forwards; }
-.animate-confetti-7   { animation: confettiFall1 1.5s ease-in 0.4s forwards; }
-.animate-confetti-8   { animation: confettiFall2 1.6s ease-in 0.05s forwards; }
-
-/* ============================================================ */
-/* SCROLLBAR MODERNO ESTILIZADO                                */
-/* ============================================================ */
-
-::-webkit-scrollbar       { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.4); border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.6); }

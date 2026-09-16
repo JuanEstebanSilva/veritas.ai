@@ -13,7 +13,8 @@ import { AdminDashboard } from './pages/AdminDashboard';
 
 export const App: React.FC = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen flex flex-col bg-ground text-hi transition-colors duration-600">
+      <div className="grain" aria-hidden="true" />
       <Navbar />
 
       <Routes>
@@ -21,47 +22,15 @@ export const App: React.FC = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* Rutas Protegidas de Usuario */}
-        <Route
-          path="/dashboard"
-          element={
-            <AppLayout>
-              <UserDashboard />
-            </AppLayout>
-          }
-        />
-        <Route
-          path="/analyzer"
-          element={
-            <AppLayout>
-              <AnalyzerPage />
-            </AppLayout>
-          }
-        />
-        <Route
-          path="/history"
-          element={
-            <AppLayout>
-              <HistoryPage />
-            </AppLayout>
-          }
-        />
+        <Route path="/dashboard" element={<AppLayout><UserDashboard /></AppLayout>} />
+        <Route path="/analyzer" element={<AppLayout><AnalyzerPage /></AppLayout>} />
+        <Route path="/history" element={<AppLayout><HistoryPage /></AppLayout>} />
 
-        {/* Ruta Protegida de Administrador */}
-        <Route
-          path="/admin"
-          element={
-            <AdminLayout>
-              <AdminDashboard />
-            </AdminLayout>
-          }
-        />
+        <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
 
-        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {/* Modal Global de Pago Premium */}
       <ModalCheckout />
     </div>
   );

@@ -2,124 +2,91 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { sound } from '../../utils/soundEffects';
-import {
-  LayoutDashboard,
-  FileSearch,
-  History,
-  Crown,
-  ShieldAlert,
-  ShieldCheck,
-  CheckCircle2,
-  Lock,
-} from 'lucide-react';
+import { LayoutDashboard, FileSearch, History, ShieldCheck, Users } from 'lucide-react';
 
+const item = ({ isActive }: { isActive: boolean }) =>
+  `group relative flex items-center gap-3 h-11 pl-4 pr-3 rounded-xl text-[14px] font-medium transition-all duration-450 ease-out ${
+    isActive ? 'text-hi bg-hair' : 'text-mid hover:text-hi hover:bg-hair'
+  }`;
+
+const Bar: React.FC<{ active: boolean; tone?: 'azure' | 'gold' }> = ({ active, tone = 'azure' }) => (
+  <span
+    aria-hidden="true"
+    className={`absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[2px] rounded-full transition-all duration-450 ease-out ${
+      active ? (tone === 'gold' ? 'bg-gold' : 'bg-azure') + ' opacity-100' : 'opacity-0'
+    }`}
+  />
+);
+
+/**
+ * Barra lateral del área autenticada. Mantiene navegación, sección de
+ * administración por rol, cuota diaria con acceso a Premium y estado de licencia.
+ */
 export const Sidebar: React.FC = () => {
   const { user, isAdmin, isPremium, openPremiumModal } = useAuth();
-
-  const navClasses = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-      isActive
-        ? 'bg-blue-600 text-white shadow-sm font-bold'
-        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
-    }`;
+  const used = user?.daily_analysis_count || 0;
+  const pct = Math.min((used / 5) * 100, 100);
+  const click = () => sound.playClick();
 
   return (
-    <aside className="w-64 shrink-0 hidden md:flex flex-col justify-between p-4 border-r border-slate-200/90 dark:border-slate-800/90 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm min-h-[calc(100vh-4rem)]">
-      <div className="space-y-6">
-        {/* Navegación Principal */}
-        <div className="space-y-1">
-          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-            Navegación
-          </div>
-
-          <NavLink to="/dashboard" onClick={() => sound.playClick()} className={navClasses}>
-            <span className="text-base">📊</span>
-            <span>Dashboard</span>
+    <aside className="hidden md:flex w-64 shrink-0 flex-col justify-between py-6 pr-6 border-r hair min-h-[calc(100vh-78px)]">
+      <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-1">
+          <span className="eyebrow px-4 pb-3">Navegación</span>
+          <NavLink to="/dashboard" onClick={click} className={item}>
+            {({ isActive }) => (<><Bar active={isActive} /><LayoutDashboard className="w-4 h-4" strokeWidth={1.6} /><span>Panel</span></>)}
           </NavLink>
-
-          <NavLink to="/analyzer" onClick={() => sound.playClick()} className={navClasses}>
-            <span className="text-base">🔍</span>
-            <span>Analizador de Textos</span>
+          <NavLink to="/analyzer" onClick={click} className={item}>
+            {({ isActive }) => (<><Bar active={isActive} /><FileSearch className="w-4 h-4" strokeWidth={1.6} /><span>Analizador</span></>)}
           </NavLink>
-
-          <NavLink to="/history" onClick={() => sound.playClick()} className={navClasses}>
-            <span className="text-base">🕒</span>
-            <span>Registro de Auditorías</span>
+          <NavLink to="/history" onClick={click} className={item}>
+            {({ isActive }) => (<><Bar active={isActive} /><History className="w-4 h-4" strokeWidth={1.6} /><span>Historial</span></>)}
           </NavLink>
         </div>
 
-        {/* Sección de Administrador (Solo si es ADMIN) */}
         {isAdmin && (
-          <div className="space-y-1 pt-4 border-t border-slate-200/80 dark:border-slate-800">
-            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-500 flex items-center gap-1.5">
-              <span>🛡️</span>
-              <span>Administración</span>
-            </div>
-
-            <NavLink
-              to="/admin"
-              onClick={() => sound.playClick()}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  isActive
-                    ? 'bg-amber-600 text-white font-bold shadow-sm'
-                    : 'text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40'
-                }`
-              }
-            >
-              <span className="text-base">👑</span>
-              <span>Control de Usuarios</span>
+          <div className="flex flex-col gap-1 pt-6 border-t hair">
+            <span className="eyebrow px-4 pb-3 text-gold">Administración</span>
+            <NavLink to="/admin" onClick={click} className={item}>
+              {({ isActive }) => (<><Bar active={isActive} tone="gold" /><Users className="w-4 h-4" strokeWidth={1.6} /><span>Usuarios y métricas</span></>)}
             </NavLink>
           </div>
         )}
       </div>
 
-      {/* Tarjeta de Estado de Cuenta / Licencia */}
-      <div className="pt-4 border-t border-slate-200/80 dark:border-slate-800 space-y-3">
+      <div className="flex flex-col gap-5 pt-6 border-t hair">
         {isPremium ? (
-          <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-center space-y-1">
-            <ShieldCheck className="w-6 h-6 text-emerald-600 dark:text-emerald-400 mx-auto" />
-            <div className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
-              Licencia Vitalicia Activa
+          <div className="flex items-start gap-3 px-1">
+            <ShieldCheck className="w-5 h-5 text-gold shrink-0 mt-0.5" strokeWidth={1.6} />
+            <div className="flex flex-col gap-1">
+              <span className="text-[13px] font-semibold text-hi">Licencia vitalicia</span>
+              <span className="text-[12px] text-low leading-relaxed">Análisis y descargas sin límite</span>
             </div>
-            <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">
-              Análisis y descargas ilimitadas
-            </p>
           </div>
         ) : (
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Cuota Diaria
-              </span>
-              <span className="text-xs font-black text-blue-600 dark:text-blue-400">
-                {user?.daily_analysis_count || 0}/5
-              </span>
+          <div className="flex flex-col gap-4 px-1">
+            <div className="flex items-baseline justify-between">
+              <span className="eyebrow">Cuota de hoy</span>
+              <span className="num text-[13px] text-hi">{used}<span className="text-low">/5</span></span>
             </div>
-
-            {/* Barra de progreso sobria */}
-            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
-              <div
-                className="bg-blue-600 dark:bg-blue-500 h-full rounded-full transition-all"
-                style={{ width: `${Math.min(((user?.daily_analysis_count || 0) / 5) * 100, 100)}%` }}
-              />
+            <div className="h-[3px] rounded-full bg-hair overflow-hidden">
+              <div className="h-full rounded-full bg-azure transition-all duration-900 ease-out" style={{ width: `${pct}%` }} />
             </div>
-
             <button
+              type="button"
               onClick={() => { sound.playClick(); openPremiumModal(); }}
-              className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 transition-all"
+              className="btn btn-primary btn-sm w-full"
             >
-              <Crown className="w-3.5 h-3.5 text-amber-300" />
-              <span>Obtener Vitalicio ($2 USD)</span>
+              Licencia vitalicia · $2
             </button>
           </div>
         )}
 
-        <div className="flex items-center justify-between text-[10px] text-slate-400 px-2 font-medium">
-          <span>Veritas AI • v1.2</span>
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span>Sistema Seguro</span>
+        <div className="flex items-center justify-between px-1 text-[11px] text-low">
+          <span className="font-mono">v1.2</span>
+          <span className="inline-flex items-center gap-2">
+            <span className="h-[5px] w-[5px] rounded-full bg-human" />
+            Sistema seguro
           </span>
         </div>
       </div>

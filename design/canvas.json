@@ -1,0 +1,19 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html",          "x": 0,    "y": 0,    "w": 1440, "h": 4600, "title": "Landing — escritorio" },
+    { "file": "Login.dc.html",         "x": 1600, "y": 0,    "w": 1440, "h": 900,  "title": "Iniciar sesión" },
+    { "file": "Register.dc.html",      "x": 1600, "y": 1060, "w": 1440, "h": 900,  "title": "Crear cuenta" },
+    { "file": "LandingMobile.dc.html", "x": 1600, "y": 2120, "w": 390,  "h": 2480, "title": "Landing — móvil 390px" }
+  ],
+  "annotations": [
+    { "id": "sistema", "x": 2120, "y": 2120, "w": 420,
+      "text": "SISTEMA DE DISEÑO\n\nFondos (oklch h265, croma casi nulo)\n  void #06070a · base #0d0f13\n  surface #17191f · surface-2 #22252b\n\nTexto (contraste WCAG AA verificado)\n  alto #f4f5f8 · medio #afb2b8 · bajo #898c93\n\nAcentos de marca — L 0.76 / C 0.140\n  azure #40befd · gold #dda733\n\nVeredicto — L 0.74 / C 0.149\n  humano #4cc680 · mixto #db9e16 · IA #fb827a\n\nTodos comparten luminosidad y croma: solo\ncambia el tono, por eso conviven sin pelearse." },
+    { "id": "tipografia", "x": 2120, "y": 2900, "w": 420,
+      "text": "TIPOGRAFÍA\n\nDisplay — Instrument Serif itálica\n  Solo para la segunda línea de cada titular.\n  Es lo que aleja esto del look SaaS genérico.\n\nInterfaz — Manrope 300/500/600/800\n  Titulares en 300 a tamaño grande, tracking -0.04em.\n  Deliberadamente NO Inter.\n\nDatos — JetBrains Mono\n  Todas las cifras, con tabular-nums para que\n  no bailen al animarse.\n\nNada de emojis: los iconos son SVG de trazo\ndibujados a mano sobre rejilla de 24px." },
+    { "id": "motion", "x": 2120, "y": 3680, "w": 420,
+      "text": "MOVIMIENTO\n\nCurva única: cubic-bezier(.16,1,.3,1)\n\n1. Entrada escalonada (rise): opacidad +\n   translateY + desenfoque, con retardos de\n   0.05s a 0.66s. Se ve al cargar el artboard.\n2. Haz de escaneo recorriendo el informe,\n   en bucle de 7s.\n3. Barras de métrica creciendo desde la\n   izquierda al entrar.\n4. Resplandor que respira en el plan de pago.\n\nTodo respeta prefers-reduced-motion.\nAl pasarlo a React: Framer Motion para 1 y 3,\nCSS puro para 2 y 4." },
+    { "id": "pendiente", "x": 2120, "y": 4480, "w": 420,
+      "text": "PENDIENTE DE TU DECISIÓN\n\n· Las cifras del panel izquierdo del login son\n  marcadores [TU CIFRA]. Dime los números\n  reales o quitamos ese bloque.\n· Razón social y ciudad del pie, igual.\n· Los datos del informe (96.4%, el .docx,\n  los párrafos de ejemplo) son de muestra,\n  elegidos para enseñar los tres estados:\n  IA, mixto y humano.\n· Falta decidir si el tema claro se mantiene.\n  Ahora mismo esto es sólo oscuro." }
+  ],
+  "launch": { "view": "canvas" }
+}
