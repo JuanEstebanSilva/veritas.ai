@@ -1,0 +1,78 @@
+/* ============================================================
+   LANDING — coreografía por scroll derivada de --p (0–1).
+   Cada capítulo con [data-scroll-group] recibe --p de ScrollTrigger;
+   todo lo demás es CSS: umbrales, cruces y transformaciones. El JS
+   nunca escribe colores, así que el cambio de tema es completo.
+   ============================================================ */
+
+.landing { background: rgb(var(--chapter)); transition: background-color .9s var(--ease-in-out); }
+.landing-progress { transform: scaleX(var(--p)); }
+
+/* ── Héroe: se aleja al bajar; el instrumento responde al puntero ── */
+.hero-inner { transform: translate3d(0, calc(var(--p) * -48px), 0) scale(calc(1 - var(--p) * .06)); opacity: calc(1 - var(--p) * 1.15); }
+.hero-copy { transform: translate3d(calc(var(--mx, 0) * -5px), calc(var(--my, 0) * -4px), 0); }
+.hero-field { transform: translate3d(calc(var(--mx, 0) * 12px), calc(var(--my, 0) * 9px), 0); }
+.hero-field-glow { transform: translate3d(calc(var(--mx, 0) * 24px), calc(var(--my, 0) * 18px), 0); }
+
+/* ── El escáner ── */
+.scanner { --pe: clamp(0, calc(var(--p) / .14), 1); --pb: clamp(0, calc((var(--p) - .14) / .66), 1.1); }
+.scanner-sheet { transform: perspective(1400px) rotateX(calc((1 - var(--pe)) * 16deg)) translate3d(0, calc((1 - var(--pe)) * 56px), 0) scale(calc(.93 + var(--pe) * .07)); transform-origin: 50% 100%; }
+.scanner-panel { opacity: calc(.4 + var(--pe) * .6); transform: translate3d(0, calc((1 - var(--pe)) * 28px), 0); }
+.sheet-beam { position: absolute; left: 0; right: 0; z-index: 2; height: 22%; pointer-events: none;
+  top: calc(-24% + var(--pb) * 126%);
+  opacity: min(clamp(0, calc(var(--pb) * 10), 1), clamp(0, calc((1 - var(--pb)) * 10), 1));
+  background: linear-gradient(180deg, rgb(var(--azure) / 0) 0%, rgb(var(--azure) / .10) 58%, rgb(var(--azure) / .5) 100%); }
+.sheet-beam::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: rgb(var(--azure)); box-shadow: 0 0 18px 4px rgb(var(--azure) / .5); }
+.sheet-para { --lit: clamp(0, calc((var(--pb) - var(--at)) * 9), 1); }
+.sheet-lit { background: rgb(var(--tone)); opacity: calc(var(--lit) * .62); }
+.sheet-score { color: rgb(var(--tone)); opacity: var(--lit); transform: translate3d(calc((1 - var(--lit)) * 8px), 0, 0); }
+.metric { --k: clamp(0, calc((var(--p) - var(--at)) * 5), 1); opacity: calc(.32 + .68 * var(--k)); transform: translate3d(0, calc((1 - var(--k)) * 10px), 0); }
+.metric-bar { transform: scaleX(calc(var(--w) * var(--k))); transform-origin: left center; }
+.scanner-grade { --k: clamp(0, calc((var(--p) - .88) * 12), 1); opacity: var(--k); transform: translate3d(0, calc((1 - var(--k)) * 8px), 0); }
+.scanner-status { --k: clamp(0, calc((var(--p) - .93) * 16), 1); opacity: var(--k); }
+.scanner-glow-ai { --d: calc((var(--pb) - .47) * 3.2); opacity: clamp(0, calc(1 - max(var(--d), calc(-1 * var(--d)))), 1); }
+.scanner-glow-human { --d: calc((var(--pb) - .9) * 3); opacity: clamp(0, calc(1 - max(var(--d), calc(-1 * var(--d)))), 1); }
+.scanner-hint { opacity: calc(1 - var(--pb) * 6); }
+[data-static] .sheet-beam { display: none; }
+
+/* ── Tres lecturas: capítulos que se cruzan ── */
+.chapter { --d: calc(var(--p) * 3 - var(--i) - .5); --a: max(var(--d), calc(-1 * var(--d))); --k: clamp(0, calc((.5 - var(--a)) * 5), 1);
+  position: absolute; inset: 0; opacity: var(--k); transform: translate3d(0, calc(var(--d) * -64px), 0); }
+.chapter[data-first] { --a: max(var(--d), 0); }
+.chapter[data-last] { --a: max(calc(-1 * var(--d)), 0); }
+[data-static] .chapter { position: relative; --k: 1; --d: 0; }
+.rail-mark { transform: translate3d(0, calc(var(--p) * 200%), 0); }
+.rail-label { --d: calc(var(--p) * 3 - var(--i) - .5); --a: max(var(--d), calc(-1 * var(--d))); --k: clamp(0, calc((.55 - var(--a)) * 5), 1); opacity: calc(.32 + .68 * var(--k)); }
+.rail-label[data-first] { --a: max(var(--d), 0); }
+.rail-label[data-last] { --a: max(calc(-1 * var(--d)), 0); }
+.readings-glow { --d: calc(var(--p) * 3 - var(--i) - .5); --a: max(var(--d), calc(-1 * var(--d))); opacity: calc(var(--glow-a) * clamp(0, calc((.9 - var(--a)) * 2), 1)); }
+.readings-glow[data-first] { --a: max(var(--d), 0); }
+.readings-glow[data-last] { --a: max(calc(-1 * var(--d)), 0); }
+[data-static] .readings-glow { opacity: 0; }
+/* Instrumentos: animados con --k del capítulo */
+.inst-bar { transform: scaleY(clamp(0, calc((var(--k) - var(--i) * .035) * 1.7), 1)); }
+.inst-fade { opacity: clamp(0, calc((var(--k) - .55) * 3), 1); }
+.inst-match { opacity: calc(.3 + .7 * var(--k)); }
+.inst-link { stroke-dasharray: 1; stroke-dashoffset: calc(1 - clamp(0, calc((var(--k) - .3 - var(--i, 0) * .18) * 2.6), 1)); }
+.inst-line-old, .inst-line-new { --kk: clamp(0, calc((var(--k) - .35 - var(--i) * .06) * 3), 1); transform: scaleX(calc(var(--w0) + (var(--w1) - var(--w0)) * var(--kk))); }
+.inst-line-old { opacity: calc(1 - var(--kk)); }
+.inst-line-new { opacity: var(--kk); }
+.inst-old { opacity: calc(1 - clamp(0, calc((var(--k) - .6) * 5), 1)); }
+.inst-new { opacity: clamp(0, calc((var(--k) - .6) * 5), 1); }
+
+/* ── Misma idea, otra voz: cambio palabra a palabra ── */
+.ba { --pk: clamp(0, calc((var(--p) - .18) / .56), 1); }
+.diff-cell { display: inline-grid; grid-template-areas: 'w'; vertical-align: baseline; --k: clamp(0, calc((var(--pk) - var(--at) * .82) * 5), 1); }
+.diff-cell > span { grid-area: w; white-space: nowrap; justify-self: start; }
+.diff-cell[style*='--w0'] { width: calc((var(--w0) + (var(--w1) - var(--w0)) * var(--k)) * 1px); }
+.diff-old { color: rgb(var(--ai)); opacity: calc(1 - var(--k)); transform: translate3d(0, calc(var(--k) * -.4em), 0); }
+.diff-new { color: rgb(var(--human)); opacity: var(--k); transform: translate3d(0, calc((1 - var(--k)) * .4em), 0); }
+.ba-score-ai { opacity: calc(1 - var(--pk)); }
+.ba-score-human { opacity: var(--pk); }
+.ba-bar { transform: scaleX(calc(.87 - .78 * var(--pk))); transform-origin: left center; }
+.ba-change { --k: clamp(0, calc((var(--pk) - var(--at)) * 6), 1); opacity: var(--k); transform: translate3d(calc((1 - var(--k)) * -10px), 0, 0); }
+.ba-caption-old { opacity: calc(1 - var(--pk)); }
+.ba-caption-new { opacity: var(--pk); }
+
+/* Alto de pantalla para el contenido fijado */
+.pin-screen { height: 100vh; height: 100svh; }

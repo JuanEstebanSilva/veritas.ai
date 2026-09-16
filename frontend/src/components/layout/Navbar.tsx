@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { startTransition, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -7,14 +7,15 @@ import { sound } from '../../utils/soundEffects';
 import { Sun, Moon, LogOut, Volume2, VolumeX, Menu, X } from 'lucide-react';
 
 const linkBase =
-  'relative text-[14px] font-medium transition-colors duration-450 ease-out after:absolute after:left-0 after:-bottom-1.5 after:h-px after:w-full after:origin-left after:scale-x-0 after:bg-azure after:transition-transform after:duration-450 after:ease-out';
+  'relative text-[14px] font-medium transition-colors duration-240 ease-out after:absolute after:left-0 after:-bottom-1.5 after:h-px after:w-full after:origin-left after:scale-x-0 after:bg-azure after:transition-transform after:duration-450 after:ease-out';
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `${linkBase} ${isActive ? 'text-hi after:scale-x-100' : 'text-mid hover:text-hi'}`;
 
 /**
- * Navegación superior. Se condensa al separarse del inicio de la página
- * (78 → 62px, gana fondo y filete). Mantiene: enlaces por rol, sonido, tema,
- * cuota diaria y acceso a Premium, perfil y cierre de sesión.
+ * Navegación superior. Altura constante (--nav-h) para que condensarse al
+ * hacer scroll nunca mueva el contenido: sólo cambian fondo, filete y
+ * desenfoque. Mantiene enlaces por rol, sonido, tema, cuota diaria y acceso
+ * a Premium, perfil y cierre de sesión.
  */
 export const Navbar: React.FC = () => {
   const { user, isAuthenticated, isAdmin, isPremium, logout, openPremiumModal } = useAuth();
@@ -25,19 +26,44 @@ export const Navbar: React.FC = () => {
   const [soundActive, setSoundActive] = useState(sound.isEnabled());
   const [stuck, setStuck] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const stuckRef = useRef(false);
 
+  // Umbral con histéresis (24 ↓ / 8 ↑) para que nunca parpadee cerca del límite.
   useEffect(() => {
-    const onScroll = () => setStuck(window.scrollY > 40);
-    onScroll();
+    let raf = 0;
+    const check = () => {
+      raf = 0;
+      const y = window.scrollY;
+      const next = stuckRef.current ? y > 8 : y > 24;
+      if (next !== stuckRef.current) { stuckRef.current = next; setStuck(next); }
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(check); };
+    check();
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    return () => { window.removeEventListener('scroll', onScroll); if (raf) cancelAnimationFrame(raf); };
   }, []);
 
-  // Cierra el menú móvil al navegar
+  // Cierra el menú móvil al navegar y con Escape
   useEffect(() => { setMenuOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false); };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [menuOpen]);
 
   const handleToggleSound = () => setSoundActive(sound.toggle());
-  const handleLogout = () => { sound.playClick(); logout(); navigate('/login'); };
+  const handleLogout = useCallback(() => {
+    sound.playClick();
+    setMenuOpen(false);
+    // Ruta y sesión cambian en la misma transición: la ruta protegida no
+    // llega a redirigir por su cuenta y no hay doble navegación.
+    startTransition(() => {
+      navigate('/login', { replace: true });
+      logout();
+    });
+  }, [navigate, logout]);
   const click = () => sound.playClick();
 
   const links = isAuthenticated ? (
@@ -51,8 +77,8 @@ export const Navbar: React.FC = () => {
 
   const quota = isAuthenticated && user ? (
     isPremium ? (
-      <span className="hidden sm:inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-gold">
-        <span className="status-dot opacity-90" style={{ color: 'rgb(var(--gold) / .18)', background: 'rgb(var(--gold))' }} />
+      <span className="hidden sm:inline-flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.16em] text-gold">
+        <span className="status-dot" style={{ color: 'rgb(var(--gold) / .18)', background: 'rgb(var(--gold))' }} />
         Vitalicio
       </span>
     ) : (
@@ -70,57 +96,41 @@ export const Navbar: React.FC = () => {
 
   return (
     <header
-      className={`sticky top-0 z-40 w-full border-b transition-all duration-600 ease-out ${
-        stuck ? 'bg-ground/75 backdrop-blur-2xl hair' : 'border-transparent bg-transparent'
+      className={`sticky top-0 z-40 w-full h-[var(--nav-h)] border-b transition-[background-color,border-color,backdrop-filter] duration-450 ease-out ${
+        stuck || menuOpen ? 'bg-ground/75 backdrop-blur-xl hair' : 'border-transparent bg-transparent'
       }`}
     >
-      <div className={`wrap flex items-center justify-between gap-6 transition-all duration-600 ease-out ${stuck ? 'h-[62px]' : 'h-[78px]'}`}>
-        <Link to="/" onClick={click} className="shrink-0" aria-label="Inicio de Veritas AI">
+      <div className="wrap h-full flex items-center justify-between gap-6">
+        <Link to="/" onClick={click} className="shrink-0 rounded-md" aria-label="Inicio de Veritas AI">
           <VeritasLogo variant="compact" size="md" />
         </Link>
 
-        {links && <nav className="hidden md:flex items-center gap-8">{links}</nav>}
+        {links && <nav aria-label="Principal" className="hidden md:flex items-center gap-8">{links}</nav>}
 
-        <div className="flex items-center gap-1.5 sm:gap-3">
-          <button
-            type="button"
-            onClick={handleToggleSound}
-            aria-label={soundActive ? 'Desactivar sonidos' : 'Activar sonidos'}
-            title={soundActive ? 'Sonidos activos' : 'Sonidos silenciados'}
-            className="p-2 rounded-full text-low hover:text-hi hover:bg-hair transition-colors duration-450"
-          >
+        <div className="flex items-center gap-0.5 sm:gap-2">
+          <button type="button" onClick={handleToggleSound} aria-label={soundActive ? 'Desactivar sonidos' : 'Activar sonidos'} aria-pressed={soundActive} title={soundActive ? 'Sonidos activos' : 'Sonidos silenciados'} className="btn-icon">
             {soundActive ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
           </button>
 
-          <button
-            type="button"
-            onClick={() => { sound.playToggle(); toggleTheme(); }}
-            aria-label="Cambiar tema"
-            title="Cambiar tema claro / oscuro"
-            className="p-2 rounded-full text-low hover:text-hi hover:bg-hair transition-colors duration-450"
-          >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          <button type="button" onClick={() => { sound.playToggle(); toggleTheme(); }} aria-label={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'} title="Cambiar tema claro / oscuro" className="btn-icon relative">
+            <Sun className={`absolute w-4 h-4 transition-[opacity,transform] duration-450 ease-out ${theme === 'dark' ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-75'}`} />
+            <Moon className={`absolute w-4 h-4 transition-[opacity,transform] duration-450 ease-out ${theme === 'dark' ? 'opacity-0 rotate-90 scale-75' : 'opacity-100 rotate-0 scale-100'}`} />
           </button>
 
           {quota}
 
           {isAuthenticated && user ? (
-            <div className="hidden sm:flex items-center gap-3 pl-3 border-l hair">
+            <div className="hidden sm:flex items-center gap-2 pl-3 ml-1 border-l hair">
               <div className="text-right leading-tight">
                 <div className="text-[13px] font-semibold text-hi">{user.name}</div>
                 <div className="text-[11px] text-low">{isAdmin ? 'Administrador' : isPremium ? 'Premium' : 'Estándar'}</div>
               </div>
-              <button
-                type="button"
-                onClick={handleLogout}
-                title="Cerrar sesión"
-                className="p-2 rounded-full text-low hover:text-ai hover:bg-ai/10 transition-colors duration-450"
-              >
+              <button type="button" onClick={handleLogout} title="Cerrar sesión" aria-label="Cerrar sesión" className="btn-icon hover:!text-ai hover:!bg-ai/10">
                 <LogOut className="w-4 h-4" />
               </button>
             </div>
           ) : (
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2 ml-1">
               <Link to="/login" onClick={click} className="btn btn-quiet btn-sm px-3">Acceder</Link>
               <Link to="/register" onClick={click} className="btn btn-ghost btn-sm">Crear cuenta</Link>
             </div>
@@ -131,18 +141,25 @@ export const Navbar: React.FC = () => {
             onClick={() => setMenuOpen((v) => !v)}
             aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
             aria-expanded={menuOpen}
-            className="md:hidden p-2 rounded-full text-mid hover:text-hi hover:bg-hair transition-colors duration-450"
+            aria-controls="mobile-menu"
+            className="md:hidden btn-icon text-mid"
           >
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {menuOpen && (
-        <div className="md:hidden border-t hair bg-ground/95 backdrop-blur-2xl animate-page-in">
+      {/* Menú móvil: panel bajo la cabecera con velo que cierra al tocar */}
+      <div
+        id="mobile-menu"
+        className={`md:hidden fixed inset-x-0 top-[var(--nav-h)] bottom-0 z-40 transition-[opacity,visibility] duration-240 ease-out ${menuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}
+        aria-hidden={!menuOpen}
+      >
+        <div className="absolute inset-0 bg-ground/60" onClick={() => setMenuOpen(false)} />
+        <div className={`relative border-t hair bg-ground/95 backdrop-blur-xl transition-transform duration-320 ease-drawer ${menuOpen ? 'translate-y-0' : '-translate-y-3'}`}>
           <div className="wrap py-5 flex flex-col gap-5">
             {links ? (
-              <nav className="flex flex-col gap-4 text-[15px]">{links}</nav>
+              <nav aria-label="Principal (móvil)" className="flex flex-col gap-4 text-[15px]">{links}</nav>
             ) : (
               <div className="flex flex-col gap-3">
                 <Link to="/login" onClick={click} className="btn btn-ghost w-full">Acceder</Link>
@@ -162,7 +179,7 @@ export const Navbar: React.FC = () => {
             )}
           </div>
         </div>
-      )}
+      </div>
     </header>
   );
 };

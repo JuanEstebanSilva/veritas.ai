@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { analysisApi, writingApi } from '../services/api';
 import { Analysis } from '../types';
-import { ResultScoreCard, DiffViewer } from '../components/analysis';
+import { ResultScoreCard, DiffViewer, AnalysisProgress } from '../components/analysis';
+import { useToast } from '../components/ui';
 import { sound } from '../utils/soundEffects';
 import { getScoreMood } from '../utils/scoreMood';
 import { CountUp } from '../motion';
-import { UploadCloud, FileText, ExternalLink, AlertCircle, Loader2, RefreshCw, Copy, Check, Download, ArrowRight, Sparkles } from 'lucide-react';
+import { UploadCloud, FileText, ExternalLink, AlertCircle, Loader2, RefreshCw, Copy, Check, Download, ArrowRight, Sparkles, X } from 'lucide-react';
 
 export const AnalyzerPage: React.FC = () => {
   const { isAuthenticated, openPremiumModal, refreshProfile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const toast = useToast();
 
   // Modo de operación: analizador completo vs reescritura directa
   const [mode, setMode] = useState<'analyzer' | 'humanizer'>('analyzer');
@@ -23,6 +25,7 @@ export const AnalyzerPage: React.FC = () => {
   const [titleInput, setTitleInput] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
 
   // Procesamiento y resultado
   const [loading, setLoading] = useState(false);
@@ -38,6 +41,7 @@ export const AnalyzerPage: React.FC = () => {
     originalAiScore?: number; improvedAiScore?: number; aiReduction?: number;
   } | null>(null);
 
+
   // Carga de un análisis existente por URL (?id=)
   useEffect(() => {
     const id = new URLSearchParams(location.search).get('id');
@@ -47,6 +51,8 @@ export const AnalyzerPage: React.FC = () => {
 
   const loadAnalysisById = async (id: string) => {
     setLoading(true);
+    setLoadingStage('Recuperando el informe del historial…');
+    setError(null);
     const res = await analysisApi.getById(id);
     setLoading(false);
     if (res.data?.success && res.data.analysis) {
@@ -66,8 +72,8 @@ export const AnalyzerPage: React.FC = () => {
 
   const validateAndSetFile = (file: File) => {
     setError(null);
-    if (!file.name.toLowerCase().endsWith('.docx')) { setError('Formato inválido. Solo se admiten documentos en formato .docx'); return; }
-    if (file.size > 10 * 1024 * 1024) { setError('El archivo excede el tamaño máximo permitido de 10 MB.'); return; }
+    if (!file.name.toLowerCase().endsWith('.docx')) { sound.playError(); setError('Formato inválido. Solo se admiten documentos en formato .docx'); return; }
+    if (file.size > 10 * 1024 * 1024) { sound.playError(); setError('El archivo excede el tamaño máximo permitido de 10 MB.'); return; }
     setSelectedFile(file);
     if (!titleInput) setTitleInput(file.name.replace(/\.[^/.]+$/, ''));
   };
@@ -77,6 +83,7 @@ export const AnalyzerPage: React.FC = () => {
   };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) validateAndSetFile(e.target.files[0]);
+    e.target.value = '';
   };
 
   const handleAnalyze = async () => {
@@ -85,9 +92,9 @@ export const AnalyzerPage: React.FC = () => {
     setImprovedResult(null);
 
     if (activeTab === 'text') {
-      if (!textInput || textInput.trim().length < 15) { setError('Por favor introduce un texto de al menos 15 caracteres.'); return; }
+      if (!textInput || textInput.trim().length < 15) { sound.playError(); setError('Por favor introduce un texto de al menos 15 caracteres.'); return; }
       setLoading(true);
-      setLoadingStage('Analizando perplejidad, burstiness y regularidad sintáctica…');
+      setLoadingStage('Midiendo perplejidad, burstiness y regularidad sintáctica');
       sound.playScan();
       const res = await analysisApi.analyzeText(textInput, titleInput);
       setLoading(false);
@@ -97,7 +104,7 @@ export const AnalyzerPage: React.FC = () => {
     } else {
       if (!selectedFile) { sound.playError(); setError('Por favor selecciona un archivo .docx para analizar.'); return; }
       setLoading(true);
-      setLoadingStage('Extrayendo párrafos y estructura del documento .docx…');
+      setLoadingStage('Extrayendo párrafos y estructura del documento .docx');
       sound.playScan();
       const res = await analysisApi.analyzeDocx(selectedFile);
       setLoading(false);
@@ -110,7 +117,7 @@ export const AnalyzerPage: React.FC = () => {
   // Reescritura directa sin análisis previo
   const handleDirectHumanize = async () => {
     if (!isAuthenticated) { navigate('/login?notice=unauthenticated'); return; }
-    if (!textInput || textInput.trim().length < 15) { setError('Por favor introduce un texto de al menos 15 caracteres para reescribir.'); return; }
+    if (!textInput || textInput.trim().length < 15) { sound.playError(); setError('Por favor introduce un texto de al menos 15 caracteres para reescribir.'); return; }
     setError(null);
     setImproving(true);
     sound.playScan();
@@ -129,37 +136,44 @@ export const AnalyzerPage: React.FC = () => {
     if (!analysis) return;
     setImproving(true);
     setError(null);
+    sound.playScan();
     const res = await writingApi.improveText({ analysisId: analysis.id, text: analysis.originalText });
     setImproving(false);
     if (res.data?.success) {
+      sound.playSuccess();
       setImprovedResult({
         improvedText: res.data.improvedText, summaryOfChanges: res.data.summaryOfChanges,
         originalAiScore: res.data.originalAiScore ?? analysis.aiScore, improvedAiScore: res.data.improvedAiScore, aiReduction: res.data.aiReduction,
       });
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    } else { setError(res.error || 'No se pudo generar la mejora de redacción.'); }
+    } else { sound.playError(); setError(res.error || 'No se pudo generar la mejora de redacción.'); toast.show({ title: 'No se pudo reescribir', description: res.error, tone: 'ai' }); }
   };
 
-  const handleCopyDirectText = () => {
+  const handleCopyDirectText = async () => {
     if (!improvedResult?.improvedText) return;
-    navigator.clipboard.writeText(improvedResult.improvedText);
-    setCopiedDirect(true);
-    setTimeout(() => setCopiedDirect(false), 2500);
+    try {
+      await navigator.clipboard.writeText(improvedResult.improvedText);
+      setCopiedDirect(true);
+      toast.show({ title: 'Texto copiado al portapapeles', tone: 'human', duration: 2200 });
+      setTimeout(() => setCopiedDirect(false), 2500);
+    } catch { toast.show({ title: 'No se pudo copiar', description: 'Selecciona el texto y cópialo manualmente.', tone: 'ai' }); }
   };
   const handleDownloadDirectDocx = async () => {
     if (!improvedResult?.improvedText) return;
-    await writingApi.downloadDocx({ improvedText: improvedResult.improvedText, title: titleInput || 'documento_humanizado' });
+    const res = await writingApi.downloadDocx({ improvedText: improvedResult.improvedText, title: titleInput || 'documento_humanizado' });
+    if (res.error) toast.show({ title: 'No se pudo descargar el documento', description: res.error, tone: 'ai' });
   };
   const resetForm = () => {
     setAnalysis(null); setImprovedResult(null); setTextInput(''); setSelectedFile(null); setTitleInput(''); setError(null);
+    if (location.search) navigate('/analyzer', { replace: true });
   };
 
   const wordCount = textInput.split(/\s+/).filter(Boolean).length;
   const showForm = !analysis && !improvedResult;
+  const busy = loading || improving;
 
   const Segment: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode }> = ({ active, onClick, children }) => (
-    <button type="button" onClick={onClick}
-      className={`h-10 px-5 rounded-full text-[13px] font-semibold transition-all duration-450 ease-out ${active ? 'bg-hair-2 text-hi' : 'text-mid hover:text-hi'}`}>
+    <button type="button" role="tab" aria-selected={active} onClick={onClick}
+      className={`h-10 px-5 rounded-full text-[13px] font-semibold transition-[background-color,color] duration-240 ease-out ${active ? 'bg-hair-2 text-hi' : 'text-mid hover:text-hi'}`}>
       {children}
     </button>
   );
@@ -169,7 +183,6 @@ export const AnalyzerPage: React.FC = () => {
       {/* Cabecera */}
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div className="flex flex-col gap-3">
-          <span className="eyebrow">Analizador</span>
           <h1 className="text-d-4 font-light">
             {mode === 'humanizer' && showForm ? <>Reescribe <span className="serif text-human">con otra voz.</span></> : <>Verifica <span className="serif text-azure">un texto.</span></>}
           </h1>
@@ -183,16 +196,19 @@ export const AnalyzerPage: React.FC = () => {
       </div>
 
       {/* Selector de modo */}
-      {showForm && (
-        <div className="inline-flex self-start p-1 rounded-full border hair bg-hair">
+      {showForm && !busy && (
+        <div className="inline-flex self-start p-1 rounded-full border hair bg-hair" role="tablist" aria-label="Modo">
           <Segment active={mode === 'analyzer'} onClick={() => { sound.playToggle(); setMode('analyzer'); setError(null); }}>Análisis de originalidad</Segment>
           <Segment active={mode === 'humanizer'} onClick={() => { sound.playToggle(); setMode('humanizer'); setActiveTab('text'); setError(null); }}>Reescritura editorial</Segment>
         </div>
       )}
 
+      {/* Proceso en curso */}
+      {busy && showForm && <AnalysisProgress stage={loading ? (loadingStage || 'Procesando') : 'Optimizando cadencia y variedad léxica'} mode={loading ? 'analyze' : 'rewrite'} />}
+
       {/* Resultado directo de reescritura */}
       {improvedResult && !analysis && (
-        <div className="card p-7 sm:p-9 flex flex-col gap-7 border-l-2 border-l-human animate-page-in">
+        <div className="card p-7 sm:p-9 flex flex-col gap-7 page-in">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="flex flex-col gap-2">
               <span className="eyebrow text-human">Reescritura lista</span>
@@ -216,10 +232,10 @@ export const AnalyzerPage: React.FC = () => {
 
           <div className="rounded-xl border hair bg-ground/60 overflow-hidden">
             <div className="flex items-center justify-between px-5 h-10 border-b hair">
-              <span className="text-[12px] font-semibold text-mid">Texto final</span>
+              <label htmlFor="improved-direct" className="text-[12px] font-semibold text-mid">Texto final</label>
               <span className="font-mono text-[11px] text-low">{improvedResult.improvedText.split(/\s+/).filter(Boolean).length} palabras · {improvedResult.improvedText.length} caracteres</span>
             </div>
-            <textarea readOnly rows={11} value={improvedResult.improvedText}
+            <textarea id="improved-direct" readOnly rows={11} value={improvedResult.improvedText}
               className="w-full p-5 bg-transparent text-hi text-[14.5px] leading-[1.75] outline-none resize-y" />
           </div>
 
@@ -236,14 +252,14 @@ export const AnalyzerPage: React.FC = () => {
       )}
 
       {/* Formulario */}
-      {showForm && (
+      {showForm && !busy && (
         <div className="card p-7 sm:p-9 flex flex-col gap-7">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="inline-flex p-1 rounded-full border hair">
+            <div className="inline-flex p-1 rounded-full border hair" role="tablist" aria-label="Origen del texto">
               <Segment active={activeTab === 'text'} onClick={() => { setActiveTab('text'); setError(null); }}>Texto</Segment>
               {mode === 'analyzer' && <Segment active={activeTab === 'docx'} onClick={() => { setActiveTab('docx'); setError(null); }}>Documento .docx</Segment>}
             </div>
-            {activeTab === 'text' && <span className="font-mono text-[11px] text-low">{wordCount} palabras · {textInput.length} caracteres</span>}
+            {activeTab === 'text' && <span className="font-mono text-[11px] text-low" aria-live="polite">{wordCount} palabras · {textInput.length} caracteres</span>}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -254,7 +270,7 @@ export const AnalyzerPage: React.FC = () => {
           {activeTab === 'text' && (
             <div className="flex flex-col gap-2">
               <label htmlFor="analysis-text" className="field-label">{mode === 'humanizer' ? 'Texto a reescribir' : 'Texto a evaluar'}</label>
-              <textarea id="analysis-text" rows={11} value={textInput} onChange={(e) => setTextInput(e.target.value)}
+              <textarea id="analysis-text" rows={11} value={textInput} onChange={(e) => { setTextInput(e.target.value); if (error) setError(null); }}
                 placeholder={mode === 'humanizer'
                   ? 'Pega el texto. Se reestructura la cadencia, se diversifica el vocabulario y se eliminan clichés sin tocar citas ni cifras.'
                   : 'Pega el texto. Recibirás la probabilidad estimada de IA, el índice de similitud y el desglose párrafo a párrafo.'}
@@ -264,17 +280,21 @@ export const AnalyzerPage: React.FC = () => {
 
           {activeTab === 'docx' && (
             <div
+              role="button"
+              tabIndex={0}
+              aria-label={selectedFile ? `Archivo seleccionado: ${selectedFile.name}. Pulsa para cambiarlo.` : 'Elegir un archivo .docx'}
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
               onDrop={handleFileDrop}
-              onClick={() => document.getElementById('docx-file-input')?.click()}
-              className={`rounded-2xl border border-dashed p-10 text-center cursor-pointer transition-all duration-450 ease-out ${
+              onClick={() => fileInput.current?.click()}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.current?.click(); } }}
+              className={`relative rounded-2xl border border-dashed p-10 text-center cursor-pointer transition-[border-color,background-color] duration-240 ease-out ${
                 dragging ? 'border-azure/60 bg-azure/5' : selectedFile ? 'border-human/40 bg-human/5' : 'hair-2 hover:bg-hair'
               }`}
             >
-              <input id="docx-file-input" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleFileChange} className="hidden" />
+              <input ref={fileInput} id="docx-file-input" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleFileChange} className="hidden" tabIndex={-1} />
               <div className="flex flex-col items-center gap-3">
-                {selectedFile ? <FileText className="w-8 h-8 text-human" strokeWidth={1.4} /> : <UploadCloud className="w-8 h-8 text-azure" strokeWidth={1.4} />}
+                {selectedFile ? <FileText className="w-8 h-8 text-human" strokeWidth={1.4} /> : <UploadCloud className={`w-8 h-8 text-azure transition-transform duration-240 ${dragging ? '-translate-y-1' : ''}`} strokeWidth={1.4} />}
                 {selectedFile ? (
                   <>
                     <span className="text-[14px] font-semibold text-hi break-all">{selectedFile.name}</span>
@@ -288,11 +308,14 @@ export const AnalyzerPage: React.FC = () => {
                   </>
                 )}
               </div>
+              {selectedFile && (
+                <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }} aria-label="Quitar archivo" className="btn-icon absolute top-2 right-2"><X className="w-4 h-4" /></button>
+              )}
             </div>
           )}
 
           {error && (
-            <div className="flex items-start gap-3 py-4 border-y border-ai/30 text-[13px] text-ai animate-page-in">
+            <div className="flex items-start gap-3 py-4 border-y border-ai/30 text-[13px] text-ai animate-fadeIn" role="alert">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.8} />
               <div className="flex flex-col gap-1.5">
                 <span className="font-semibold">{error}</span>
@@ -307,21 +330,28 @@ export const AnalyzerPage: React.FC = () => {
 
           <div className={`grid grid-cols-1 gap-3 ${mode === 'analyzer' ? 'sm:grid-cols-2' : ''}`}>
             {mode === 'analyzer' && (
-              <button type="button" disabled={loading || improving} onClick={handleAnalyze} className="btn btn-primary w-full">
-                {loading ? (<><Loader2 className="w-4 h-4 animate-spin" /> {loadingStage || 'Procesando…'}</>) : (<>Analizar <ArrowRight className="w-4 h-4" strokeWidth={2} /></>)}
+              <button type="button" disabled={busy} onClick={handleAnalyze} className="btn btn-primary w-full">
+                Analizar <ArrowRight className="w-4 h-4" strokeWidth={2} />
               </button>
             )}
-            <button type="button" disabled={loading || improving || activeTab !== 'text'} onClick={handleDirectHumanize}
+            <button type="button" disabled={busy || activeTab !== 'text'} onClick={handleDirectHumanize}
               className={`btn w-full ${mode === 'humanizer' ? 'btn-primary' : 'btn-ghost'}`}>
-              {improving ? (<><Loader2 className="w-4 h-4 animate-spin" /> Optimizando cadencia y variedad…</>) : (<><Sparkles className="w-4 h-4" strokeWidth={1.7} /> Reescritura editorial</>)}
+              <Sparkles className="w-4 h-4" strokeWidth={1.7} /> Reescritura editorial
             </button>
           </div>
         </div>
       )}
 
+      {/* Error al recuperar un informe */}
+      {!showForm && error && !analysis && (
+        <div className="flex items-start gap-3 py-4 border-y border-ai/30 text-[13px] text-ai" role="alert">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.8} /><span className="font-semibold">{error}</span>
+        </div>
+      )}
+
       {/* Resultados del análisis */}
       {analysis && (
-        <div className="flex flex-col gap-7 animate-page-in">
+        <div className="flex flex-col gap-7 page-in">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="text-d-5 font-semibold break-words">{analysis.title}</h2>
             <span className="font-mono text-[11.5px] text-low">{analysis.type === 'DOCX' ? 'documento .docx' : 'texto'} · {new Date(analysis.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
@@ -329,9 +359,17 @@ export const AnalyzerPage: React.FC = () => {
 
           <ResultScoreCard aiScore={analysis.aiScore} similarityScore={analysis.similarityScore} indicators={analysis.overallIndicators || []} summaryExplanation={analysis.summaryExplanation} />
 
+          {error && (
+            <div className="flex items-start gap-3 py-4 border-y border-ai/30 text-[13px] text-ai" role="alert">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.8} /><span className="font-semibold">{error}</span>
+            </div>
+          )}
+
           {/* Llamada a la reescritura */}
-          {!improvedResult && (
-            <div className="relative overflow-hidden rounded-[18px] border border-human/30 p-7 sm:p-8 flex flex-wrap items-center justify-between gap-6"
+          {!improvedResult && (improving ? (
+            <AnalysisProgress stage="Reescribiendo con otra voz" mode="rewrite" />
+          ) : (
+            <div className="relative overflow-hidden rounded-[20px] border border-human/30 p-7 sm:p-8 flex flex-wrap items-center justify-between gap-6"
               style={{ background: 'linear-gradient(165deg, rgb(var(--human) / .09), rgb(var(--human) / .015) 60%)' }}>
               <div className="flex flex-col gap-2 max-w-[560px]">
                 <span className="eyebrow text-human">Reescritura editorial</span>
@@ -339,10 +377,10 @@ export const AnalyzerPage: React.FC = () => {
                 <p className="text-[13.5px] leading-[1.65] text-mid">Rompe la cadencia uniforme, sustituye más de 40 fórmulas de IA y conserva citas, cifras y sentido.</p>
               </div>
               <button type="button" disabled={improving} onClick={handleImproveWriting} className="btn btn-primary shrink-0">
-                {improving ? (<><Loader2 className="w-4 h-4 animate-spin" /> Reescribiendo…</>) : (<>Aplicar reescritura <ArrowRight className="w-4 h-4" strokeWidth={2} /></>)}
+                Aplicar reescritura <ArrowRight className="w-4 h-4" strokeWidth={2} />
               </button>
             </div>
-          )}
+          ))}
 
           {improvedResult && (
             <DiffViewer originalText={analysis.originalText} improvedText={improvedResult.improvedText} summaryOfChanges={improvedResult.summaryOfChanges}
@@ -353,23 +391,23 @@ export const AnalyzerPage: React.FC = () => {
           {analysis.paragraphs && analysis.paragraphs.length > 0 && (
             <div className="flex flex-col gap-5">
               <div className="flex flex-wrap items-baseline justify-between gap-3 pt-4">
-                <div className="flex flex-col gap-1.5">
-                  <span className="eyebrow">Desglose</span>
-                  <h3 className="text-d-5 font-light">No un número. <span className="serif">Un argumento.</span></h3>
-                </div>
+                <h3 className="text-d-5 font-light">No un número. <span className="serif">Un argumento.</span></h3>
                 <span className="font-mono text-[11.5px] text-low">{analysis.paragraphs.length} párrafos</span>
               </div>
-              <div className="flex flex-col gap-3">
+              <ol className="flex flex-col gap-3">
                 {analysis.paragraphs.map((p, idx) => {
                   const m = getScoreMood(p.aiScore);
                   return (
-                    <div key={idx} className={`card px-6 py-6 flex flex-col sm:flex-row gap-5 sm:gap-7 border-l-2 ${m.borderClass}`}>
+                    <li key={idx} className="card px-6 py-6 flex flex-col sm:flex-row gap-5 sm:gap-7">
                       <div className="flex sm:flex-col items-baseline sm:items-center gap-2 sm:w-[76px] shrink-0">
                         <span className={`num text-[28px] leading-none ${m.textClass}`}>{Math.round(p.aiScore)}%</span>
                         <span className="eyebrow">{m.tone === 'ai' ? 'IA' : m.tone === 'mixed' ? 'Mixto' : 'Humano'}</span>
                       </div>
                       <div className="flex flex-col gap-3 min-w-0 flex-1">
-                        <span className="font-mono text-[11px] text-low">Párrafo {p.index + 1}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-[11px] text-low">Párrafo {p.index + 1}</span>
+                          <span className="h-[3px] flex-1 max-w-[120px] rounded-full bg-hair overflow-hidden" aria-hidden="true"><span className={`block h-full ${m.barClass}`} style={{ width: `${Math.round(p.aiScore)}%` }} /></span>
+                        </div>
                         <p className="text-[14px] leading-[1.75] text-mid">{p.text}</p>
                         {p.indicators.length > 0 && (
                           <div className="flex items-baseline gap-3">
@@ -379,10 +417,10 @@ export const AnalyzerPage: React.FC = () => {
                         )}
                         <p className="text-[12.5px] leading-[1.6] text-low italic">{p.explanation}</p>
                       </div>
-                    </div>
+                    </li>
                   );
                 })}
-              </div>
+              </ol>
             </div>
           )}
 
@@ -390,17 +428,14 @@ export const AnalyzerPage: React.FC = () => {
           {analysis.sources && analysis.sources.length > 0 && (
             <div className="flex flex-col gap-5">
               <div className="flex flex-wrap items-baseline justify-between gap-3 pt-4">
-                <div className="flex flex-col gap-1.5">
-                  <span className="eyebrow">Similitud</span>
-                  <h3 className="text-d-5 font-light">Fuentes <span className="serif">cotejadas.</span></h3>
-                </div>
+                <h3 className="text-d-5 font-light">Fuentes <span className="serif">cotejadas.</span></h3>
                 <span className="num text-[13px] text-azure">{analysis.similarityScore}% total</span>
               </div>
-              <div className="flex flex-col">
+              <ul className="flex flex-col">
                 {analysis.sources.map((src, i) => (
-                  <div key={i} className={`py-6 border-b hair flex flex-col gap-4 ${i === 0 ? 'border-t' : ''}`}>
+                  <li key={i} className={`py-6 border-b hair flex flex-col gap-4 ${i === 0 ? 'border-t' : ''}`}>
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <a href={src.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-[13.5px] font-semibold text-hi hover:text-azure transition-colors">
+                      <a href={src.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-[13.5px] font-semibold text-hi hover:text-azure transition-colors rounded-md">
                         {src.title} <ExternalLink className="w-3.5 h-3.5 text-low" strokeWidth={1.8} />
                       </a>
                       <span className="num text-[13px] text-azure">{src.similarityPercentage}%</span>
@@ -415,18 +450,16 @@ export const AnalyzerPage: React.FC = () => {
                         <p className="serif text-[16px] leading-[1.55] text-hi">{src.userSnippet}</p>
                       </div>
                     </div>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           )}
         </div>
       )}
 
-      {loading && !analysis && (
-        <div className="flex items-center gap-3 text-[13px] text-mid">
-          <Loader2 className="w-4 h-4 animate-spin text-azure" /> {loadingStage || 'Cargando…'}
-        </div>
+      {loading && !analysis && !showForm && (
+        <div className="flex items-center gap-3 text-[13px] text-mid" role="status"><Loader2 className="w-4 h-4 animate-spin text-azure" /> {loadingStage || 'Cargando…'}</div>
       )}
     </div>
   );

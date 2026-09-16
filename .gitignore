@@ -42,3 +42,6 @@ uploads/
 
 # Canvas de diseño ensamblado (generado desde design/*.dc.html + canvas.json)
 design/rediseno-veritas-ai.html
+
+# Notas de dirección de diseño: documento interno, no se publica
+design/PRINCIPIOS.md

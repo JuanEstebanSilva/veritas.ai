@@ -1,2 +1,3 @@
 export { Navbar } from './Navbar';
-export { Sidebar } from './Sidebar';
+export { Sidebar, MobileTabBar } from './Sidebar';
+export { Page, ScrollToTop } from './Page';

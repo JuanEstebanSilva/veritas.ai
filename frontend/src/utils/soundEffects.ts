@@ -10,7 +10,8 @@ class SoundEngine {
 
   constructor() {
     // Recuperar preferencia de sonido (habilitado por defecto)
-    const stored = localStorage.getItem('veritas_sound_enabled');
+    let stored: string | null = null;
+    try { stored = localStorage.getItem('veritas_sound_enabled'); } catch { /* almacenamiento no disponible */ }
     this.enabled = stored !== null ? stored === 'true' : true;
   }
 
@@ -34,7 +35,7 @@ class SoundEngine {
 
   public setEnabled(val: boolean) {
     this.enabled = val;
-    localStorage.setItem('veritas_sound_enabled', String(val));
+    try { localStorage.setItem('veritas_sound_enabled', String(val)); } catch { /* sin almacenamiento */ }
   }
 
   public toggle(): boolean {

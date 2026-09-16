@@ -12,28 +12,46 @@ interface AuthShellProps {
   children: React.ReactNode;
 }
 
+/** Hoja pequeña con un haz que la recorre despacio: la marca, sin palabras. */
+const QuietSheet: React.FC<{ tone: 'azure' | 'human' }> = ({ tone }) => {
+  const lines = [100, 92, 97, 58, 0, 96, 100, 71, 0, 100, 94, 99, 100, 47, 0, 98, 88, 62];
+  return (
+    <div className="sheet relative w-[188px] h-[236px] overflow-hidden px-6 pt-7" aria-hidden="true">
+      <div className="absolute inset-x-0 top-0 h-[24%] animate-beam" style={{ animationDelay: '0s', animationDuration: '6.5s', background: `linear-gradient(180deg, rgb(var(--${tone}) / 0) 0%, rgb(var(--${tone}) / .10) 60%, rgb(var(--${tone}) / .45) 100%)` }} />
+      <div className="h-[6px] w-[40%] rounded-sm mb-5" style={{ background: 'rgb(var(--ink) / .3)' }} />
+      <div className="flex flex-col gap-[5px]">
+        {lines.map((w, i) => (w === 0 ? <div key={i} className="h-[6px]" /> : <div key={i} className="h-[5px] rounded-sm sheet-line" style={{ width: `${w}%` }} />))}
+      </div>
+    </div>
+  );
+};
+
 /**
  * Marco de las pantallas de acceso: panel editorial a la izquierda con la
  * atmósfera del sistema, panel de formulario a la derecha. En móvil sólo se
  * muestra el formulario.
  */
 export const AuthShell: React.FC<AuthShellProps> = ({ tone, headline, lede, aside, children }) => {
-  const glow = tone === 'azure' ? 'rgb(var(--azure) / .17)' : 'rgb(var(--human) / .13)';
-  const glow2 = tone === 'azure' ? 'rgb(var(--gold) / .07)' : 'rgb(var(--azure) / .11)';
+  const glow = tone === 'azure' ? 'rgb(var(--azure) / .18)' : 'rgb(var(--human) / .14)';
+  const glow2 = tone === 'azure' ? 'rgb(var(--gold) / .08)' : 'rgb(var(--azure) / .12)';
 
   return (
-    <div className="flex flex-1 min-h-[calc(100vh-78px)]">
+    <div className="flex flex-1 min-h-[calc(100vh-var(--nav-h))]">
       <section className="relative hidden lg:flex flex-1 flex-col justify-between px-16 py-14 overflow-hidden">
-        <div className="glow animate-breathe" style={{ width: 820, height: 760, top: -280, left: -220, background: glow }} aria-hidden="true" />
-        <div className="glow" style={{ width: 580, height: 520, bottom: -240, left: 120, background: glow2 }} aria-hidden="true" />
+        <div className="glow" style={{ width: 900, height: 820, top: -300, left: -240, ['--glow-color' as string]: glow }} aria-hidden="true" />
+        <div className="glow" style={{ width: 620, height: 560, bottom: -260, left: 140, ['--glow-color' as string]: glow2 }} aria-hidden="true" />
+        <div className="grain" aria-hidden="true" />
 
-        <Link to="/" onClick={() => sound.playClick()} className="relative self-start animate-rise" aria-label="Inicio">
+        <Link to="/" onClick={() => sound.playClick()} className="relative self-start animate-rise rounded-md" aria-label="Inicio">
           <VeritasLogo variant="compact" size="md" />
         </Link>
 
-        <div className="relative flex flex-col gap-8 max-w-[580px] animate-rise" style={{ animationDelay: '.14s' }}>
-          <h1 className="text-d-3 font-light">{headline}</h1>
-          <p className="text-[16.5px] leading-[1.7] text-mid max-w-[460px]">{lede}</p>
+        <div className="relative grid grid-cols-[1fr_auto] items-end gap-10 max-w-[760px]">
+          <div className="flex flex-col gap-8 animate-rise" style={{ animationDelay: '.14s' }}>
+            <h1 className="text-d-3 font-light">{headline}</h1>
+            <p className="text-[16.5px] leading-[1.7] text-mid max-w-[460px]">{lede}</p>
+          </div>
+          <div className="animate-rise hidden xl:block" style={{ animationDelay: '.3s', transform: 'rotate(-4deg)' }}><QuietSheet tone={tone} /></div>
         </div>
 
         <div className="relative animate-rise" style={{ animationDelay: '.26s' }}>{aside}</div>

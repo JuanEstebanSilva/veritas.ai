@@ -21,6 +21,7 @@ export const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     sound.playClick();
     if (!email || !password) { sound.playError(); setError('Por favor completa todos los campos.'); return; }
 
@@ -32,7 +33,7 @@ export const LoginPage: React.FC = () => {
     if (res.success) {
       sound.playSuccess();
       // Redirección por rol real, no por el texto del correo
-      navigate(res.user?.role === 'ADMIN' ? '/admin' : '/dashboard');
+      navigate(res.user?.role === 'ADMIN' ? '/admin' : '/dashboard', { replace: true });
     } else {
       sound.playError();
       setError(res.message || 'Credenciales inválidas.');
@@ -66,25 +67,25 @@ export const LoginPage: React.FC = () => {
         <p className="text-sm text-low">¿Aún no tienes cuenta? <Link to="/register" onClick={() => sound.playClick()} className="text-azure hover:text-hi transition-colors">Créala en un minuto</Link></p>
       </div>
 
-      {redirectNotice && (
-        <div className="flex items-center gap-3 py-3.5 border-y border-gold/30 text-[13px] text-gold">
+      {redirectNotice && !error && (
+        <div className="flex items-center gap-3 py-3.5 border-y border-gold/30 text-[13px] text-gold" role="status">
           <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={1.8} />
           <span>Debes iniciar sesión para utilizar el analizador.</span>
         </div>
       )}
       {error && (
-        <div className="flex items-center gap-3 py-3.5 border-y border-ai/30 text-[13px] text-ai animate-page-in">
+        <div className="flex items-center gap-3 py-3.5 border-y border-ai/30 text-[13px] text-ai animate-fadeIn" role="alert">
           <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={1.8} />
           <span>{error}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate aria-busy={loading}>
         <div className="flex flex-col gap-2">
           <label htmlFor="login-email" className="field-label">Correo electrónico</label>
           <div className="relative">
             <Mail className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-low pointer-events-none" strokeWidth={1.6} />
-            <input id="login-email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)}
+            <input id="login-email" type="email" required autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(null); }}
               placeholder="tu@universidad.edu" className="field pl-11" />
           </div>
         </div>
@@ -94,20 +95,20 @@ export const LoginPage: React.FC = () => {
           <div className="relative">
             <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-low pointer-events-none" strokeWidth={1.6} />
             <input id="login-password" type={showPassword ? 'text' : 'password'} required autoComplete="current-password" value={password}
-              onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="field pl-11 pr-12" />
-            <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-low hover:text-hi transition-colors">
+              onChange={(e) => { setPassword(e.target.value); setError(null); }} placeholder="••••••••" className="field pl-11 pr-14" />
+            <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} aria-pressed={showPassword}
+              className="btn-icon absolute right-1.5 top-1/2 -translate-y-1/2">
               {showPassword ? <EyeOff className="w-4 h-4" strokeWidth={1.6} /> : <Eye className="w-4 h-4" strokeWidth={1.6} />}
             </button>
           </div>
         </div>
 
         <button type="submit" disabled={loading} className="btn btn-primary w-full mt-1">
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (<>Acceder <ArrowRight className="w-4 h-4" strokeWidth={2} /></>)}
+          {loading ? (<><Loader2 className="w-4 h-4 animate-spin" /> Verificando…</>) : (<>Acceder <ArrowRight className="w-4 h-4" strokeWidth={2} /></>)}
         </button>
       </form>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4" aria-hidden="true">
         <span className="h-px flex-1 bg-hair" />
         <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-low">Acceso de demostración</span>
         <span className="h-px flex-1 bg-hair" />
@@ -119,7 +120,7 @@ export const LoginPage: React.FC = () => {
           { key: 'user' as const, Icon: UserIcon, tone: 'text-azure', title: 'Usuario de prueba', mail: 'usuario@veritas.ai' },
         ].map((d, i) => (
           <button key={d.key} type="button" onClick={() => fillDemoUser(d.key)}
-            className={`group flex items-center justify-between gap-4 h-14 border-b hair text-left transition-colors ${i === 0 ? 'border-t' : ''}`}>
+            className={`group flex items-center justify-between gap-4 h-14 border-b hair text-left transition-colors duration-240 hover:bg-hair -mx-2 px-2 rounded-lg ${i === 0 ? 'border-t' : ''}`}>
             <span className="flex items-center gap-3.5">
               <d.Icon className={`w-[17px] h-[17px] ${d.tone}`} strokeWidth={1.7} />
               <span className="flex flex-col gap-0.5">

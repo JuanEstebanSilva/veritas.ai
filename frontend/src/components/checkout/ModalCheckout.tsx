@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { paymentApi } from '../../services/api';
 import { sound } from '../../utils/soundEffects';
 import { VeritasLogo } from '../brand/VeritasLogo';
+import { Dialog } from '../ui/Dialog';
+import { hasFinePointer } from '../../motion';
 import {
   X, Check, CreditCard, ShieldCheck, AlertCircle, Loader2, Lock, ArrowRight, ArrowLeft,
   Globe, Building, Smartphone, Wifi, User as UserIcon, RefreshCw, Infinity as InfinityIcon, FileCheck2, Download,
@@ -65,6 +68,7 @@ const StepIndicator: React.FC<{ currentStep: CheckoutStep }> = ({ currentStep })
    ──────────────────────────────────────────────────────────── */
 const VirtualCard: React.FC<{ cardNumber: string; cardName: string; cardExpiry: string; skin: CardSkin }> = ({ cardNumber, cardName, cardExpiry, skin }) => {
   const cardRef = useRef<HTMLDivElement>(null);
+  const fine = useMemo(() => hasFinePointer(), []);
   const brand = getCardBrand(cardNumber);
   const skins: Record<CardSkin, React.CSSProperties> = {
     graphite: { background: 'linear-gradient(135deg, #1c1f26 0%, #0d0f13 60%, #17191f 100%)' },
@@ -81,7 +85,7 @@ const VirtualCard: React.FC<{ cardNumber: string; cardName: string; cardExpiry: 
   const onLeave = () => { if (cardRef.current) cardRef.current.style.transform = 'perspective(800px) rotateY(0deg) rotateX(0deg) scale(1)'; };
 
   return (
-    <div ref={cardRef} onMouseMove={onMove} onMouseLeave={onLeave}
+    <div ref={cardRef} onMouseMove={fine ? onMove : undefined} onMouseLeave={fine ? onLeave : undefined}
       style={{ ...skins[skin], transition: 'transform .35s cubic-bezier(.16,1,.3,1)', transformStyle: 'preserve-3d' }}
       className="relative w-full max-w-sm mx-auto h-48 rounded-2xl p-5 text-[#f4f5f8] border border-white/10 shadow-panel overflow-hidden select-none">
       <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/[.06] blur-2xl pointer-events-none" />
@@ -340,8 +344,10 @@ export const ModalCheckout: React.FC = () => {
             <span className="eyebrow">Tarjeta</span>
             <div className="flex items-center gap-2">
               {([{ skin: 'graphite', bg: '#22252b' }, { skin: 'azure', bg: '#0a3552' }, { skin: 'gold', bg: '#3d2b06' }] as const).map((s) => (
-                <button key={s.skin} type="button" onClick={() => { sound.playToggle(); setCardSkin(s.skin); }} title={s.skin} aria-label={`Estilo ${s.skin}`}
-                  className={`w-4 h-4 rounded-full border transition-all ${cardSkin === s.skin ? 'border-hi scale-110' : 'border-transparent opacity-60'}`} style={{ background: s.bg }} />
+                <button key={s.skin} type="button" onClick={() => { sound.playToggle(); setCardSkin(s.skin); }} title={s.skin} aria-label={`Estilo ${s.skin}`} aria-pressed={cardSkin === s.skin}
+                  className={`h-7 w-7 rounded-full inline-flex items-center justify-center transition-[opacity,box-shadow] duration-160 ${cardSkin === s.skin ? 'ring-1 ring-hi' : 'opacity-60 hover:opacity-100'}`}>
+                  <span className="h-3.5 w-3.5 rounded-full" style={{ background: s.bg }} />
+                </button>
               ))}
             </div>
           </div>
@@ -454,12 +460,12 @@ export const ModalCheckout: React.FC = () => {
     return (
       <div className="flex flex-col items-center py-6 gap-9 animate-fadeIn">
         <div className="relative w-20 h-20 flex items-center justify-center">
-          <div className="absolute inset-0 rounded-full bg-azure/15 animate-ping" />
+          <div className="absolute inset-0 rounded-full bg-azure/15 animate-ringPulse" />
           <div className="w-14 h-14 rounded-full bg-azure/15 border border-azure/40 flex items-center justify-center z-10"><Loader2 className="w-6 h-6 text-azure animate-spin" strokeWidth={1.8} /></div>
         </div>
         <div className="w-full max-w-xs flex flex-col gap-2.5">
           <div className="flex justify-between text-[11px] font-bold uppercase tracking-[0.14em] text-low"><span>Procesando</span><span className="num text-hi">{Math.round(loadingProgress)}%</span></div>
-          <div className="h-[3px] rounded-full bg-hair overflow-hidden"><div className="h-full rounded-full bg-azure transition-all duration-200 ease-out" style={{ width: `${loadingProgress}%` }} /></div>
+          <div className="h-[3px] rounded-full bg-hair overflow-hidden" role="progressbar" aria-valuenow={Math.round(loadingProgress)} aria-valuemin={0} aria-valuemax={100}><div className="h-full w-full rounded-full bg-azure origin-left transition-transform duration-200 ease-out" style={{ transform: `scaleX(${loadingProgress / 100})` }} /></div>
         </div>
         <ul className="w-full max-w-xs flex flex-col">
           {stages.map((s, i) => (
@@ -480,11 +486,11 @@ export const ModalCheckout: React.FC = () => {
     <div className="relative flex flex-col items-center py-4 gap-7 animate-scaleIn">
       <div className="absolute inset-x-0 top-0 pointer-events-none overflow-hidden h-48" aria-hidden="true">
         {[
-          { left: '10%', color: 'bg-azure', cls: 'animate-confetti-1', size: 'w-2 h-2' }, { left: '25%', color: 'bg-gold', cls: 'animate-confetti-2', size: 'w-1.5 h-3' },
-          { left: '40%', color: 'bg-human', cls: 'animate-confetti-3', size: 'w-2 h-2' }, { left: '55%', color: 'bg-azure', cls: 'animate-confetti-4', size: 'w-1.5 h-1.5' },
-          { left: '70%', color: 'bg-gold', cls: 'animate-confetti-5', size: 'w-2 h-3' }, { left: '80%', color: 'bg-human', cls: 'animate-confetti-6', size: 'w-1.5 h-2' },
-          { left: '90%', color: 'bg-azure', cls: 'animate-confetti-7', size: 'w-2 h-2' }, { left: '5%', color: 'bg-gold', cls: 'animate-confetti-8', size: 'w-1.5 h-3' },
-        ].map((p, i) => <div key={i} className={`absolute ${p.size} ${p.color} rounded-sm ${p.cls} opacity-0`} style={{ left: p.left, top: 0 }} />)}
+          { left: '10%', color: 'bg-azure', size: 'w-2 h-2' }, { left: '25%', color: 'bg-gold', size: 'w-1.5 h-3' },
+          { left: '40%', color: 'bg-human', size: 'w-2 h-2' }, { left: '55%', color: 'bg-azure', size: 'w-1.5 h-1.5' },
+          { left: '70%', color: 'bg-gold', size: 'w-2 h-3' }, { left: '80%', color: 'bg-human', size: 'w-1.5 h-2' },
+          { left: '90%', color: 'bg-azure', size: 'w-2 h-2' }, { left: '5%', color: 'bg-gold', size: 'w-1.5 h-3' },
+        ].map((p, i) => <div key={i} className={`absolute ${p.size} ${p.color} rounded-sm animate-confetti opacity-0`} style={{ left: p.left, top: 0, ['--delay' as string]: `${(i * 0.06).toFixed(2)}s` }} />)}
       </div>
 
       <div className="relative w-24 h-24 flex items-center justify-center">
@@ -528,7 +534,7 @@ export const ModalCheckout: React.FC = () => {
       </ul>
       <div className="w-full max-w-xs flex flex-col gap-2.5">
         {!user ? (
-          <a href="/login" className="btn btn-primary w-full"><UserIcon className="w-4 h-4" strokeWidth={1.8} /> Iniciar sesión para activar</a>
+          <Link to="/login" onClick={closePremiumModal} className="btn btn-primary w-full"><UserIcon className="w-4 h-4" strokeWidth={1.8} /> Iniciar sesión para activar</Link>
         ) : (
           <>
             <button type="button" onClick={() => { setErrorMessage(null); goTo('payment'); }} className="btn btn-primary w-full"><RefreshCw className="w-4 h-4" strokeWidth={1.8} /> Intentar de nuevo</button>
@@ -540,20 +546,13 @@ export const ModalCheckout: React.FC = () => {
     </div>
   );
 
-  if (!isPremiumModalOpen) return null;
   const isFullscreen = checkoutStep === 'success' || checkoutStep === 'processing';
+  const close = () => { sound.playClick(); closePremiumModal(); };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-ground/85 backdrop-blur-xl animate-fadeIn" onClick={() => { if (checkoutStep !== 'processing') { sound.playClick(); closePremiumModal(); } }}>
-      <div className="fixed top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full pointer-events-none" style={{ background: 'rgb(var(--azure) / .14)', filter: 'blur(120px)' }} />
-      <div className="fixed bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 rounded-full pointer-events-none" style={{ background: 'rgb(var(--gold) / .09)', filter: 'blur(120px)' }} />
-
-      <div className="flex min-h-full items-center justify-center p-3 sm:p-5">
-        <div onClick={(e) => e.stopPropagation()}
-          className={`relative w-full bg-surface rounded-[22px] shadow-panel border hair-2 overflow-hidden my-auto animate-slideUp transition-all duration-450 ${isFullscreen ? 'max-w-md' : 'max-w-4xl'}`}>
+    <Dialog open={isPremiumModalOpen} onClose={close} dismissible={checkoutStep !== 'processing'} size={isFullscreen ? 'md' : 'xl'} label="Licencia vitalicia" className="overflow-hidden">
           {checkoutStep !== 'processing' && (
-            <button type="button" onClick={() => { sound.playClick(); closePremiumModal(); }} title="Cerrar" aria-label="Cerrar"
-              className="absolute top-4 right-4 z-30 p-2 rounded-full text-low hover:text-hi hover:bg-hair transition-colors"><X className="w-5 h-5" strokeWidth={1.7} /></button>
+            <button type="button" onClick={close} title="Cerrar" aria-label="Cerrar" className="btn-icon absolute top-3 right-3 z-30"><X className="w-5 h-5" strokeWidth={1.7} /></button>
           )}
 
           {isFullscreen ? (
@@ -596,8 +595,6 @@ export const ModalCheckout: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
-      </div>
-    </div>
+    </Dialog>
   );
 };

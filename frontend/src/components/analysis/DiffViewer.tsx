@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { writingApi, analysisApi } from '../../services/api';
 import { getScoreMood } from '../../utils/scoreMood';
 import { Copy, Check, Download, FileText, RefreshCw, ArrowRight } from 'lucide-react';
+import { useToast } from '../ui/Toast';
 
 interface DiffViewerProps {
   originalText: string;
@@ -21,6 +22,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
   originalText, improvedText, summaryOfChanges = [], analysisId,
   originalAiScore, improvedAiScore, originalSimilarityScore, title,
 }) => {
+  const toast = useToast();
   const [copied, setCopied] = useState(false);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
   const [downloadingTxt, setDownloadingTxt] = useState(false);
@@ -39,25 +41,37 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
       : null
   );
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(improvedText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(improvedText);
+      setCopied(true);
+      toast.show({ title: 'Texto copiado al portapapeles', tone: 'human', duration: 2200 });
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      toast.show({ title: 'No se pudo copiar', description: 'Selecciona el texto y cópialo manualmente.', tone: 'ai' });
+    }
   };
   const handleDownloadDocx = async () => {
     setDownloadingDocx(true);
-    try { await writingApi.downloadDocx({ improvedText, title, analysisId }); } finally { setDownloadingDocx(false); }
+    try {
+      const res = await writingApi.downloadDocx({ improvedText, title, analysisId });
+      if (res.error) toast.show({ title: 'No se pudo generar el .docx', description: res.error, tone: 'ai' });
+    } finally { setDownloadingDocx(false); }
   };
   const handleDownloadTxt = async () => {
     setDownloadingTxt(true);
-    try { await writingApi.downloadTxt({ improvedText, title }); } finally { setDownloadingTxt(false); }
+    try {
+      const res = await writingApi.downloadTxt({ improvedText, title });
+      if (res.error) toast.show({ title: 'No se pudo generar el .txt', description: res.error, tone: 'ai' });
+    } finally { setDownloadingTxt(false); }
   };
   const handleReanalyze = async () => {
     if (!analysisId) return;
     setReanalyzing(true);
     try {
       const res = await analysisApi.reanalyzeImproved(analysisId);
-      if (res.data?.comparison) setComparison(res.data.comparison);
+      if (res.data?.comparison) { setComparison(res.data.comparison); toast.show({ title: 'Reanálisis completado', description: res.data.comparison.notice, tone: 'azure' }); }
+      else if (res.error) toast.show({ title: 'No se pudo reanalizar', description: res.error, tone: 'ai' });
     } finally { setReanalyzing(false); }
   };
 

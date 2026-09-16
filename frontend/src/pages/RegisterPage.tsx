@@ -42,13 +42,14 @@ export const RegisterPage: React.FC = () => {
     }
     if (formData.password !== formData.confirm_password) { sound.playError(); setError('Las contraseñas ingresadas no coinciden.'); return; }
     if (formData.password.length < 8) { sound.playError(); setError('La contraseña debe contener al menos 8 caracteres.'); return; }
+    if (loading) return;
 
     setLoading(true);
     setError(null);
     const res = await register(formData);
     setLoading(false);
 
-    if (res.success) { sound.playSuccess(); navigate('/dashboard'); }
+    if (res.success) { sound.playSuccess(); navigate('/dashboard', { replace: true }); }
     else { sound.playError(); setError(res.message || 'Error al completar el registro.'); }
   };
 
@@ -76,12 +77,12 @@ export const RegisterPage: React.FC = () => {
       </div>
 
       {error && (
-        <div className="flex items-center gap-3 py-3.5 border-y border-ai/30 text-[13px] text-ai animate-page-in">
+        <div className="flex items-center gap-3 py-3.5 border-y border-ai/30 text-[13px] text-ai animate-fadeIn" role="alert">
           <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={1.8} /><span>{error}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate aria-busy={loading}>
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-2">
             <label htmlFor="reg-name" className="field-label">Nombre</label>
@@ -107,10 +108,10 @@ export const RegisterPage: React.FC = () => {
           <label htmlFor="reg-password" className="field-label">Contraseña</label>
           <div className="relative">
             <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-low pointer-events-none" strokeWidth={1.6} />
-            <input id="reg-password" name="password" type="password" required autoComplete="new-password" value={formData.password} onChange={handleChange} placeholder="••••••••" className="field pl-11" />
+            <input id="reg-password" name="password" type="password" required autoComplete="new-password" aria-describedby="reg-strength" value={formData.password} onChange={handleChange} placeholder="••••••••" className="field pl-11" />
           </div>
-          <div className="flex items-center gap-3 mt-0.5">
-            <div className="flex-1 flex gap-1">
+          <div id="reg-strength" className="flex items-center gap-3 mt-0.5" aria-live="polite">
+            <div className="flex-1 flex gap-1" aria-hidden="true">
               {[1, 2, 3, 4].map((n) => (
                 <span key={n} className={`h-[3px] flex-1 rounded-full transition-colors duration-450 ${strength.score >= n ? strengthColor : 'bg-hair'}`} />
               ))}
@@ -130,7 +131,7 @@ export const RegisterPage: React.FC = () => {
         </div>
 
         <button type="submit" disabled={loading} className="btn btn-primary w-full mt-1">
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (<>Crear cuenta <ArrowRight className="w-4 h-4" strokeWidth={2} /></>)}
+          {loading ? (<><Loader2 className="w-4 h-4 animate-spin" /> Creando tu cuenta…</>) : (<>Crear cuenta <ArrowRight className="w-4 h-4" strokeWidth={2} /></>)}
         </button>
       </form>
 
