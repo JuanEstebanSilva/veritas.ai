@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { AnalysisController } from '../controllers/AnalysisController';
 import { authenticateJWT } from '../middleware/authMiddleware';
 import { checkDailyAnalysisLimit } from '../middleware/dailyLimitGuard';
-import { uploadDocx } from '../middleware/uploadMiddleware';
+import { uploadDocument } from '../middleware/uploadMiddleware';
 
 const router = Router();
 
@@ -11,7 +11,8 @@ router.use(authenticateJWT);
 
 // Rutas de ejecución de análisis sujetas a control de límite de 5 análisis diarios para usuarios gratuitos
 router.post('/text', checkDailyAnalysisLimit, AnalysisController.analyzeText);
-router.post('/docx', checkDailyAnalysisLimit, uploadDocx.single('file'), AnalysisController.analyzeDocx);
+router.post('/document', checkDailyAnalysisLimit, uploadDocument.single('file'), AnalysisController.analyzeDocument);
+router.post('/docx', checkDailyAnalysisLimit, uploadDocument.single('file'), AnalysisController.analyzeDocument);
 
 // Historial y detalle
 router.get('/history', AnalysisController.getHistory);

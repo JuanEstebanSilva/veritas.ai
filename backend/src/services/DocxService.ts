@@ -39,6 +39,66 @@ export class DocxService {
   }
 
   /**
+   * Extrae el texto y estructura de un archivo PDF en memoria
+   */
+  public static async extractTextFromPdf(buffer: Buffer): Promise<{
+    text: string;
+    paragraphsCount: number;
+  }> {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { PDFParse } = require('pdf-parse');
+    const parser = new PDFParse({ data: buffer });
+    try {
+      const result = await parser.getText();
+      const rawText = (result?.text || '').trim();
+
+      // Limpiar saltos de página y normalizar
+      const normalizedText = rawText
+        .split(/\r?\n/)
+        .map((line: string) => line.trim())
+        .filter((line: string) => line.length > 0)
+        .join('\n\n');
+
+      const paragraphsCount = normalizedText.split('\n\n').filter(Boolean).length;
+
+      return {
+        text: normalizedText,
+        paragraphsCount: Math.max(1, paragraphsCount),
+      };
+    } finally {
+      try {
+        await parser.destroy();
+      } catch {
+        // Ignorar cleanup si ya fue cerrado
+      }
+    }
+  }
+
+  /**
+   * Extrae texto de cualquier documento soportado (.docx o .pdf)
+   */
+  public static async extractTextFromDocument(file: {
+    buffer: Buffer;
+    originalname: string;
+    mimetype?: string;
+  }): Promise<{
+    text: string;
+    paragraphsCount: number;
+    fileType: 'docx' | 'pdf';
+  }> {
+    const ext = file.originalname.toLowerCase();
+    const isPdf = ext.endsWith('.pdf') || file.mimetype === 'application/pdf';
+
+    if (isPdf) {
+      const res = await this.extractTextFromPdf(file.buffer);
+      return { ...res, fileType: 'pdf' };
+    }
+
+    const res = await this.extractTextFromBuffer(file.buffer);
+    return { ...res, fileType: 'docx' };
+  }
+
+  /**
    * Genera un nuevo documento DOCX formateado profesionalmente con el texto mejorado
    */
   public static async generateImprovedDocx(options: {

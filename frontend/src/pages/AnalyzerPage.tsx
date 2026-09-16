@@ -8,7 +8,24 @@ import { useToast } from '../components/ui';
 import { sound } from '../utils/soundEffects';
 import { getScoreMood } from '../utils/scoreMood';
 import { CountUp } from '../motion';
-import { UploadCloud, FileText, ExternalLink, AlertCircle, Loader2, RefreshCw, Copy, Check, Download, ArrowRight, Sparkles, ShieldCheck, X } from 'lucide-react';
+import {
+  UploadCloud,
+  FileText,
+  ExternalLink,
+  AlertCircle,
+  AlertTriangle,
+  Loader2,
+  RefreshCw,
+  Copy,
+  Check,
+  Download,
+  ArrowRight,
+  Sparkles,
+  ShieldCheck,
+  X,
+  BookOpen,
+  Quote,
+} from 'lucide-react';
 
 export const AnalyzerPage: React.FC = () => {
   const { isAuthenticated, openPremiumModal, refreshProfile } = useAuth();
@@ -20,9 +37,8 @@ export const AnalyzerPage: React.FC = () => {
   const [mode, setMode] = useState<'analyzer' | 'humanizer'>('analyzer');
 
   // Estados de entrada
-  const [activeTab, setActiveTab] = useState<'text' | 'docx'>('text');
+  const [activeTab, setActiveTab] = useState<'text' | 'document'>('text');
   const [textInput, setTextInput] = useState('');
-  const [titleInput, setTitleInput] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -33,14 +49,19 @@ export const AnalyzerPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
 
-  // Reescritura
+  // Reescritura / Humanización
   const [improving, setImproving] = useState(false);
+  const [extractingDoc, setExtractingDoc] = useState(false);
   const [copiedDirect, setCopiedDirect] = useState(false);
+  const [copiedCitation, setCopiedCitation] = useState<{ id: string; type: 'inText' | 'ref' | 'all' } | null>(null);
   const [improvedResult, setImprovedResult] = useState<{
-    improvedText: string; summaryOfChanges: string[];
-    originalAiScore?: number; improvedAiScore?: number; aiReduction?: number;
+    improvedText: string;
+    summaryOfChanges: string[];
+    originalAiScore?: number;
+    improvedAiScore?: number;
+    aiReduction?: number;
+    filename?: string;
   } | null>(null);
-
 
   // Carga de un análisis existente por URL (?id=)
   useEffect(() => {
@@ -72,64 +93,176 @@ export const AnalyzerPage: React.FC = () => {
 
   const validateAndSetFile = (file: File) => {
     setError(null);
-    if (!file.name.toLowerCase().endsWith('.docx')) { sound.playError(); setError('Formato inválido. Solo se admiten documentos en formato .docx'); return; }
-    if (file.size > 10 * 1024 * 1024) { sound.playError(); setError('El archivo excede el tamaño máximo permitido de 10 MB.'); return; }
+    const ext = file.name.toLowerCase();
+    const isDocx = ext.endsWith('.docx');
+    const isPdf = ext.endsWith('.pdf');
+
+    if (!isDocx && !isPdf) {
+      sound.playError();
+      setError('Formato no admitido. Solo se permiten documentos en formato .docx o .pdf');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      sound.playError();
+      setError('El archivo excede el tamaño máximo permitido de 10 MB.');
+      return;
+    }
     setSelectedFile(file);
-    if (!titleInput) setTitleInput(file.name.replace(/\.[^/.]+$/, ''));
   };
+
   const handleFileDrop = (e: React.DragEvent) => {
-    e.preventDefault(); setDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) validateAndSetFile(e.dataTransfer.files[0]);
+    e.preventDefault();
+    setDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      validateAndSetFile(e.dataTransfer.files[0]);
+    }
   };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) validateAndSetFile(e.target.files[0]);
+    if (e.target.files && e.target.files[0]) {
+      validateAndSetFile(e.target.files[0]);
+    }
     e.target.value = '';
   };
 
   const handleAnalyze = async () => {
-    if (!isAuthenticated) { navigate('/login?notice=unauthenticated'); return; }
+    if (!isAuthenticated) {
+      navigate('/login?notice=unauthenticated');
+      return;
+    }
     setError(null);
     setImprovedResult(null);
 
     if (activeTab === 'text') {
-      if (!textInput || textInput.trim().length < 15) { sound.playError(); setError('Por favor introduce un texto de al menos 15 caracteres.'); return; }
+      if (!textInput || textInput.trim().length < 15) {
+        sound.playError();
+        setError('Por favor introduce un texto de al menos 15 caracteres.');
+        return;
+      }
       setLoading(true);
-      setLoadingStage('Midiendo perplejidad, burstiness y regularidad sintáctica');
+      setLoadingStage('Midiendo perplejidad, burstiness y cotejando similitud');
       sound.playScan();
-      const res = await analysisApi.analyzeText(textInput, titleInput);
+      const res = await analysisApi.analyzeText(textInput);
       setLoading(false);
-      if (res.isLimitReached) { sound.playError(); setError(res.error || 'Has alcanzado tus 5 análisis gratuitos de hoy.'); openPremiumModal(); return; }
-      if (res.data?.success && res.data.analysis) { sound.playSuccess(); setAnalysis(res.data.analysis); await refreshProfile(); }
-      else { sound.playError(); setError(res.error || 'Error al procesar el análisis de texto.'); }
+      if (res.isLimitReached) {
+        sound.playError();
+        setError(res.error || 'Has alcanzado tus 5 análisis gratuitos de hoy.');
+        openPremiumModal();
+        return;
+      }
+      if (res.data?.success && res.data.analysis) {
+        sound.playSuccess();
+        setAnalysis(res.data.analysis);
+        await refreshProfile();
+      } else {
+        sound.playError();
+        setError(res.error || 'Error al procesar el análisis de texto.');
+      }
     } else {
-      if (!selectedFile) { sound.playError(); setError('Por favor selecciona un archivo .docx para analizar.'); return; }
+      if (!selectedFile) {
+        sound.playError();
+        setError('Por favor selecciona un archivo .docx o .pdf para analizar.');
+        return;
+      }
+      const isPdf = selectedFile.name.toLowerCase().endsWith('.pdf');
       setLoading(true);
-      setLoadingStage('Extrayendo párrafos y estructura del documento .docx');
+      setLoadingStage(`Extrayendo contenido de ${isPdf ? 'PDF' : 'Word'} y analizando similitud e IA`);
       sound.playScan();
-      const res = await analysisApi.analyzeDocx(selectedFile);
+      const res = await analysisApi.analyzeDocument(selectedFile);
       setLoading(false);
-      if (res.isLimitReached) { sound.playError(); setError(res.error || 'Has alcanzado tus 5 análisis gratuitos de hoy.'); openPremiumModal(); return; }
-      if (res.data?.success && res.data.analysis) { sound.playSuccess(); setAnalysis(res.data.analysis); await refreshProfile(); }
-      else { sound.playError(); setError(res.error || 'Error al procesar el archivo DOCX.'); }
+      if (res.isLimitReached) {
+        sound.playError();
+        setError(res.error || 'Has alcanzado tus 5 análisis gratuitos de hoy.');
+        openPremiumModal();
+        return;
+      }
+      if (res.data?.success && res.data.analysis) {
+        sound.playSuccess();
+        setAnalysis(res.data.analysis);
+        await refreshProfile();
+      } else {
+        sound.playError();
+        setError(res.error || 'Error al procesar el documento.');
+      }
     }
   };
 
-  // Reescritura directa sin análisis previo
+  // Reescritura / humanización directa
   const handleDirectHumanize = async () => {
-    if (!isAuthenticated) { navigate('/login?notice=unauthenticated'); return; }
-    if (!textInput || textInput.trim().length < 15) { sound.playError(); setError('Por favor introduce un texto de al menos 15 caracteres para reescribir.'); return; }
+    if (!isAuthenticated) {
+      navigate('/login?notice=unauthenticated');
+      return;
+    }
     setError(null);
-    setImproving(true);
-    sound.playScan();
-    const res = await writingApi.improveText({ text: textInput.trim() });
-    setImproving(false);
-    if (res.data?.success) {
-      sound.playSuccess();
-      setImprovedResult({
-        improvedText: res.data.improvedText, summaryOfChanges: res.data.summaryOfChanges,
-        originalAiScore: res.data.originalAiScore, improvedAiScore: res.data.improvedAiScore, aiReduction: res.data.aiReduction,
+
+    if (activeTab === 'text') {
+      if (!textInput || textInput.trim().length < 15) {
+        sound.playError();
+        setError('Por favor introduce un texto de al menos 15 caracteres para reescribir.');
+        return;
+      }
+      setImproving(true);
+      sound.playScan();
+      const res = await writingApi.improveText({ text: textInput.trim() });
+      setImproving(false);
+      if (res.data?.success) {
+        sound.playSuccess();
+        setImprovedResult({
+          improvedText: res.data.improvedText,
+          summaryOfChanges: res.data.summaryOfChanges,
+          originalAiScore: res.data.originalAiScore,
+          improvedAiScore: res.data.improvedAiScore,
+          aiReduction: res.data.aiReduction,
+        });
+      } else {
+        sound.playError();
+        setError(res.error || 'No se pudo procesar la reescritura del texto.');
+      }
+    } else {
+      if (!selectedFile) {
+        sound.playError();
+        setError('Por favor selecciona un archivo .docx o .pdf para humanizar.');
+        return;
+      }
+      setImproving(true);
+      sound.playScan();
+      const res = await writingApi.improveDocument(selectedFile);
+      setImproving(false);
+      if (res.data?.success) {
+        sound.playSuccess();
+        setImprovedResult({
+          improvedText: res.data.improvedText,
+          summaryOfChanges: res.data.summaryOfChanges,
+          originalAiScore: res.data.originalAiScore,
+          improvedAiScore: res.data.improvedAiScore,
+          aiReduction: res.data.aiReduction,
+          filename: selectedFile.name,
+        });
+      } else {
+        sound.playError();
+        setError(res.error || 'No se pudo humanizar el documento.');
+      }
+    }
+  };
+
+  // Extraer texto del documento para edición previa
+  const handleExtractTextToEditor = async () => {
+    if (!selectedFile) return;
+    setExtractingDoc(true);
+    setError(null);
+    const res = await writingApi.extractDocumentText(selectedFile);
+    setExtractingDoc(false);
+    if (res.data?.success && res.data.text) {
+      setTextInput(res.data.text);
+      setActiveTab('text');
+      toast.show({
+        title: 'Texto extraído exitosamente',
+        description: `Se cargaron ${res.data.paragraphsCount} párrafos en el editor.`,
+        tone: 'human',
       });
-    } else { sound.playError(); setError(res.error || 'No se pudo procesar la reescritura del texto.'); }
+    } else {
+      setError(res.error || 'No se pudo extraer el texto del documento.');
+    }
   };
 
   const handleImproveWriting = async () => {
@@ -142,10 +275,18 @@ export const AnalyzerPage: React.FC = () => {
     if (res.data?.success) {
       sound.playSuccess();
       setImprovedResult({
-        improvedText: res.data.improvedText, summaryOfChanges: res.data.summaryOfChanges,
-        originalAiScore: res.data.originalAiScore ?? analysis.aiScore, improvedAiScore: res.data.improvedAiScore, aiReduction: res.data.aiReduction,
+        improvedText: res.data.improvedText,
+        summaryOfChanges: res.data.summaryOfChanges,
+        originalAiScore: res.data.originalAiScore ?? analysis.aiScore,
+        improvedAiScore: res.data.improvedAiScore,
+        aiReduction: res.data.aiReduction,
+        filename: analysis.title,
       });
-    } else { sound.playError(); setError(res.error || 'No se pudo generar la mejora de redacción.'); toast.show({ title: 'No se pudo reescribir', description: res.error, tone: 'ai' }); }
+    } else {
+      sound.playError();
+      setError(res.error || 'No se pudo generar la mejora de redacción.');
+      toast.show({ title: 'No se pudo reescribir', description: res.error, tone: 'ai' });
+    }
   };
 
   const handleCopyDirectText = async () => {
@@ -155,21 +296,50 @@ export const AnalyzerPage: React.FC = () => {
       setCopiedDirect(true);
       toast.show({ title: 'Texto copiado al portapapeles', tone: 'human', duration: 2200 });
       setTimeout(() => setCopiedDirect(false), 2500);
-    } catch { toast.show({ title: 'No se pudo copiar', description: 'Selecciona el texto y cópialo manualmente.', tone: 'ai' }); }
+    } catch {
+      toast.show({ title: 'No se pudo copiar', description: 'Selecciona el texto y cópialo manualmente.', tone: 'ai' });
+    }
   };
+
   const handleDownloadDirectDocx = async () => {
     if (!improvedResult?.improvedText) return;
-    const res = await writingApi.downloadDocx({ improvedText: improvedResult.improvedText, title: titleInput || 'documento_humanizado' });
+    const res = await writingApi.downloadDocx({
+      improvedText: improvedResult.improvedText,
+      title: improvedResult.filename || 'documento_humanizado',
+    });
     if (res.error) toast.show({ title: 'No se pudo descargar el documento', description: res.error, tone: 'ai' });
   };
+
+  const handleCopyApa = async (textToCopy: string, id: string, type: 'inText' | 'ref' | 'all') => {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setCopiedCitation({ id, type });
+      sound.playSuccess();
+      const label =
+        type === 'inText'
+          ? 'Cita parentética APA copiada'
+          : type === 'ref'
+          ? 'Referencia bibliográfica APA copiada'
+          : 'Cita y referencia completas en APA 7 copiadas';
+      toast.show({ title: label, tone: 'human', duration: 2500 });
+      setTimeout(() => setCopiedCitation(null), 2500);
+    } catch {
+      toast.show({ title: 'No se pudo copiar la cita', tone: 'ai' });
+    }
+  };
+
   const resetForm = () => {
-    setAnalysis(null); setImprovedResult(null); setTextInput(''); setSelectedFile(null); setTitleInput(''); setError(null);
+    setAnalysis(null);
+    setImprovedResult(null);
+    setTextInput('');
+    setSelectedFile(null);
+    setError(null);
     if (location.search) navigate('/analyzer', { replace: true });
   };
 
   const wordCount = textInput.split(/\s+/).filter(Boolean).length;
   const showForm = !analysis && !improvedResult;
-  const busy = loading || improving;
+  const busy = loading || improving || extractingDoc;
 
   const ModeTab: React.FC<{
     active: boolean;
@@ -348,81 +518,152 @@ export const AnalyzerPage: React.FC = () => {
                     : 'text-mid hover:text-hi hover:bg-black/[0.02] dark:hover:bg-white/[0.02]'
                 }`}
               >
-                <FileText className={`w-3.5 h-3.5 ${activeTab === 'text' ? 'text-azure' : 'text-low'}`} strokeWidth={1.8} />
+                <FileText className={`w-3.5 h-3.5 ${activeTab === 'text' ? (mode === 'humanizer' ? 'text-human' : 'text-azure') : 'text-low'}`} strokeWidth={1.8} />
                 Texto directo
               </button>
-              {mode === 'analyzer' && (
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === 'docx'}
-                  onClick={() => {
-                    sound.playToggle();
-                    setActiveTab('docx');
-                    setError(null);
-                  }}
-                  className={`flex items-center gap-2 h-9 px-4 rounded-full text-[12.5px] font-semibold transition-all duration-200 ${
-                    activeTab === 'docx'
-                      ? 'bg-white dark:bg-surface-2 text-hi shadow-sm ring-1 ring-black/[0.04] dark:ring-white/[0.08]'
-                      : 'text-mid hover:text-hi hover:bg-black/[0.02] dark:hover:bg-white/[0.02]'
-                  }`}
-                >
-                  <UploadCloud className={`w-3.5 h-3.5 ${activeTab === 'docx' ? 'text-azure' : 'text-low'}`} strokeWidth={1.8} />
-                  Documento .docx
-                </button>
-              )}
-            </div>
-            {activeTab === 'text' && <span className="font-mono text-[11px] text-low" aria-live="polite">{wordCount} palabras · {textInput.length} caracteres</span>}
-          </div>
 
-          <div className="flex flex-col gap-2">
-            <label htmlFor="analysis-title" className="field-label">Título o referencia <span className="text-low font-normal">(opcional)</span></label>
-            <input id="analysis-title" type="text" value={titleInput} onChange={(e) => setTitleInput(e.target.value)} placeholder="Ensayo o documento académico" className="field" />
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'document'}
+                onClick={() => {
+                  sound.playToggle();
+                  setActiveTab('document');
+                  setError(null);
+                }}
+                className={`flex items-center gap-2 h-9 px-4 rounded-full text-[12.5px] font-semibold transition-all duration-200 ${
+                  activeTab === 'document'
+                    ? 'bg-white dark:bg-surface-2 text-hi shadow-sm ring-1 ring-black/[0.04] dark:ring-white/[0.08]'
+                    : 'text-mid hover:text-hi hover:bg-black/[0.02] dark:hover:bg-white/[0.02]'
+                }`}
+              >
+                <UploadCloud className={`w-3.5 h-3.5 ${activeTab === 'document' ? (mode === 'humanizer' ? 'text-human' : 'text-azure') : 'text-low'}`} strokeWidth={1.8} />
+                Documento (.docx o .pdf)
+              </button>
+            </div>
+            {activeTab === 'text' && (
+              <span className="font-mono text-[11px] text-low" aria-live="polite">
+                {wordCount} palabras · {textInput.length} caracteres
+              </span>
+            )}
           </div>
 
           {activeTab === 'text' && (
             <div className="flex flex-col gap-2">
-              <label htmlFor="analysis-text" className="field-label">{mode === 'humanizer' ? 'Texto a humanizar' : 'Texto a evaluar'}</label>
-              <textarea id="analysis-text" rows={11} value={textInput} onChange={(e) => { setTextInput(e.target.value); if (error) setError(null); }}
-                placeholder={mode === 'humanizer'
-                  ? 'Pega el texto aquí. Eliminaremos patrones y clichés de IA para devolver cadencia natural y riqueza léxica, respetando tus citas y datos.'
-                  : 'Pega el texto aquí. Verificaremos que no haya plagio de fuentes públicas y calcularemos la probabilidad de IA con desglose párrafo a párrafo.'}
-                className="field h-auto py-4 leading-[1.7] resize-y" />
+              <label htmlFor="analysis-text" className="field-label">
+                {mode === 'humanizer' ? 'Texto a humanizar' : 'Texto a evaluar'}
+              </label>
+              <textarea
+                id="analysis-text"
+                rows={11}
+                value={textInput}
+                onChange={(e) => {
+                  setTextInput(e.target.value);
+                  if (error) setError(null);
+                }}
+                placeholder={
+                  mode === 'humanizer'
+                    ? 'Pega el texto aquí. Eliminaremos patrones y clichés de IA para devolver cadencia natural y riqueza léxica, respetando tus citas y datos.'
+                    : 'Pega el texto aquí. Verificaremos que no haya plagio de fuentes públicas y calcularemos la probabilidad de IA con desglose párrafo a párrafo.'
+                }
+                className="field h-auto py-4 leading-[1.7] resize-y"
+              />
             </div>
           )}
 
-          {activeTab === 'docx' && (
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label={selectedFile ? `Archivo seleccionado: ${selectedFile.name}. Pulsa para cambiarlo.` : 'Elegir un archivo .docx'}
-              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={handleFileDrop}
-              onClick={() => fileInput.current?.click()}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.current?.click(); } }}
-              className={`relative rounded-2xl border border-dashed p-10 text-center cursor-pointer transition-[border-color,background-color] duration-240 ease-out ${
-                dragging ? 'border-azure/60 bg-azure/5' : selectedFile ? 'border-human/40 bg-human/5' : 'hair-2 hover:bg-hair'
-              }`}
-            >
-              <input ref={fileInput} id="docx-file-input" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleFileChange} className="hidden" tabIndex={-1} />
-              <div className="flex flex-col items-center gap-3">
-                {selectedFile ? <FileText className="w-8 h-8 text-human" strokeWidth={1.4} /> : <UploadCloud className={`w-8 h-8 text-azure transition-transform duration-240 ${dragging ? '-translate-y-1' : ''}`} strokeWidth={1.4} />}
-                {selectedFile ? (
-                  <>
-                    <span className="text-[14px] font-semibold text-hi break-all">{selectedFile.name}</span>
-                    <span className="font-mono text-[11.5px] text-low">{(selectedFile.size / 1024).toFixed(1)} KB · documento Word válido</span>
-                    <span className="text-[12px] text-azure pt-1">Haz clic para cambiar de archivo</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-[14px] font-semibold text-hi">Arrastra tu archivo .docx aquí, o haz clic para elegirlo</span>
-                    <span className="text-[12px] text-low">Solo .docx · máximo 10 MB</span>
-                  </>
+          {activeTab === 'document' && (
+            <div className="flex flex-col gap-4">
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label={selectedFile ? `Archivo seleccionado: ${selectedFile.name}. Pulsa para cambiarlo.` : 'Elegir un archivo .docx o .pdf'}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={handleFileDrop}
+                onClick={() => fileInput.current?.click()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    fileInput.current?.click();
+                  }
+                }}
+                className={`relative rounded-2xl border border-dashed p-10 text-center cursor-pointer transition-[border-color,background-color] duration-240 ease-out ${
+                  dragging
+                    ? 'border-azure/60 bg-azure/5'
+                    : selectedFile
+                    ? 'border-human/40 bg-human/5'
+                    : 'hair-2 hover:bg-hair'
+                }`}
+              >
+                <input
+                  ref={fileInput}
+                  id="document-file-input"
+                  type="file"
+                  accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  tabIndex={-1}
+                />
+                <div className="flex flex-col items-center gap-3">
+                  {selectedFile ? (
+                    <FileText className="w-8 h-8 text-human" strokeWidth={1.4} />
+                  ) : (
+                    <UploadCloud
+                      className={`w-8 h-8 text-azure transition-transform duration-240 ${dragging ? '-translate-y-1' : ''}`}
+                      strokeWidth={1.4}
+                    />
+                  )}
+                  {selectedFile ? (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[14px] font-semibold text-hi break-all">{selectedFile.name}</span>
+                        <span className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-azure/10 text-azure uppercase">
+                          {selectedFile.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'DOCX'}
+                        </span>
+                      </div>
+                      <span className="font-mono text-[11.5px] text-low">
+                        {(selectedFile.size / 1024).toFixed(1)} KB · Documento cargado correctamente
+                      </span>
+                      <span className="text-[12px] text-azure pt-1">Haz clic para cambiar de archivo</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-[14px] font-semibold text-hi">
+                        Arrastra tu archivo .docx o .pdf aquí, o haz clic para elegirlo
+                      </span>
+                      <span className="text-[12px] text-low">Formatos soportados: Microsoft Word (.docx) y Adobe PDF (.pdf) · máximo 10 MB</span>
+                    </>
+                  )}
+                </div>
+                {selectedFile && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedFile(null);
+                    }}
+                    aria-label="Quitar archivo"
+                    className="btn-icon absolute top-2 right-2"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 )}
               </div>
-              {selectedFile && (
-                <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }} aria-label="Quitar archivo" className="btn-icon absolute top-2 right-2"><X className="w-4 h-4" /></button>
+
+              {selectedFile && mode === 'humanizer' && (
+                <div className="flex items-center justify-end">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={handleExtractTextToEditor}
+                    className="btn btn-ghost btn-sm text-[12.5px]"
+                  >
+                    <FileText className="w-3.5 h-3.5" /> Extraer texto al editor antes de humanizar
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -443,12 +684,24 @@ export const AnalyzerPage: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
             {mode === 'analyzer' ? (
-              <button type="button" disabled={busy} onClick={handleAnalyze} className="btn btn-primary min-w-[200px]">
+              <button
+                type="button"
+                disabled={busy || (activeTab === 'text' && !textInput.trim()) || (activeTab === 'document' && !selectedFile)}
+                onClick={handleAnalyze}
+                className="btn btn-primary min-w-[200px]"
+              >
                 <ShieldCheck className="w-4 h-4" strokeWidth={2} /> Verificar plagio e IA <ArrowRight className="w-4 h-4" strokeWidth={2} />
               </button>
             ) : (
-              <button type="button" disabled={busy || activeTab !== 'text'} onClick={handleDirectHumanize} className="btn btn-primary min-w-[200px] bg-human hover:bg-human/90">
-                <Sparkles className="w-4 h-4" strokeWidth={2} /> Humanizar texto <ArrowRight className="w-4 h-4" strokeWidth={2} />
+              <button
+                type="button"
+                disabled={busy || (activeTab === 'text' && !textInput.trim()) || (activeTab === 'document' && !selectedFile)}
+                onClick={handleDirectHumanize}
+                className="btn btn-primary min-w-[200px] bg-human hover:bg-human/90"
+              >
+                <Sparkles className="w-4 h-4" strokeWidth={2} />{' '}
+                {activeTab === 'document' ? 'Humanizar documento (.docx o .pdf)' : 'Humanizar texto'}{' '}
+                <ArrowRight className="w-4 h-4" strokeWidth={2} />
               </button>
             )}
           </div>
@@ -458,7 +711,8 @@ export const AnalyzerPage: React.FC = () => {
       {/* Error al recuperar un informe */}
       {!showForm && error && !analysis && (
         <div className="flex items-start gap-3 py-4 border-y border-ai/30 text-[13px] text-ai" role="alert">
-          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.8} /><span className="font-semibold">{error}</span>
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.8} />
+          <span className="font-semibold">{error}</span>
         </div>
       )}
 
@@ -467,44 +721,75 @@ export const AnalyzerPage: React.FC = () => {
         <div className="flex flex-col gap-7 page-in">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="text-d-5 font-semibold break-words">{analysis.title}</h2>
-            <span className="font-mono text-[11.5px] text-low">{analysis.type === 'DOCX' ? 'documento .docx' : 'texto'} · {new Date(analysis.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+            <span className="font-mono text-[11.5px] text-low">
+              {analysis.type === 'PDF' ? 'documento .pdf' : analysis.type === 'DOCX' ? 'documento .docx' : 'texto'} ·{' '}
+              {new Date(analysis.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+            </span>
           </div>
 
-          <ResultScoreCard aiScore={analysis.aiScore} similarityScore={analysis.similarityScore} indicators={analysis.overallIndicators || []} summaryExplanation={analysis.summaryExplanation} />
+          <ResultScoreCard
+            aiScore={analysis.aiScore}
+            similarityScore={analysis.similarityScore}
+            indicators={analysis.overallIndicators || []}
+            summaryExplanation={analysis.summaryExplanation}
+          />
 
           {error && (
             <div className="flex items-start gap-3 py-4 border-y border-ai/30 text-[13px] text-ai" role="alert">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.8} /><span className="font-semibold">{error}</span>
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.8} />
+              <span className="font-semibold">{error}</span>
             </div>
           )}
 
           {/* Llamada al Humanizador */}
-          {!improvedResult && (improving ? (
-            <AnalysisProgress stage="Humanizando texto y erradicando huella de IA..." mode="rewrite" />
-          ) : (
-            <div className="relative overflow-hidden rounded-[20px] border border-human/30 p-7 sm:p-8 flex flex-wrap items-center justify-between gap-6"
-              style={{ background: 'linear-gradient(165deg, rgb(var(--human) / .09), rgb(var(--human) / .015) 60%)' }}>
-              <div className="flex flex-col gap-2 max-w-[560px]">
-                <span className="eyebrow text-human">Humanizador de IA</span>
-                <h3 className="text-d-5 font-semibold">Humaniza este texto para <span className="serif">cero detección.</span></h3>
-                <p className="text-[13.5px] leading-[1.65] text-mid">Rompe la cadencia uniforme, sustituye más de 130 fórmulas de IA y conserva citas, cifras y sentido original.</p>
+          {!improvedResult &&
+            (improving ? (
+              <AnalysisProgress stage="Humanizando texto y erradicando huella de IA..." mode="rewrite" />
+            ) : (
+              <div
+                className="relative overflow-hidden rounded-[20px] border border-human/30 p-7 sm:p-8 flex flex-wrap items-center justify-between gap-6"
+                style={{ background: 'linear-gradient(165deg, rgb(var(--human) / .09), rgb(var(--human) / .015) 60%)' }}
+              >
+                <div className="flex flex-col gap-2 max-w-[560px]">
+                  <span className="eyebrow text-human">Humanizador de IA</span>
+                  <h3 className="text-d-5 font-semibold">
+                    Humaniza este texto para <span className="serif">cero detección.</span>
+                  </h3>
+                  <p className="text-[13.5px] leading-[1.65] text-mid">
+                    Rompe la cadencia uniforme, sustituye más de 130 fórmulas de IA y conserva citas, cifras y sentido original.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={improving}
+                  onClick={handleImproveWriting}
+                  className="btn btn-primary bg-human hover:bg-human/90 shrink-0"
+                >
+                  <Sparkles className="w-4 h-4" strokeWidth={2} /> Humanizar este texto <ArrowRight className="w-4 h-4" strokeWidth={2} />
+                </button>
               </div>
-              <button type="button" disabled={improving} onClick={handleImproveWriting} className="btn btn-primary bg-human hover:bg-human/90 shrink-0">
-                <Sparkles className="w-4 h-4" strokeWidth={2} /> Humanizar este texto <ArrowRight className="w-4 h-4" strokeWidth={2} />
-              </button>
-            </div>
-          ))}
+            ))}
 
           {improvedResult && (
-            <DiffViewer originalText={analysis.originalText} improvedText={improvedResult.improvedText} summaryOfChanges={improvedResult.summaryOfChanges}
-              analysisId={analysis.id} originalAiScore={analysis.aiScore} improvedAiScore={improvedResult.improvedAiScore} originalSimilarityScore={analysis.similarityScore} title={analysis.title} />
+            <DiffViewer
+              originalText={analysis.originalText}
+              improvedText={improvedResult.improvedText}
+              summaryOfChanges={improvedResult.summaryOfChanges}
+              analysisId={analysis.id}
+              originalAiScore={analysis.aiScore}
+              improvedAiScore={improvedResult.improvedAiScore}
+              originalSimilarityScore={analysis.similarityScore}
+              title={analysis.title}
+            />
           )}
 
           {/* Desglose por párrafo */}
           {analysis.paragraphs && analysis.paragraphs.length > 0 && (
             <div className="flex flex-col gap-5">
               <div className="flex flex-wrap items-baseline justify-between gap-3 pt-4">
-                <h3 className="text-d-5 font-light">No un número. <span className="serif">Un argumento.</span></h3>
+                <h3 className="text-d-5 font-light">
+                  No un número. <span className="serif">Un argumento.</span>
+                </h3>
                 <span className="font-mono text-[11.5px] text-low">{analysis.paragraphs.length} párrafos</span>
               </div>
               <ol className="flex flex-col gap-3">
@@ -519,13 +804,17 @@ export const AnalyzerPage: React.FC = () => {
                       <div className="flex flex-col gap-3 min-w-0 flex-1">
                         <div className="flex items-center gap-3">
                           <span className="font-mono text-[11px] text-low">Párrafo {p.index + 1}</span>
-                          <span className="h-[3px] flex-1 max-w-[120px] rounded-full bg-hair overflow-hidden" aria-hidden="true"><span className={`block h-full ${m.barClass}`} style={{ width: `${Math.round(p.aiScore)}%` }} /></span>
+                          <span className="h-[3px] flex-1 max-w-[120px] rounded-full bg-hair overflow-hidden" aria-hidden="true">
+                            <span className={`block h-full ${m.barClass}`} style={{ width: `${Math.round(p.aiScore)}%` }} />
+                          </span>
                         </div>
                         <p className="text-[14px] leading-[1.75] text-mid">{p.text}</p>
                         {p.indicators.length > 0 && (
                           <div className="flex items-baseline gap-3">
                             <span className={`h-px w-[16px] shrink-0 relative -top-1 ${m.barClass}`} />
-                            <span className={`text-[12.5px] font-semibold leading-[1.6] ${m.textClass}`}>{p.indicators.join('  ·  ')}</span>
+                            <span className={`text-[12.5px] font-semibold leading-[1.6] ${m.textClass}`}>
+                              {p.indicators.join('  ·  ')}
+                            </span>
                           </div>
                         )}
                         <p className="text-[12.5px] leading-[1.6] text-low italic">{p.explanation}</p>
@@ -537,34 +826,239 @@ export const AnalyzerPage: React.FC = () => {
             </div>
           )}
 
-          {/* Fuentes */}
+          {/* Fuentes Cotejadas y Generador de Citas APA 7 (Destacado de Plagio) */}
           {analysis.sources && analysis.sources.length > 0 && (
-            <div className="flex flex-col gap-5">
-              <div className="flex flex-wrap items-baseline justify-between gap-3 pt-4">
-                <h3 className="text-d-5 font-light">Fuentes <span className="serif">cotejadas.</span></h3>
-                <span className="num text-[13px] text-azure">{analysis.similarityScore}% total</span>
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-wrap items-baseline justify-between gap-3 pt-6 border-t hair">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-d-5 font-light">
+                    Detección de Similitud y <span className="serif text-azure">Citas APA 7.</span>
+                  </h3>
+                </div>
+                <span
+                  className={`num text-[13px] px-3 py-1 rounded-full font-bold ${
+                    analysis.similarityScore >= 35
+                      ? 'bg-red-500/10 text-red-500 border border-red-500/30'
+                      : analysis.similarityScore >= 18
+                      ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30'
+                      : 'bg-azure/10 text-azure border border-azure/30'
+                  }`}
+                >
+                  {analysis.similarityScore}% coincidencia total
+                </span>
               </div>
-              <ul className="flex flex-col">
-                {analysis.sources.map((src, i) => (
-                  <li key={i} className={`py-6 border-b hair flex flex-col gap-4 ${i === 0 ? 'border-t' : ''}`}>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <a href={src.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-[13.5px] font-semibold text-hi hover:text-azure transition-colors rounded-md">
-                        {src.title} <ExternalLink className="w-3.5 h-3.5 text-low" strokeWidth={1.8} />
-                      </a>
-                      <span className="num text-[13px] text-azure">{src.similarityPercentage}%</span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-2">
-                        <span className="eyebrow">Fuente externa</span>
-                        <p className="serif text-[16px] leading-[1.55] text-mid">{src.matchedText}</p>
+
+              {/* Banner de alerta de posible plagio */}
+              <div
+                className={`p-5 sm:p-6 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+                  analysis.similarityScore >= 35
+                    ? 'border-red-500/40 bg-red-500/[0.04] dark:bg-red-500/[0.08]'
+                    : analysis.similarityScore >= 18
+                    ? 'border-amber-500/40 bg-amber-500/[0.04] dark:bg-amber-500/[0.08]'
+                    : 'border-azure/30 bg-azure/[0.03] dark:bg-azure/[0.06]'
+                }`}
+              >
+                <div className="flex items-start gap-3.5">
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      analysis.similarityScore >= 35
+                        ? 'bg-red-500/15 text-red-500'
+                        : analysis.similarityScore >= 18
+                        ? 'bg-amber-500/15 text-amber-500'
+                        : 'bg-azure/15 text-azure'
+                    }`}
+                  >
+                    <AlertTriangle className="w-5 h-5" strokeWidth={2} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <h4 className="text-[14.5px] font-semibold text-hi flex items-center gap-2">
+                      {analysis.similarityScore >= 35
+                        ? '⚠️ Alerta de Similitud Significativa (Posible Plagio)'
+                        : analysis.similarityScore >= 18
+                        ? 'Similitud moderada con fuentes abiertas'
+                        : 'Cotejo bibliográfico completado'}
+                    </h4>
+                    <p className="text-[13px] text-mid leading-[1.6] max-w-[680px]">
+                      {analysis.similarityScore >= 18
+                        ? 'Se identificaron fragmentos que coinciden con publicaciones o repositorios académicos. Para evitar plagio involuntario, utiliza las citas en normas APA 7 generadas para cada fuente a continuación.'
+                        : 'Coincidencias de frases o terminología común. Puedes copiar las referencias en formato APA 7 si requieres citar estas fuentes.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lista de coincidencias con citación APA */}
+              <ul className="flex flex-col gap-6">
+                {analysis.sources.map((src, i) => {
+                  const isHighMatch = src.similarityPercentage >= 35;
+                  const isModMatch = src.similarityPercentage >= 18;
+
+                  // Generar formato APA si no viene del backend
+                  const inTextCitation =
+                    src.apaCitation?.inText ||
+                    `(${src.title.split(':')[0].trim().replace(/[^\w\s]/g, '') || 'Fuente consultada'}, 2023)`;
+                  const fullReference =
+                    src.apaCitation?.reference ||
+                    `${src.title.replace(/[A-Za-z0-9\s/]+:\s*/, '')}. (2023). ${src.url}`;
+
+                  const combinedApa = `${inTextCitation}\n\nReferencia bibliográfica:\n${fullReference}`;
+
+                  const isCopiedInText = copiedCitation?.id === (src.id || `src-${i}`) && copiedCitation.type === 'inText';
+                  const isCopiedRef = copiedCitation?.id === (src.id || `src-${i}`) && copiedCitation.type === 'ref';
+                  const isCopiedAll = copiedCitation?.id === (src.id || `src-${i}`) && copiedCitation.type === 'all';
+
+                  return (
+                    <li
+                      key={src.id || i}
+                      className={`p-6 sm:p-7 rounded-2xl border transition-all flex flex-col gap-5 ${
+                        isHighMatch
+                          ? 'border-red-500/30 bg-red-500/[0.02] dark:bg-red-500/[0.04]'
+                          : isModMatch
+                          ? 'border-amber-500/30 bg-amber-500/[0.02] dark:bg-amber-500/[0.04]'
+                          : 'border-line/70 bg-surface/80'
+                      }`}
+                    >
+                      {/* Encabezado de la fuente y severidad */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b hair">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+                              isHighMatch
+                                ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+                                : isModMatch
+                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                : 'bg-azure/10 text-azure'
+                            }`}
+                          >
+                            <span
+                              className="w-1.5 h-1.5 rounded-full"
+                              style={{
+                                background: isHighMatch ? '#ef4444' : isModMatch ? '#f59e0b' : 'rgb(var(--azure))',
+                              }}
+                            />
+                            {isHighMatch ? 'Posible Plagio' : isModMatch ? 'Similitud Moderada' : 'Coincidencia'}
+                          </span>
+                          <a
+                            href={src.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-hi hover:text-azure transition-colors truncate"
+                          >
+                            {src.title}
+                            <ExternalLink className="w-3.5 h-3.5 text-low shrink-0" strokeWidth={1.8} />
+                          </a>
+                        </div>
+                        <span className="num text-[14px] font-bold text-azure">{src.similarityPercentage}% coincidencia</span>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <span className="eyebrow">En tu documento</span>
-                        <p className="serif text-[16px] leading-[1.55] text-hi">{src.userSnippet}</p>
+
+                      {/* Comparativa visual destacando el fragmento detectado */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Texto en documento del usuario con resaltado visual destacado */}
+                        <div className="flex flex-col gap-2 rounded-xl p-4 bg-amber-500/[0.06] dark:bg-amber-500/[0.12] border-l-4 border-amber-500">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11.5px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                              <AlertCircle className="w-3.5 h-3.5" /> Fragmento detectado en tu documento
+                            </span>
+                          </div>
+                          <p className="serif text-[15px] leading-[1.65] text-hi selection:bg-amber-500/30">
+                            {src.userSnippet}
+                          </p>
+                        </div>
+
+                        {/* Texto en la fuente externa */}
+                        <div className="flex flex-col gap-2 rounded-xl p-4 bg-surface-2/60 border-l-4 border-azure/60">
+                          <span className="text-[11.5px] font-bold uppercase tracking-wider text-azure flex items-center gap-1.5">
+                            <Quote className="w-3.5 h-3.5" /> Texto original en fuente externa
+                          </span>
+                          <p className="serif text-[15px] leading-[1.65] text-mid italic">
+                            {src.matchedText}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
+
+                      {/* Generador de Citas Normas APA 7ma Edición */}
+                      <div className="mt-2 rounded-xl border border-azure/20 bg-azure/[0.03] dark:bg-azure/[0.06] p-4 sm:p-5 flex flex-col gap-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 text-azure">
+                            <BookOpen className="w-4 h-4" strokeWidth={2} />
+                            <span className="text-[13px] font-bold uppercase tracking-wider">
+                              Cita y Referencia en Normas APA (7ma Edición)
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyApa(combinedApa, src.id || `src-${i}`, 'all')}
+                            className="btn btn-ghost btn-sm text-[12px] h-8 text-azure hover:bg-azure/10"
+                          >
+                            {isCopiedAll ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-human" strokeWidth={2.5} /> Todo copiado
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5" strokeWidth={1.8} /> Copiar cita + referencia
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Cita parentética en texto */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg bg-surface/90 dark:bg-surface/60 border hair">
+                          <div className="flex flex-col gap-0.5 min-w-0">
+                            <span className="text-[11px] font-semibold text-low uppercase tracking-wider">
+                              Cita en el texto (parentética):
+                            </span>
+                            <span className="font-mono text-[13px] text-hi select-all">{inTextCitation}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyApa(inTextCitation, src.id || `src-${i}`, 'inText')}
+                            className={`btn btn-sm text-[12px] h-8 shrink-0 ${
+                              isCopiedInText ? 'bg-human text-[rgb(var(--on-accent))]' : 'btn-quiet'
+                            }`}
+                          >
+                            {isCopiedInText ? (
+                              <>
+                                <Check className="w-3.5 h-3.5" strokeWidth={2.5} /> Copiado
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5" strokeWidth={1.8} /> Copiar cita
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Referencia bibliográfica completa */}
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 p-3 rounded-lg bg-surface/90 dark:bg-surface/60 border hair">
+                          <div className="flex flex-col gap-0.5 min-w-0">
+                            <span className="text-[11px] font-semibold text-low uppercase tracking-wider">
+                              Referencia bibliográfica completa:
+                            </span>
+                            <span className="text-[13px] leading-[1.6] text-hi select-all">{fullReference}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyApa(fullReference, src.id || `src-${i}`, 'ref')}
+                            className={`btn btn-sm text-[12px] h-8 shrink-0 mt-0.5 ${
+                              isCopiedRef ? 'bg-human text-[rgb(var(--on-accent))]' : 'btn-quiet'
+                            }`}
+                          >
+                            {isCopiedRef ? (
+                              <>
+                                <Check className="w-3.5 h-3.5" strokeWidth={2.5} /> Copiado
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5" strokeWidth={1.8} /> Copiar referencia
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}

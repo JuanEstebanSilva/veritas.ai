@@ -1,4 +1,7 @@
-// Motor de análisis de similitud con corpus multi-disciplinario de fuentes públicas y académicas
+export interface ApaCitation {
+  inText: string;
+  reference: string;
+}
 
 export interface MatchedSource {
   sourceUrl: string;
@@ -6,6 +9,7 @@ export interface MatchedSource {
   matchedText: string;
   userSnippet: string;
   similarityPercentage: number;
+  apaCitation: ApaCitation;
 }
 
 export interface SimilarityReport {
@@ -18,6 +22,8 @@ interface CorpusDocument {
   id: string;
   url: string;
   title: string;
+  author: string;
+  year: number;
   domain: string;
   keywords: string[];
   content: string;
@@ -32,6 +38,8 @@ export class SimilarityEngine {
       id: 'tech-ai-wiki',
       url: 'https://es.wikipedia.org/wiki/Inteligencia_artificial',
       title: 'Wikipedia: Fundamentos de Inteligencia Artificial y Aprendizaje Automático',
+      author: 'Wikipedia',
+      year: 2024,
       domain: 'tecnologia',
       keywords: ['inteligencia', 'artificial', 'algoritmo', 'aprendizaje', 'computacional', 'datos', 'redes', 'neuronales', 'modelo', 'software'],
       content:
@@ -41,6 +49,8 @@ export class SimilarityEngine {
       id: 'tech-ieee-deeplearning',
       url: 'https://ieeexplore.ieee.org/document/open-deep-learning-architectures',
       title: 'IEEE Open: Arquitecturas de Redes Neuronales y Procesamiento de Información',
+      author: 'IEEE Xplore Open',
+      year: 2023,
       domain: 'tecnologia',
       keywords: ['deep', 'learning', 'arquitectura', 'computacion', 'procesamiento', 'lenguaje', 'redes', 'convolucionales', 'optimizacion', 'parametros'],
       content:
@@ -50,6 +60,8 @@ export class SimilarityEngine {
       id: 'tech-cybersecurity-incibe',
       url: 'https://www.incibe.es/guias-estudio/seguridad-sistemas-informacion',
       title: 'INCIBE: Principios de Ciberseguridad, Cifrado y Protección de Datos',
+      author: 'Instituto Nacional de Ciberseguridad [INCIBE]',
+      year: 2023,
       domain: 'tecnologia',
       keywords: ['seguridad', 'ciberseguridad', 'cifrado', 'vulnerabilidades', 'criptografia', 'autenticacion', 'red', 'protocolo', 'ataque', 'sistemas'],
       content:
@@ -61,6 +73,8 @@ export class SimilarityEngine {
       id: 'edu-dialnet-metodologia',
       url: 'https://dialnet.unirioja.es/descarga/articulo/metodologia-investigacion-educativa.pdf',
       title: 'Dialnet: Metodología de la Investigación Científica y Redacción Académica',
+      author: 'Dialnet',
+      year: 2022,
       domain: 'educacion',
       keywords: ['investigacion', 'metodologia', 'cientifica', 'cualitativa', 'cuantitativa', 'hipotesis', 'variables', 'recoleccion', 'datos', 'academica'],
       content:
@@ -70,6 +84,8 @@ export class SimilarityEngine {
       id: 'edu-scielo-constructivismo',
       url: 'https://www.scielo.org/metodos-aprendizaje-constructivista-aula',
       title: 'SciELO Educación: Modelos de Aprendizaje Activo y Evaluación Formativa',
+      author: 'SciELO Educación',
+      year: 2023,
       domain: 'educacion',
       keywords: ['aprendizaje', 'estudiantes', 'constructivismo', 'evaluacion', 'pedagogia', 'docente', 'formativa', 'aula', 'competencias', 'ensenanza'],
       content:
@@ -79,6 +95,8 @@ export class SimilarityEngine {
       id: 'edu-unesco-digital',
       url: 'https://unesco.org/es/digital-ethics/ia-generativa-educacion-superior',
       title: 'UNESCO: Directrices Éticas para la Transformación Digital en Educación',
+      author: 'Organización de las Naciones Unidas para la Educación, la Ciencia y la Cultura [UNESCO]',
+      year: 2023,
       domain: 'educacion',
       keywords: ['unesco', 'educacion', 'etica', 'digital', 'transformacion', 'superior', 'inclusion', 'acceso', 'docentes', 'integridad'],
       content:
@@ -90,6 +108,8 @@ export class SimilarityEngine {
       id: 'med-scielo-salud-publica',
       url: 'https://scielosp.org/article/salud-publica-epidemiologia-determinantes/',
       title: 'SciELO Salud Pública: Determinantes Sociales y Epidemiología Clínica',
+      author: 'SciELO Salud Pública',
+      year: 2023,
       domain: 'salud',
       keywords: ['salud', 'pacientes', 'enfermedad', 'tratamiento', 'clinico', 'epidemiologia', 'prevencion', 'diagnostico', 'medica', 'sintomas'],
       content:
@@ -99,6 +119,8 @@ export class SimilarityEngine {
       id: 'med-pubmed-farmacologia',
       url: 'https://pubmed.ncbi.nlm.nih.gov/open-clinical-trials-pharmacology/',
       title: 'PubMed Central: Farmacología Clínica y Ensayos Terapéuticos',
+      author: 'PubMed Central',
+      year: 2023,
       domain: 'salud',
       keywords: ['farmacologia', 'ensayo', 'terapia', 'medicamento', 'dosis', 'efectos', 'secundarios', 'fisiopatologia', 'terapeutica', 'farmaco'],
       content:
@@ -110,6 +132,8 @@ export class SimilarityEngine {
       id: 'econ-cepal-desarrollo',
       url: 'https://www.cepal.org/es/publicaciones/desarrollo-economico-sostenible',
       title: 'CEPAL: Políticas Fiscales, Inflación y Crecimiento Económico Sostenible',
+      author: 'Comisión Económica para América Latina y el Caribe [CEPAL]',
+      year: 2023,
       domain: 'economia',
       keywords: ['economia', 'mercado', 'inflacion', 'crecimiento', 'fiscal', 'politicas', 'desarrollo', 'empresas', 'inversion', 'financiero'],
       content:
@@ -119,6 +143,8 @@ export class SimilarityEngine {
       id: 'econ-empresa-gestion',
       url: 'https://dialnet.unirioja.es/descarga/articulo/gestion-estrategica-competitividad.pdf',
       title: 'Dialnet Empresa: Gestión Estratégica, Liderazgo y Cadena de Valor',
+      author: 'Dialnet Empresa',
+      year: 2022,
       domain: 'economia',
       keywords: ['estrategia', 'gestion', 'liderazgo', 'organizacion', 'competitividad', 'cadena', 'valor', 'clientes', 'negocio', 'operaciones'],
       content:
@@ -130,6 +156,8 @@ export class SimilarityEngine {
       id: 'law-boe-propiedad',
       url: 'https://www.boe.es/legislacion/propiedad-intelectual-derechos-autor',
       title: 'Boletín Oficial del Estado: Ley de Propiedad Intelectual y Régimen de Citas',
+      author: 'Boletín Oficial del Estado [BOE]',
+      year: 2021,
       domain: 'derecho',
       keywords: ['derecho', 'ley', 'normativa', 'propiedad', 'intelectual', 'autor', 'juridico', 'articulo', 'legislacion', 'judicial'],
       content:
@@ -139,6 +167,8 @@ export class SimilarityEngine {
       id: 'law-cidh-humanos',
       url: 'https://www.corteidh.or.cr/jurisprudencia-garantias-constitucionales',
       title: 'Corte IDH: Garantías Judiciales, Debido Proceso y Derechos Fundamentales',
+      author: 'Corte Interamericana de Derechos Humanos [Corte IDH]',
+      year: 2022,
       domain: 'derecho',
       keywords: ['derechos', 'humanos', 'constitucional', 'justicia', 'garantias', 'tribunal', 'proceso', 'tratados', 'libertad', 'ciudadanos'],
       content:
@@ -150,6 +180,8 @@ export class SimilarityEngine {
       id: 'eco-ipcc-clima',
       url: 'https://www.ipcc.ch/report/evaluacion-cambio-climatico-mitigacion',
       title: 'IPCC / MITECO: Mitigación del Cambio Climático y Transición Energética',
+      author: 'Intergovernmental Panel on Climate Change [IPCC]',
+      year: 2023,
       domain: 'medioambiente',
       keywords: ['cambio', 'climatico', 'emisiones', 'sostenibilidad', 'energia', 'renovable', 'biodiversidad', 'ambiental', 'carbono', 'ecosistema'],
       content:
@@ -161,6 +193,8 @@ export class SimilarityEngine {
       id: 'hum-filo-epistemologia',
       url: 'https://dialnet.unirioja.es/descarga/articulo/teoria-conocimiento-epistemologia.pdf',
       title: 'Dialnet Filosofía: Epistemología, Filosofía del Lenguaje y Hermenéutica',
+      author: 'Dialnet Filosofía',
+      year: 2022,
       domain: 'humanidades',
       keywords: ['filosofia', 'conocimiento', 'epistemologia', 'lenguaje', 'hermeneutica', 'verdad', 'etica', 'cultura', 'pensamiento', 'historia'],
       content:
@@ -333,6 +367,7 @@ export class SimilarityEngine {
           matchedText: item.doc.content.slice(0, 160) + '...',
           userSnippet: userText.slice(0, 160) + '...',
           similarityPercentage: percentage,
+          apaCitation: this.buildApaCitation(item.doc.title, item.doc.url, item.doc.author, item.doc.year),
         });
       }
     }
@@ -384,6 +419,7 @@ export class SimilarityEngine {
         matchedText: `Coincidencias en terminología estándar y giros académicos en el área de ${primaryDoc.domain.toUpperCase()}: "${primaryDoc.content.slice(0, 110)}..."`,
         userSnippet: userText.slice(0, 120) + '...',
         similarityPercentage: firstPercentage,
+        apaCitation: this.buildApaCitation(primaryDoc.title, primaryDoc.url, primaryDoc.author, primaryDoc.year),
       });
 
       if (totalWords > 45) {
@@ -393,6 +429,7 @@ export class SimilarityEngine {
           matchedText: `Concordancia en sintaxis metodológica y vocabulario expositivo común: "${secondaryDoc.content.slice(0, 110)}..."`,
           userSnippet: userText.slice(Math.min(60, userText.length - 60), Math.min(180, userText.length)) + '...',
           similarityPercentage: secondPercentage,
+          apaCitation: this.buildApaCitation(secondaryDoc.title, secondaryDoc.url, secondaryDoc.author, secondaryDoc.year),
         });
       }
     }
@@ -404,6 +441,58 @@ export class SimilarityEngine {
       overallSimilarityScore,
       sources: matchedSources.slice(0, 4),
       disclaimer,
+    };
+  }
+
+  /**
+   * Genera cita en normas APA 7ma edición a partir de título y URL
+   */
+  public static buildApaCitation(
+    sourceTitle: string,
+    sourceUrl: string,
+    author?: string,
+    year?: number | string
+  ): ApaCitation {
+    // 1. Determinar autor institucional o personal
+    let determinedAuthor = author;
+    if (!determinedAuthor) {
+      if (sourceTitle.includes(':')) {
+        determinedAuthor = sourceTitle.split(':')[0].trim();
+      } else if (sourceUrl.includes('wikipedia.org')) {
+        determinedAuthor = 'Wikipedia';
+      } else if (sourceUrl.includes('scielo')) {
+        determinedAuthor = 'SciELO';
+      } else if (sourceUrl.includes('dialnet')) {
+        determinedAuthor = 'Dialnet';
+      } else if (sourceUrl.includes('unesco.org')) {
+        determinedAuthor = 'UNESCO';
+      } else if (sourceUrl.includes('boe.es')) {
+        determinedAuthor = 'Boletín Oficial del Estado [BOE]';
+      } else if (sourceUrl.includes('cepal.org')) {
+        determinedAuthor = 'CEPAL';
+      } else {
+        try {
+          const hostname = new URL(sourceUrl).hostname.replace(/^www\./, '');
+          determinedAuthor = hostname.charAt(0).toUpperCase() + hostname.slice(1);
+        } catch {
+          determinedAuthor = 'Fuente consultada';
+        }
+      }
+    }
+
+    // 2. Determinar año
+    const determinedYear = year || 2023;
+
+    // 3. Limpiar título
+    const cleanTitle = sourceTitle.replace(/^[A-Za-z0-9\s/]+:\s*/, '').trim();
+
+    // 4. Formato estándar APA 7ma edición
+    const inText = `(${determinedAuthor}, ${determinedYear})`;
+    const reference = `${determinedAuthor}. (${determinedYear}). ${cleanTitle}. ${sourceUrl}`;
+
+    return {
+      inText,
+      reference,
     };
   }
 }
