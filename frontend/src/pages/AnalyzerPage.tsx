@@ -8,7 +8,7 @@ import { useToast } from '../components/ui';
 import { sound } from '../utils/soundEffects';
 import { getScoreMood } from '../utils/scoreMood';
 import { CountUp } from '../motion';
-import { UploadCloud, FileText, ExternalLink, AlertCircle, Loader2, RefreshCw, Copy, Check, Download, ArrowRight, Sparkles, X } from 'lucide-react';
+import { UploadCloud, FileText, ExternalLink, AlertCircle, Loader2, RefreshCw, Copy, Check, Download, ArrowRight, Sparkles, ShieldCheck, X } from 'lucide-react';
 
 export const AnalyzerPage: React.FC = () => {
   const { isAuthenticated, openPremiumModal, refreshProfile } = useAuth();
