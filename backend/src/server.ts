@@ -12,6 +12,8 @@ const startServer = async () => {
       console.log(`===================================================`);
       console.log(`🚀 Servidor Plagelio activo en puerto ${ENV.PORT}`);
       console.log(`🔗 API Base: http://localhost:${ENV.PORT}/api`);
+      console.log(`📖 Swagger UI: http://localhost:${ENV.PORT}/api-docs`);
+      console.log(`📄 OpenAPI JSON: http://localhost:${ENV.PORT}/openapi.json`);
       console.log(`⚙  Modo: ${ENV.NODE_ENV}`);
       console.log(`💳 Pasarela: ${ENV.STRIPE_SECRET_KEY ? 'Stripe Test Mode' : 'Sandbox Local Activo'}`);
       console.log(`===================================================`);

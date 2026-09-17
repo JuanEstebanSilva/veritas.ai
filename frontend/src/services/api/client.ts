@@ -26,6 +26,11 @@ export async function request<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  const apiKey = (import.meta as any).env?.VITE_API_KEY || '0a2dbbf52581b55dbd35713a4bd6386424149fc288ad32177f7b21096ed7350c';
+  if (apiKey && !headers['X-API-Key']) {
+    headers['X-API-Key'] = apiKey;
+  }
+
   if (!(options.body instanceof FormData) && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json';
   }

@@ -7,16 +7,18 @@ import writingRoutes from './routes/writingRoutes';
 import userRoutes from './routes/userRoutes';
 import paymentRoutes from './routes/paymentRoutes';
 import { errorHandler } from './middleware/errorHandler';
+import { apiKeyMiddleware } from './middleware/apiKeyMiddleware';
+import { setupSwagger } from './docs/swagger';
 
 const app: Application = express();
 
 // Configuración de CORS
 app.use(
   cors({
-    origin: [ENV.FRONTEND_URL, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: ENV.NODE_ENV === 'development' ? '*' : [ENV.FRONTEND_URL],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'stripe-signature'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'stripe-signature', 'X-API-Key'],
   })
 );
 
@@ -43,6 +45,12 @@ app.get('/api/health', (_req: Request, res: Response) => {
     version: '1.0.0',
   });
 });
+
+// Configuración Swagger
+setupSwagger(app);
+
+// Middleware de Autenticación por API Key
+app.use('/api', apiKeyMiddleware);
 
 // Rutas API
 app.use('/api/auth', authRoutes);

@@ -389,11 +389,23 @@ export class UserController {
         return;
       }
 
+      // Integridad Referencial (Lab 5)
+      const hasAnalyses = await prisma.analysis.findFirst({ where: { user_id: id } });
+      const hasPayments = await prisma.payment.findFirst({ where: { user_id: id } });
+
+      if (hasAnalyses || hasPayments) {
+        res.status(409).json({
+          success: false,
+          message: 'No se puede eliminar el usuario porque tiene análisis o pagos asociados',
+        });
+        return;
+      }
+
       await prisma.user.delete({ where: { id } });
 
       res.status(200).json({
         success: true,
-        message: 'Usuario y todos sus análisis asociados eliminados correctamente.',
+        message: 'Usuario eliminado correctamente.',
       });
     } catch (error: any) {
       res.status(500).json({ success: false, message: 'Error al eliminar usuario.' });
