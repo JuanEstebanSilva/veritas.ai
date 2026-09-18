@@ -12,7 +12,9 @@
     "prisma:push": "prisma db push",
     "prisma:seed": "ts-node prisma/seed.ts",
     "test": "jest --detectOpenHandles --runInBand",
-    "test:dast": "jest tests/security.dast.test.ts --detectOpenHandles --runInBand"
+    "test:dast": "jest tests/security.dast.test.ts --detectOpenHandles --runInBand",
+    "vault:secure": "ts-node scripts/vaultCli.ts secure-env",
+    "vault:check": "ts-node scripts/vaultCli.ts check-env"
   },
   "keywords": [
     "turnitin",

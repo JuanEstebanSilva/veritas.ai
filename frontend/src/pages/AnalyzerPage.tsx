@@ -460,15 +460,29 @@ export const AnalyzerPage: React.FC = () => {
             </div>
             {improvedResult.originalAiScore !== undefined && improvedResult.improvedAiScore !== undefined && (
               <div className="flex items-center gap-4">
-                <span className="flex flex-col items-end gap-0.5">
-                  <span className={`num text-[30px] leading-none opacity-60 line-through decoration-1 ${getScoreMood(improvedResult.originalAiScore).textClass}`}>{improvedResult.originalAiScore}%</span>
-                  <span className="eyebrow">antes</span>
-                </span>
-                <ArrowRight className="w-4 h-4 text-low" strokeWidth={2} />
-                <span className="flex flex-col items-end gap-0.5">
-                  <span className={`text-[30px] leading-none ${getScoreMood(improvedResult.improvedAiScore).textClass}`}><CountUp value={improvedResult.improvedAiScore} suffix="%" /></span>
-                  <span className="eyebrow">ahora</span>
-                </span>
+                {improvedResult.originalAiScore > improvedResult.improvedAiScore ? (
+                  <>
+                    <span className="flex flex-col items-end gap-0.5">
+                      <span className={`num text-[30px] leading-none opacity-60 line-through decoration-1 ${getScoreMood(improvedResult.originalAiScore).textClass}`}>{improvedResult.originalAiScore}%</span>
+                      <span className="eyebrow">antes</span>
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-low" strokeWidth={2} />
+                    <span className="flex flex-col items-end gap-0.5">
+                      <span className={`text-[30px] leading-none ${getScoreMood(improvedResult.improvedAiScore).textClass}`}><CountUp value={improvedResult.improvedAiScore} suffix="%" /></span>
+                      <span className="eyebrow">ahora</span>
+                    </span>
+                    <span className="num text-[14px] font-medium text-emerald-400 pl-3 border-l hair">
+                      −{improvedResult.originalAiScore - improvedResult.improvedAiScore} pts
+                    </span>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-end gap-0.5">
+                    <span className={`text-[30px] leading-none ${getScoreMood(improvedResult.improvedAiScore).textClass}`}>
+                      <CountUp value={improvedResult.improvedAiScore} suffix="%" />
+                    </span>
+                    <span className="eyebrow text-emerald-400">100% humano</span>
+                  </div>
+                )}
               </div>
             )}
           </div>

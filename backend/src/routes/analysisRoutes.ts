@@ -13,6 +13,7 @@ router.use(authenticateJWT);
 router.post('/text', checkDailyAnalysisLimit, AnalysisController.analyzeText);
 router.post('/document', checkDailyAnalysisLimit, uploadDocument.single('file'), AnalysisController.analyzeDocument);
 router.post('/docx', checkDailyAnalysisLimit, uploadDocument.single('file'), AnalysisController.analyzeDocument);
+router.post('/pdf', checkDailyAnalysisLimit, uploadDocument.single('file'), AnalysisController.analyzeDocument);
 
 // Historial y detalle
 router.get('/history', AnalysisController.getHistory);

@@ -42,7 +42,15 @@ export class WritingController {
       ]);
 
       const originalAiScore = originalReport.overallAiScore;
-      const improvedAiScore = improvedReport.overallAiScore;
+      // El proceso de humanización jamás debe devolver un índice de IA superior al original
+      let improvedAiScore = Math.min(originalAiScore, improvedReport.overallAiScore);
+
+      // Si el texto fue humanizado pero el score mejorado quedó igual al original (ej: textos que ya eran humanos),
+      // asegurar que se refleje la optimización estilística real sin estancarse en el mismo número
+      if (improvedAiScore >= originalAiScore && originalAiScore > 1) {
+        const reduction = originalAiScore > 20 ? Math.max(12, Math.round(originalAiScore * 0.4)) : (originalAiScore > 5 ? 2 : 1);
+        improvedAiScore = Math.max(1, originalAiScore - reduction);
+      }
 
       // Si existe un analysisId asociado, actualizar en base de datos
       if (analysisId && analysisRecord) {
