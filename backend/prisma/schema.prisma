@@ -59,7 +59,8 @@ model Analysis {
   improved_similarity_score Float?
   created_at              DateTime         @default(now())
 
-  user                    User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  // Integridad referencial (Lab 5): RESTRICT. Un usuario con análisis NO puede eliminarse.
+  user                    User             @relation(fields: [user_id], references: [id], onDelete: Restrict)
   results                 AnalysisResult[]
   sources                 AnalysisSource[]
 
@@ -75,6 +76,7 @@ model AnalysisResult {
   indicators         String    // JSON serialized array of tags e.g. ["Alta uniformidad", "Patrones repetitivos"]
   explanation        String    @db.Text
 
+  // Composición: los resultados por párrafo no existen sin su análisis -> CASCADE
   analysis           Analysis  @relation(fields: [analysis_id], references: [id], onDelete: Cascade)
 
   @@map("analysis_results")
@@ -89,6 +91,7 @@ model AnalysisSource {
   user_snippet          String    @db.Text
   similarity_percentage Float
 
+  // Composición: las fuentes detectadas no existen sin su análisis -> CASCADE
   analysis              Analysis  @relation(fields: [analysis_id], references: [id], onDelete: Cascade)
 
   @@map("analysis_sources")
@@ -104,7 +107,8 @@ model Payment {
   status         PaymentStatus @default(PENDING)
   created_at     DateTime      @default(now())
 
-  user           User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  // Integridad referencial (Lab 5): RESTRICT. Un pago es un registro financiero histórico.
+  user           User          @relation(fields: [user_id], references: [id], onDelete: Restrict)
 
   @@map("payments")
 }

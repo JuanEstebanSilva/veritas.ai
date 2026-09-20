@@ -50,9 +50,12 @@ describe('3. Control Estricto del Límite Diario de 5 Análisis', () => {
   });
 
   afterAll(async () => {
-    await prisma.user.deleteMany({
-      where: { id: { in: [freeUserId, premiumUserId] } },
-    });
+    // Integridad referencial (Lab 5): las FKs son ON DELETE RESTRICT,
+    // por lo que hay que retirar primero los registros dependientes.
+    const ids = [freeUserId, premiumUserId];
+    await prisma.payment.deleteMany({ where: { user_id: { in: ids } } });
+    await prisma.analysis.deleteMany({ where: { user_id: { in: ids } } });
+    await prisma.user.deleteMany({ where: { id: { in: ids } } });
     await prisma.$disconnect();
   });
 

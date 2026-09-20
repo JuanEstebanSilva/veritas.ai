@@ -4,6 +4,7 @@ import { prisma } from '../config/prisma';
 import bcrypt from 'bcryptjs';
 import { Role } from '@prisma/client';
 import { isSameCalendarDay } from '../middleware/dailyLimitGuard';
+import { contarDependenciasUsuario } from '../services/referentialIntegrity.service';
 
 export class UserController {
   /**
@@ -389,14 +390,16 @@ export class UserController {
         return;
       }
 
-      // Integridad Referencial (Lab 5)
-      const hasAnalyses = await prisma.analysis.findFirst({ where: { user_id: id } });
-      const hasPayments = await prisma.payment.findFirst({ where: { user_id: id } });
+      // Integridad Referencial (Lab 5 - BLOQUE 1)
+      // Equivalente lógico de ON DELETE RESTRICT: la petición es válida y el
+      // recurso existe, pero choca con el estado actual del sistema -> 409.
+      const dependencias = await contarDependenciasUsuario(id);
 
-      if (hasAnalyses || hasPayments) {
+      if (dependencias.tieneDependencias) {
         res.status(409).json({
           success: false,
           message: 'No se puede eliminar el usuario porque tiene análisis o pagos asociados',
+          dependencias: { analisis: dependencias.analisis, pagos: dependencias.pagos },
         });
         return;
       }
@@ -408,6 +411,15 @@ export class UserController {
         message: 'Usuario eliminado correctamente.',
       });
     } catch (error: any) {
+      // Red de seguridad: si la restricción ON DELETE RESTRICT de PostgreSQL
+      // rechaza el borrado, se traduce a 409 y no a un 500 genérico.
+      if (error?.code === 'P2003') {
+        res.status(409).json({
+          success: false,
+          message: 'No se puede eliminar el usuario porque tiene registros dependientes asociados',
+        });
+        return;
+      }
       res.status(500).json({ success: false, message: 'Error al eliminar usuario.' });
     }
   }

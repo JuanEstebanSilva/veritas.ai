@@ -14,7 +14,8 @@
     "test": "jest --detectOpenHandles --runInBand",
     "test:dast": "jest tests/security.dast.test.ts --detectOpenHandles --runInBand",
     "vault:secure": "ts-node scripts/vaultCli.ts secure-env",
-    "vault:check": "ts-node scripts/vaultCli.ts check-env"
+    "vault:check": "ts-node scripts/vaultCli.ts check-env",
+    "lab5:fixtures": "ts-node scripts/lab5Fixtures.ts"
   },
   "keywords": [
     "turnitin",

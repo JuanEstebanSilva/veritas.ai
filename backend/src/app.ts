@@ -1,4 +1,4 @@
-import express, { Application, Request, Response } from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { ENV } from './config/env';
 import authRoutes from './routes/authRoutes';
@@ -11,6 +11,24 @@ import { apiKeyMiddleware } from './middleware/apiKeyMiddleware';
 import { setupSwagger } from './docs/swagger';
 
 const app: Application = express();
+
+// ============================================================================
+// Cabeceras de seguridad (hallazgos de OWASP ZAP - Lab 5, BLOQUE 2)
+// Se resuelven sin añadir dependencias nuevas, usando solo Express.
+// ============================================================================
+
+// No revelar la tecnología del servidor ("Server Leaks Information via X-Powered-By")
+app.disable('x-powered-by');
+
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  // Impide que el navegador adivine el tipo de contenido (MIME sniffing)
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  // La API nunca debe renderizarse dentro de un iframe
+  res.setHeader('X-Frame-Options', 'DENY');
+  // No filtrar la URL completa como referente hacia terceros
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  next();
+});
 
 // Configuración de CORS
 app.use(

@@ -10,9 +10,13 @@ describe('1. Módulo de Autenticación (Registro y Login)', () => {
 
   afterAll(async () => {
     // Limpieza
-    await prisma.user.deleteMany({
-      where: { email: { contains: 'test_' } },
-    });
+    // Integridad referencial (Lab 5): las FKs son ON DELETE RESTRICT,
+    // por lo que hay que retirar primero los registros dependientes.
+    const stale = await prisma.user.findMany({ where: { email: { contains: 'test_' } }, select: { id: true } });
+    const ids = stale.map((u) => u.id);
+    await prisma.payment.deleteMany({ where: { user_id: { in: ids } } });
+    await prisma.analysis.deleteMany({ where: { user_id: { in: ids } } });
+    await prisma.user.deleteMany({ where: { id: { in: ids } } });
     await prisma.$disconnect();
   });
 

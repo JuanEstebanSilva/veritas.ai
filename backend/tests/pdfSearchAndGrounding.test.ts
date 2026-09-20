@@ -31,6 +31,8 @@ describe('Flujo de Análisis: PDF, Búsqueda Web Real y Evaluación con Citas AP
 
   afterAll(async () => {
     if (testUserId) {
+      await prisma.payment.deleteMany({ where: { user_id: testUserId } });
+      await prisma.analysis.deleteMany({ where: { user_id: testUserId } });
       await prisma.user.deleteMany({ where: { id: testUserId } });
     }
     await prisma.$disconnect();

@@ -368,7 +368,7 @@
  *     description: |
  *       Elimina una cuenta de usuario del sistema cumpliendo con las reglas de Integridad Referencial (Lab 5):
  *       - **409 Conflict**: Si el usuario tiene análisis de texto o pagos registrados en el sistema, se rechaza la eliminación para prevenir registros huérfanos.
- *       - **400 Bad Request**: Si el administrador intenta autoeliminarse.
+ *       - **400 Bad Request**: Si el identificador no tiene formato UUID válido, o si el administrador intenta autoeliminarse.
  *       - **403 Forbidden**: No se permite eliminar cuentas administradoras.
  *       - **404 Not Found**: Si el ID no corresponde a un usuario existente.
  *       - **200 OK**: Si el usuario no posee registros dependientes asociados.
@@ -399,7 +399,7 @@
  *                   type: string
  *                   example: Usuario eliminado correctamente.
  *       400:
- *         description: No puedes eliminar tu propia cuenta de administrador.
+ *         description: Identificador con formato UUID inválido / No puedes eliminar tu propia cuenta de administrador.
  *       401:
  *         description: API Key ausente o inválida / Token de autorización no suministrado.
  *       403:

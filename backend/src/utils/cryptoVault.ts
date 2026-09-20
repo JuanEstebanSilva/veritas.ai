@@ -17,6 +17,9 @@ export class CryptoVault {
   private static readonly ALGORITHM = 'aes-256-gcm';
   private static readonly IV_LENGTH = 12; // 96 bits recomendado para GCM
   private static readonly SALT = 'veritas_ai_vault_salt_2026_secure';
+  /** Longitud completa del tag de autenticacion GCM (128 bits). Se fija de forma
+   *  explicita para impedir que se acepte un tag mas corto de lo esperado. */
+  private static readonly AUTH_TAG_LENGTH = 16;
 
   /**
    * Deriva la clave de 256 bits mediante scrypt a partir del secreto maestro
@@ -38,7 +41,7 @@ export class CryptoVault {
 
     const key = this.getMasterKey();
     const iv = crypto.randomBytes(this.IV_LENGTH);
-    const cipher = crypto.createCipheriv(this.ALGORITHM, key, iv);
+    const cipher = crypto.createCipheriv(this.ALGORITHM, key, iv, { authTagLength: this.AUTH_TAG_LENGTH });
 
     let encrypted = cipher.update(plainText, 'utf8', 'hex');
     encrypted += cipher.final('hex');
@@ -64,7 +67,17 @@ export class CryptoVault {
       const key = this.getMasterKey();
       const iv = Buffer.from(ivHex, 'hex');
       const authTag = Buffer.from(authTagHex, 'hex');
-      const decipher = crypto.createDecipheriv(this.ALGORITHM, key, iv);
+
+      // Se rechaza cualquier tag truncado antes de intentar descifrar: aceptar un
+      // tag mas corto permitiria falsificar textos cifrados (hallazgo de Semgrep).
+      if (authTag.length !== this.AUTH_TAG_LENGTH) {
+        console.error('[CryptoVault] Tag de autenticacion GCM con longitud invalida.');
+        return cipherText;
+      }
+
+      const decipher = crypto.createDecipheriv(this.ALGORITHM, key, iv, {
+        authTagLength: this.AUTH_TAG_LENGTH,
+      });
 
       decipher.setAuthTag(authTag);
       let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');

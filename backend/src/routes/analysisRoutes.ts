@@ -3,6 +3,7 @@ import { AnalysisController } from '../controllers/AnalysisController';
 import { authenticateJWT } from '../middleware/authMiddleware';
 import { checkDailyAnalysisLimit } from '../middleware/dailyLimitGuard';
 import { uploadDocument } from '../middleware/uploadMiddleware';
+import { validateUuidParam } from '../middleware/validateUuidParam';
 
 const router = Router();
 
@@ -17,8 +18,8 @@ router.post('/pdf', checkDailyAnalysisLimit, uploadDocument.single('file'), Anal
 
 // Historial y detalle
 router.get('/history', AnalysisController.getHistory);
-router.get('/:id', AnalysisController.getAnalysisById);
-router.delete('/:id', AnalysisController.deleteAnalysis);
-router.post('/:id/reanalyze-improved', AnalysisController.reanalyzeImproved);
+router.get('/:id', validateUuidParam('id'), AnalysisController.getAnalysisById);
+router.delete('/:id', validateUuidParam('id'), AnalysisController.deleteAnalysis);
+router.post('/:id/reanalyze-improved', validateUuidParam('id'), AnalysisController.reanalyzeImproved);
 
 export default router;
