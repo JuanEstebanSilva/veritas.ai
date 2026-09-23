@@ -112,3 +112,16 @@ model Payment {
 
   @@map("payments")
 }
+
+/// Clientes (aplicaciones) autorizados a consumir la API — Lab 6.
+/// Nunca se guarda la API Key original: solo su hash SHA-256. La clave se
+/// muestra una única vez, al generarla, y después solo la conoce el cliente.
+model ApiClient {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  key_hash   String   @unique @db.Char(64)
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  @@map("api_clients")
+}

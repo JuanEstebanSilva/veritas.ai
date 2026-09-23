@@ -4,6 +4,11 @@
  */
 
 const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const API_KEY: string = (import.meta as any).env?.VITE_API_KEY || '';
+
+if (!API_KEY && (import.meta as any).env?.DEV) {
+  console.warn('[Plagelio] Falta VITE_API_KEY en frontend/.env: la API rechazará las peticiones con 401.');
+}
 
 export interface ApiResponse<T> {
   data?: T;
@@ -26,9 +31,12 @@ export async function request<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const apiKey = (import.meta as any).env?.VITE_API_KEY || '0a2dbbf52581b55dbd35713a4bd6386424149fc288ad32177f7b21096ed7350c';
-  if (apiKey && !headers['X-API-Key']) {
-    headers['X-API-Key'] = apiKey;
+  // API Key del cliente «Frontend Web Plagelio» (Lab 6). Se inyecta en tiempo de
+  // compilación desde VITE_API_KEY; nunca se escribe en el código. En una SPA la
+  // clave acaba dentro del bundle, así que identifica a la aplicación pero no es
+  // un secreto: la identidad de la PERSONA la aporta el JWT.
+  if (API_KEY && !headers['X-API-Key']) {
+    headers['X-API-Key'] = API_KEY;
   }
 
   if (!(options.body instanceof FormData) && !headers['Content-Type']) {

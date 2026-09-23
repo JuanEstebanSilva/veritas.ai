@@ -1,12 +1,19 @@
 import app from './app';
 import { ENV } from './config/env';
 import { prisma } from './config/prisma';
+import { ConfiguracionApiKeysError } from './config/apiClients';
+import { sincronizarClientesApi } from './services/apiClients.service';
 
 const startServer = async () => {
   try {
     // Verificar conexión a la base de datos
     await prisma.$connect();
     console.log('✓ Conexión establecida exitosamente con la base de datos PostgreSQL.');
+
+    // Lab 6: se registran los hashes de las API Keys antes de aceptar peticiones.
+    // Si falta alguna clave, el servidor no arranca en lugar de funcionar a medias.
+    const clientes = await sincronizarClientesApi();
+    console.log(`✓ API Keys: ${clientes.length} clientes registrados (solo se guarda su hash SHA-256).`);
 
     app.listen(ENV.PORT, () => {
       console.log(`===================================================`);
@@ -19,7 +26,11 @@ const startServer = async () => {
       console.log(`===================================================`);
     });
   } catch (error) {
-    console.error('❌ Error al iniciar el servidor Plagelio:', error);
+    if (error instanceof ConfiguracionApiKeysError) {
+      console.error(`❌ Arranque detenido: ${error.message}`);
+    } else {
+      console.error('❌ Error al iniciar el servidor Plagelio:', error);
+    }
     process.exit(1);
   }
 };

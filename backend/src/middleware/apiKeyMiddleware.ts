@@ -1,68 +1,60 @@
 import { Request, Response, NextFunction } from 'express';
-import crypto from 'crypto';
-import { ENV } from '../config/env';
-import { CryptoVault } from '../utils/cryptoVault';
+import { buscarClientePorApiKey } from '../services/apiClients.service';
 
 /**
- * Middleware para validar la API Key en los endpoints protegidos.
+ * Autenticación del CLIENTE mediante API Key (Labs 5 y 6).
+ *
+ *   sin cabecera X-API-Key .............. 401 API Key requerida
+ *   su hash no coincide con ninguno ...... 401 API Key inválida
+ *   coincide, pero el cliente está inactivo 403 API Key deshabilitada
+ *   coincide y está activo ............... req.apiClient = { id, name } → next()
+ *
+ * 401 significa «no sé quién eres»; 403, «sé quién eres, pero tu credencial
+ * está revocada».
  */
-export const apiKeyMiddleware = (req: Request, res: Response, next: NextFunction): void => {
-  // En entorno de pruebas automatizadas, no bloquear los tests unitarios
-  if (process.env.NODE_ENV === 'test') {
-    return next();
-  }
-
-  const rawEnvKey = process.env.API_KEY || '';
-  const apiKeyConfigurada = ENV.API_KEY || CryptoVault.decrypt(rawEnvKey);
-
-  if (!apiKeyConfigurada) {
-    console.error("ERROR: La variable de entorno API_KEY no está configurada.");
-    res.status(500).json({ success: false, message: "Error de configuración del servidor" });
-    return;
-  }
-
-  // Rutas exentas de API Key (documentación, OpenAPI spec y health check)
+export const validarApiKey = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  // El health check queda fuera para que los monitores de disponibilidad no necesiten credencial
   const path = req.originalUrl || req.url;
-  if (
-    path.startsWith('/api-docs') ||
-    path.startsWith('/openapi.json') ||
-    path.startsWith('/api/health')
-  ) {
+  if (path.startsWith('/api/health')) {
     next();
     return;
   }
 
-  // Express normaliza los nombres de headers. Usamos req.get() que es case-insensitive
-  const apiKeyRecibida = req.get("X-API-Key");
-
+  // Express normaliza el nombre de las cabeceras; solo se acepta en la cabecera, nunca en la URL
+  const apiKeyRecibida = req.get('X-API-Key');
   if (!apiKeyRecibida) {
-    res.status(401).json({ success: false, message: "API Key requerida" });
+    res.status(401).json({ success: false, message: 'API Key requerida' });
     return;
   }
 
-  let isMatch = false;
-  const recibidoBuf = Buffer.from(apiKeyRecibida);
+  try {
+    const resultado = await buscarClientePorApiKey(apiKeyRecibida);
 
-  // 1. Comparar contra la clave descifrada (timing-safe)
-  if (apiKeyConfigurada) {
-    const esperadoBuf = Buffer.from(apiKeyConfigurada);
-    if (recibidoBuf.length === esperadoBuf.length && crypto.timingSafeEqual(recibidoBuf, esperadoBuf)) {
-      isMatch = true;
+    if (resultado.estado === 'invalida') {
+      res.status(401).json({ success: false, message: 'API Key inválida' });
+      return;
     }
-  }
-
-  // 2. Si el cliente envió la clave encriptada directamente, también aceptarla
-  if (!isMatch && rawEnvKey) {
-    const rawBuf = Buffer.from(rawEnvKey);
-    if (recibidoBuf.length === rawBuf.length && crypto.timingSafeEqual(recibidoBuf, rawBuf)) {
-      isMatch = true;
+    if (resultado.estado === 'deshabilitada') {
+      res.status(403).json({ success: false, message: 'API Key deshabilitada' });
+      return;
     }
-  }
 
-  if (!isMatch) {
-    res.status(401).json({ success: false, message: "API Key inválida" });
+    req.apiClient = resultado.cliente;
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Middleware montado en app.ts. En las pruebas automatizadas se omite para no
+ * obligar a cada test de negocio a llevar una API Key; la lógica de la capa se
+ * prueba aparte, llamando a validarApiKey directamente (tests/apiClients.test.ts).
+ */
+export const apiKeyMiddleware = (req: Request, res: Response, next: NextFunction): void => {
+  if (process.env.NODE_ENV === 'test') {
+    next();
     return;
   }
-
-  next();
+  void validarApiKey(req, res, next);
 };

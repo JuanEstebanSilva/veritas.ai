@@ -37,5 +37,4 @@ export const ENV = {
       ''
   ),
   SEARCH_PROVIDER: (process.env.SEARCH_PROVIDER || 'auto').toLowerCase(), // "google" | "tavily" | "serper" | "auto"
-  API_KEY: CryptoVault.decrypt(process.env.API_KEY || ''),
 };

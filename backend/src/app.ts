@@ -6,6 +6,7 @@ import analysisRoutes from './routes/analysisRoutes';
 import writingRoutes from './routes/writingRoutes';
 import userRoutes from './routes/userRoutes';
 import paymentRoutes from './routes/paymentRoutes';
+import securityRoutes from './routes/securityRoutes';
 import { errorHandler } from './middleware/errorHandler';
 import { apiKeyMiddleware } from './middleware/apiKeyMiddleware';
 import { setupSwagger } from './docs/swagger';
@@ -76,6 +77,7 @@ app.use('/api/analyses', analysisRoutes);
 app.use('/api/writing', writingRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/security', securityRoutes);
 
 // Manejo de rutas 404
 app.use((_req: Request, res: Response) => {
