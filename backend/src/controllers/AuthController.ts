@@ -13,42 +13,55 @@ export class AuthController {
    */
   public static async register(req: Request, res: Response): Promise<void> {
     try {
-      const { name, last_name, email, password, confirm_password } = req.body;
+      const rawName = req.body.name ?? req.body.nombre;
+      const rawLastName = req.body.last_name ?? req.body.apellido ?? (rawName ? 'Usuario' : '');
+      const rawEmail = req.body.email;
+      const rawPassword = req.body.password;
+      const rawConfirm = req.body.confirm_password ?? req.body.confirmPassword ?? rawPassword;
 
       // 1. Validaciones de presencia y de tipo (un número u objeto no es un correo)
-      if (!name || !last_name || !email || !password || !confirm_password ||
-          typeof name !== 'string' || typeof last_name !== 'string' || typeof email !== 'string') {
+      if (!rawName || typeof rawName !== 'string' ||
+          !rawLastName || typeof rawLastName !== 'string' ||
+          !rawEmail || typeof rawEmail !== 'string' ||
+          !rawPassword || typeof rawPassword !== 'string' ||
+          typeof rawConfirm !== 'string') {
         res.status(400).json({
           success: false,
           message: 'Todos los campos son obligatorios: Nombre, Apellido, Email y Contraseñas.',
+          mensaje: 'Datos inválidos',
         });
         return;
       }
 
+      const name = rawName.trim();
+      const last_name = rawLastName.trim();
+
       // 2. Validación de formato de email
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const normalizedEmail = email.toLowerCase().trim();
+      const normalizedEmail = rawEmail.toLowerCase().trim();
       if (!emailRegex.test(normalizedEmail)) {
         res.status(400).json({
           success: false,
           message: 'Por favor, proporciona un correo electrónico válido.',
+          mensaje: 'Debe proporcionar un correo electrónico válido',
         });
         return;
       }
 
       // 3. Validación de coincidencia de contraseña
-      if (password !== confirm_password) {
+      if (rawPassword !== rawConfirm) {
         res.status(400).json({
           success: false,
           message: 'Las contraseñas no coinciden.',
+          mensaje: 'Las contraseñas no coinciden.',
         });
         return;
       }
 
       // 4. Política de contraseñas (Lab 7): entre 10 y 72 caracteres, máximo 72 bytes
-      const errorPassword = validarPassword(password);
+      const errorPassword = validarPassword(rawPassword);
       if (errorPassword) {
-        res.status(400).json({ success: false, message: errorPassword });
+        res.status(400).json({ success: false, message: errorPassword, mensaje: errorPassword });
         return;
       }
 
@@ -61,18 +74,19 @@ export class AuthController {
         res.status(409).json({
           success: false,
           message: 'El correo electrónico ya está registrado. Inicia sesión en su lugar.',
+          mensaje: 'Ya existe un usuario con ese correo electrónico',
         });
         return;
       }
 
       // 6. Hash con bcrypt: salt aleatorio incluido en el propio hash y coste 12
-      const passwordHash = await generarPasswordHash(password);
+      const passwordHash = await generarPasswordHash(rawPassword);
 
       // 7. Creación de usuario (rol estricto USER, sin posibilidad de escalada)
       const newUser = await prisma.user.create({
         data: {
-          name: name.trim(),
-          last_name: last_name.trim(),
+          name,
+          last_name,
           email: normalizedEmail,
           password_hash: passwordHash,
           role: Role.USER, // Siempre USER en registro público
@@ -96,6 +110,7 @@ export class AuthController {
       res.status(201).json({
         success: true,
         message: '¡Registro exitoso! Bienvenido a Plagelio.',
+        mensaje: 'Usuario registrado correctamente',
         token,
         user: {
           id: newUser.id,
@@ -105,6 +120,13 @@ export class AuthController {
           role: newUser.role,
           is_premium: newUser.is_premium,
           daily_analysis_count: newUser.daily_analysis_count,
+        },
+        usuario: {
+          id: newUser.id,
+          nombre: `${newUser.name} ${newUser.last_name}`.trim(),
+          email: newUser.email,
+          rol: newUser.role.toLowerCase(),
+          activo: newUser.is_active,
         },
       });
     } catch (error: any) {
@@ -159,6 +181,7 @@ export class AuthController {
         res.status(401).json({
           success: false,
           message: 'Credenciales inválidas. Verifica tu correo y contraseña.',
+          mensaje: 'Credenciales inválidas',
         });
         return;
       }
@@ -168,6 +191,7 @@ export class AuthController {
         res.status(403).json({
           success: false,
           message: 'Esta cuenta ha sido desactivada. Por favor contacta al administrador.',
+          mensaje: 'Usuario deshabilitado',
         });
         return;
       }
@@ -197,6 +221,7 @@ export class AuthController {
       res.status(200).json({
         success: true,
         message: 'Sesión iniciada correctamente.',
+        mensaje: 'Autenticación correcta',
         token,
         user: {
           id: user.id,
@@ -207,6 +232,12 @@ export class AuthController {
           is_premium: user.is_premium,
           premium_since: user.premium_since,
           daily_analysis_count: dailyCount,
+        },
+        usuario: {
+          id: user.id,
+          nombre: `${user.name} ${user.last_name}`.trim(),
+          email: user.email,
+          rol: user.role.toLowerCase(),
         },
       });
     } catch (error: any) {
