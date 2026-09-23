@@ -15,7 +15,12 @@ export class SecurityController {
     res.status(200).json({
       success: true,
       message: 'Cliente autenticado',
+      mensaje: 'Cliente autenticado',
       client: req.apiClient,
+      cliente: {
+        id: req.apiClient.id,
+        nombre: req.apiClient.name,
+      },
     });
   }
 }

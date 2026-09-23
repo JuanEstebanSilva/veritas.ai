@@ -78,6 +78,7 @@ app.use('/api/writing', writingRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/security', securityRoutes);
+app.use('/api/seguridad', securityRoutes);
 
 // Manejo de rutas 404
 app.use((_req: Request, res: Response) => {

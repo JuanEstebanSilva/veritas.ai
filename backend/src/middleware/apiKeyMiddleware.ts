@@ -23,7 +23,7 @@ export const validarApiKey = async (req: Request, res: Response, next: NextFunct
   // Express normaliza el nombre de las cabeceras; solo se acepta en la cabecera, nunca en la URL
   const apiKeyRecibida = req.get('X-API-Key');
   if (!apiKeyRecibida) {
-    res.status(401).json({ success: false, message: 'API Key requerida' });
+    res.status(401).json({ success: false, message: 'API Key requerida', mensaje: 'API Key requerida' });
     return;
   }
 
@@ -31,15 +31,19 @@ export const validarApiKey = async (req: Request, res: Response, next: NextFunct
     const resultado = await buscarClientePorApiKey(apiKeyRecibida);
 
     if (resultado.estado === 'invalida') {
-      res.status(401).json({ success: false, message: 'API Key inválida' });
+      res.status(401).json({ success: false, message: 'API Key inválida', mensaje: 'API Key inválida' });
       return;
     }
     if (resultado.estado === 'deshabilitada') {
-      res.status(403).json({ success: false, message: 'API Key deshabilitada' });
+      res.status(403).json({ success: false, message: 'API Key deshabilitada', mensaje: 'API Key deshabilitada' });
       return;
     }
 
     req.apiClient = resultado.cliente;
+    (req as any).clienteApi = {
+      id: resultado.cliente.id,
+      nombre: resultado.cliente.name,
+    };
     next();
   } catch (error) {
     next(error);
