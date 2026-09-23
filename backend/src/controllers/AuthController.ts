@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../config/prisma';
 import { ENV } from '../config/env';
 import { Role } from '@prisma/client';
 import { AuthenticatedRequest } from '../middleware/authMiddleware';
 import { isSameCalendarDay, FREE_DAILY_LIMIT } from '../middleware/dailyLimitGuard';
+import { validarPassword, generarPasswordHash, verificarPassword } from '../utils/passwordPolicy';
 
 export class AuthController {
   /**
@@ -15,8 +15,9 @@ export class AuthController {
     try {
       const { name, last_name, email, password, confirm_password } = req.body;
 
-      // 1. Validaciones de presencia
-      if (!name || !last_name || !email || !password || !confirm_password) {
+      // 1. Validaciones de presencia y de tipo (un número u objeto no es un correo)
+      if (!name || !last_name || !email || !password || !confirm_password ||
+          typeof name !== 'string' || typeof last_name !== 'string' || typeof email !== 'string') {
         res.status(400).json({
           success: false,
           message: 'Todos los campos son obligatorios: Nombre, Apellido, Email y Contraseñas.',
@@ -44,12 +45,10 @@ export class AuthController {
         return;
       }
 
-      // 4. Validación de seguridad de contraseña
-      if (password.length < 8) {
-        res.status(400).json({
-          success: false,
-          message: 'La contraseña debe tener al menos 8 caracteres.',
-        });
+      // 4. Política de contraseñas (Lab 7): entre 10 y 72 caracteres, máximo 72 bytes
+      const errorPassword = validarPassword(password);
+      if (errorPassword) {
+        res.status(400).json({ success: false, message: errorPassword });
         return;
       }
 
@@ -66,9 +65,8 @@ export class AuthController {
         return;
       }
 
-      // 6. Hasheo seguro de contraseña
-      const salt = await bcrypt.genSalt(12);
-      const passwordHash = await bcrypt.hash(password, salt);
+      // 6. Hash con bcrypt: salt aleatorio incluido en el propio hash y coste 12
+      const passwordHash = await generarPasswordHash(password);
 
       // 7. Creación de usuario (rol estricto USER, sin posibilidad de escalada)
       const newUser = await prisma.user.create({
@@ -125,7 +123,7 @@ export class AuthController {
     try {
       const { email, password } = req.body;
 
-      if (!email || !password) {
+      if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
         res.status(400).json({
           success: false,
           message: 'Por favor, proporciona el correo electrónico y la contraseña.',
@@ -150,32 +148,14 @@ export class AuthController {
         }
       }
 
-      // Si aún no existe y corresponde a una cuenta demo oficial, asegurar su existencia
-      if (!user) {
-        const isAdminDemo = normalizedEmail === 'admin@plagelio.com' || normalizedEmail === 'admin@veritas.ai';
-        const isUserDemo = normalizedEmail === 'usuario@plagelio.com' || normalizedEmail === 'usuario@veritas.ai';
+      // bcrypt se ejecuta SIEMPRE, exista o no la cuenta (Lab 7). Si el correo no
+      // existe se compara contra un hash ficticio del mismo coste: así ambos caminos
+      // tardan lo mismo y el tiempo de respuesta no revela qué correos están
+      // registrados. Tampoco se crean cuentas desde aquí: el login ya no da de alta
+      // usuarios con contraseñas escritas en el código.
+      const passwordValida = await verificarPassword(password, user?.password_hash);
 
-        if (isAdminDemo || isUserDemo) {
-          const demoPassword = isAdminDemo ? (process.env.ADMIN_PASSWORD || 'Admin123!Secure*') : 'User123!Secure*';
-          const salt = await bcrypt.genSalt(12);
-          const passwordHash = await bcrypt.hash(demoPassword, salt);
-
-          user = await prisma.user.create({
-            data: {
-              name: isAdminDemo ? 'Administrador' : 'Usuario de prueba',
-              last_name: isAdminDemo ? 'Sistema' : 'Demo',
-              email: normalizedEmail,
-              password_hash: passwordHash,
-              role: isAdminDemo ? Role.ADMIN : Role.USER,
-              is_active: true,
-              is_premium: isAdminDemo,
-              daily_analysis_count: 0,
-            },
-          });
-        }
-      }
-
-      if (!user) {
+      if (!user || !passwordValida) {
         res.status(401).json({
           success: false,
           message: 'Credenciales inválidas. Verifica tu correo y contraseña.',
@@ -183,19 +163,11 @@ export class AuthController {
         return;
       }
 
+      // El estado de la cuenta solo se revela a quien demuestra conocer la contraseña
       if (!user.is_active) {
         res.status(403).json({
           success: false,
           message: 'Esta cuenta ha sido desactivada. Por favor contacta al administrador.',
-        });
-        return;
-      }
-
-      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-      if (!isPasswordValid) {
-        res.status(401).json({
-          success: false,
-          message: 'Credenciales inválidas. Verifica tu correo y contraseña.',
         });
         return;
       }

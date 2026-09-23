@@ -70,7 +70,7 @@ describe('1. Módulo de Autenticación (Registro y Login)', () => {
       expect(res.body.success).toBe(false);
     });
 
-    it('debe rechazar contraseña demasiado corta (< 8 caracteres)', async () => {
+    it('debe rechazar contraseña demasiado corta (< 10 caracteres)', async () => {
       const res = await request(app)
         .post('/api/auth/register')
         .send({

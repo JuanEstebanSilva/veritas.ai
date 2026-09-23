@@ -1,10 +1,10 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/authMiddleware';
 import { prisma } from '../config/prisma';
-import bcrypt from 'bcryptjs';
 import { Role } from '@prisma/client';
 import { isSameCalendarDay } from '../middleware/dailyLimitGuard';
 import { contarDependenciasUsuario } from '../services/referentialIntegrity.service';
+import { validarPassword, generarPasswordHash } from '../utils/passwordPolicy';
 
 export class UserController {
   /**
@@ -189,6 +189,12 @@ export class UserController {
         return;
       }
 
+      const errorPassword = validarPassword(password);
+      if (errorPassword) {
+        res.status(400).json({ success: false, message: errorPassword });
+        return;
+      }
+
       const normalizedEmail = email.toLowerCase().trim();
 
       const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
@@ -197,7 +203,7 @@ export class UserController {
         return;
       }
 
-      const passwordHash = await bcrypt.hash(password, 12);
+      const passwordHash = await generarPasswordHash(password);
 
       const user = await prisma.user.create({
         data: {
@@ -245,9 +251,17 @@ export class UserController {
       }
 
       // Si se desea actualizar contraseña
+      // Contraseña opcional al editar. Antes una contraseña corta se ignoraba en
+      // silencio y se recortaba con trim(); ahora se valida y se guarda tal cual,
+      // igual que en el registro.
       let passwordHash = undefined;
-      if (password && password.trim().length >= 8) {
-        passwordHash = await bcrypt.hash(password.trim(), 12);
+      if (password !== undefined && password !== null && password !== '') {
+        const errorPassword = validarPassword(password);
+        if (errorPassword) {
+          res.status(400).json({ success: false, message: errorPassword });
+          return;
+        }
+        passwordHash = await generarPasswordHash(password);
       }
 
       const updated = await prisma.user.update({
