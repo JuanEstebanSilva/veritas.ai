@@ -44,9 +44,12 @@ describe('2. Control de Acceso por Roles y Prevención de Escalada de Privilegio
   });
 
   afterAll(async () => {
-    await prisma.user.deleteMany({
-      where: { id: { in: [testUserId, adminUserId] } },
-    });
+    // Integridad referencial (Lab 5): las FKs son ON DELETE RESTRICT,
+    // por lo que hay que retirar primero los registros dependientes.
+    const ids = [testUserId, adminUserId];
+    await prisma.payment.deleteMany({ where: { user_id: { in: ids } } });
+    await prisma.analysis.deleteMany({ where: { user_id: { in: ids } } });
+    await prisma.user.deleteMany({ where: { id: { in: ids } } });
     await prisma.$disconnect();
   });
 

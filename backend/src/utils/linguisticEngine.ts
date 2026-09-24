@@ -114,12 +114,63 @@ export class LinguisticEngine {
   }
 
   /**
-   * Divide un párrafo en oraciones individuales respetando puntuación
+   * Divide un párrafo en oraciones individuales con tolerancia a abreviaturas,
+   * cifras decimales, citas académicas y notas al pie sin pérdida de texto.
    */
   public static splitSentences(paragraph: string): string[] {
-    const matched = paragraph.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g);
-    if (!matched) return [paragraph];
-    return matched.map((s) => s.trim()).filter((s) => s.length > 0);
+    if (!paragraph || typeof paragraph !== 'string') return [];
+    const trimmed = paragraph.trim();
+    if (trimmed.length === 0) return [];
+
+    // Lista de abreviaturas frecuentes que llevan punto pero no terminan oración
+    const ABBRS = [
+      'dr', 'dra', 'sr', 'sra', 'srta', 'prof', 'ing', 'lic',
+      'ej', 'pág', 'págs', 'etc', 'vs', 'art', 'vol', 'núm', 'cap',
+      'mr', 'mrs', 'ms', 'inc', 'ltd', 'dept', 'univ', 'approx', 'fig', 'al'
+    ];
+
+    let protectedText = trimmed;
+
+    // 1. Proteger números decimales (ej: 3.14 o 95.5)
+    protectedText = protectedText.replace(/(\d+)\.(\d+)/g, '$1__DEC__$2');
+
+    // 2. Proteger abreviaturas individuales (ej: "ej." -> "ej__DOT__")
+    for (const abbr of ABBRS) {
+      const reg = new RegExp(`\\b(${abbr})\\.(\\s+|$)`, 'gi');
+      protectedText = protectedText.replace(reg, '$1__DOT__$2');
+    }
+
+    // 3. Proteger abreviaturas con iniciales mayúsculas múltiples (ej: "EE. UU." o "U.S.A.")
+    protectedText = protectedText.replace(/\b([A-ZÁÉÍÓÚÑ]{1,3})\.\s*([A-ZÁÉÍÓÚÑ]{1,3})\./g, '$1__DOT__$2__DOT__');
+
+    // 4. Proteger puntos suspensivos ("...")
+    protectedText = protectedText.replace(/\.{2,}/g, '__ELLIPSIS__');
+
+    // 5. Delimitador de frontera oracional:
+    // Puntuación (. ! ?) seguida opcionalmente de notas al pie en corchetes [1], comillas o paréntesis,
+    // cuando está seguida de espacio y comienzo de nueva proposición, o fin de texto.
+    const BOUNDARY_TOKEN = '___SENT_SPLIT___';
+    const segmented = protectedText.replace(
+      /([.!?]+(?:\[[\d,\s-]+\]|[\"\'»”\)\]])*)(?=\s+[A-ZÁÉÍÓÚÑ¡¿"«\d]|$)/g,
+      '$1' + BOUNDARY_TOKEN
+    );
+
+    const rawSplits = segmented.split(BOUNDARY_TOKEN);
+    const sentences: string[] = [];
+
+    for (let s of rawSplits) {
+      s = s
+        .replace(/__DEC__/g, '.')
+        .replace(/__DOT__/g, '.')
+        .replace(/__ELLIPSIS__/g, '...');
+      s = s.trim();
+      if (s.length > 0) {
+        sentences.push(s);
+      }
+    }
+
+    // Invariante de seguridad: jamás devolver un arreglo vacío si el párrafo original tenía texto
+    return sentences.length > 0 ? sentences : [trimmed];
   }
 
   /**
@@ -286,10 +337,12 @@ export class LinguisticEngine {
     const words = this.tokenizeWords(paragraph);
 
     if (words.length < 7) {
+      const shortHash = this.deterministicHash(paragraph);
+      const shortScore = Math.max(1, 2 + (shortHash % 4));
       return {
         paragraphIndex: index,
         paragraphText: paragraph,
-        paragraphAiScore: 5,
+        paragraphAiScore: shortScore,
         indicators: ['Longitud breve'],
         explanation: 'El párrafo contiene muy pocas palabras para inferir características estilométricas completas.',
       };
@@ -305,92 +358,122 @@ export class LinguisticEngine {
     const textHash = this.deterministicHash(paragraph);
 
     const indicators: string[] = [];
+    let finalScore: number;
 
-    // Base inicial balanceada
-    let probabilityPoints = 28;
+    if (heavyCount === 0 && clicheCount === 0) {
+      // TEXTO HUMANO O HUMANIZADO (Ausencia total de fórmulas o clichés de IA)
+      // Rango orgánico dinámico y realista entre 1% y 12%, dependiente de las características intrínsecas
+      let naturalScore = 5.8;
 
-    // 1. Detección de giros y fórmulas de IA
-    if (heavyCount >= 2 || clicheCount >= 4) {
-      probabilityPoints += 48;
-      indicators.push('Fuerte presencia de fórmulas de IA');
-      indicators.push('Transiciones sintéticas estereotipadas');
-    } else if (heavyCount === 1 || clicheCount >= 2 || density > 0.12) {
-      probabilityPoints += 30;
-      indicators.push('Conectores sintéticos detectados');
-    } else if (clicheCount === 1) {
-      probabilityPoints += 14;
-      indicators.push('Conector formal reiterado');
+      // 1. Modulador por riqueza léxica (TTR y Hapax Legomena)
+      naturalScore += (0.64 - ttr) * 7.0;
+
+      // 2. Modulador por variabilidad rítmica (Burstiness y desviación estándar de oraciones)
+      if (sentences.length >= 2) {
+        naturalScore += (0.48 - burstinessScore) * 5.5;
+        if (stdDev > 8.0) {
+          naturalScore -= 1.2;
+        } else if (stdDev < 4.0 && meanLength >= 15) {
+          naturalScore += 2.0;
+        }
+      }
+
+      // 3. Modulador por presencia de voz humana genuina (primera persona, marcas de oralidad)
+      if (humanScoreBonus > 0) {
+        naturalScore -= Math.min(humanScoreBonus * 0.20, 2.8);
+        for (const m of detectedMarkers) {
+          indicators.push(m);
+        }
+      }
+
+      // 4. Modulador por extensión de párrafo
+      if (words.length > 70) {
+        naturalScore -= 0.6;
+      } else if (words.length < 20) {
+        naturalScore += 0.8;
+      }
+
+      // 5. Singularidad determinista del párrafo para garantizar un puntaje único y orgánico
+      const paragraphJitter = ((textHash % 13) - 6) * 0.45; // fluctuación reproducible continua ~ ±2.7%
+      naturalScore += paragraphJitter;
+
+      finalScore = Math.max(1, Math.min(Math.round(naturalScore), 14));
+
+      if (finalScore <= 8 && indicators.length === 0) {
+        indicators.push('Cadencia natural y autoría humana');
+      }
     } else {
-      // Ausencia total de fórmulas de IA
-      probabilityPoints -= 12;
-    }
+      // TEXTO CON FÓRMULAS DE IA O RASGOS SINTÉTICOS
+      let aiPoints = 28;
 
-    // 2. Inmunidad o atenuación por voz humana genuina (primera persona, afecto, oralidad)
-    if (humanScoreBonus > 0) {
-      probabilityPoints -= Math.min(humanScoreBonus, 42);
-      for (const m of detectedMarkers) {
-        indicators.push(m);
+      // 1. Detección de giros y fórmulas de IA
+      if (heavyCount >= 2 || clicheCount >= 4) {
+        aiPoints += 52;
+        indicators.push('Fuerte presencia de fórmulas de IA');
+        indicators.push('Transiciones sintéticas estereotipadas');
+      } else if (heavyCount === 1 || clicheCount >= 2 || density > 0.10) {
+        aiPoints += 34;
+        indicators.push('Conectores sintéticos detectados');
+      } else if (clicheCount === 1) {
+        aiPoints += 16;
+        indicators.push('Conector formal reiterado');
       }
-    }
 
-    // 3. Cadencia y burstiness (longitud y variabilidad de oraciones)
-    if (sentences.length >= 2) {
-      if (burstinessScore < 0.28) {
-        // Altamente uniforme (típico de IA)
-        probabilityPoints += 20;
-        indicators.push('Cadencia métrica uniforme');
-      } else if (burstinessScore > 0.55) {
-        // Variación rítmica orgánica (típico humano)
-        probabilityPoints -= 16;
-        indicators.push('Alternancia rítmica natural');
+      // 2. Inmunidad o atenuación por voz humana genuina
+      if (humanScoreBonus > 0) {
+        aiPoints -= Math.min(humanScoreBonus, 25);
+        for (const m of detectedMarkers) {
+          indicators.push(m);
+        }
       }
-    }
 
-    // 4. Ventana de simetría de IA (~16 a 28 palabras por oración con baja desviación)
-    if (sentences.length >= 2) {
-      if (meanLength >= 15 && meanLength <= 28 && stdDev < 4.0) {
-        probabilityPoints += 16;
-        indicators.push('Simetría estructural sintética');
-      } else if (stdDev > 7.0) {
-        probabilityPoints -= 14;
+      // 3. Cadencia y burstiness (longitud y variabilidad de oraciones)
+      if (sentences.length >= 2) {
+        if (burstinessScore < 0.28) {
+          aiPoints += 18;
+          indicators.push('Cadencia métrica uniforme');
+        } else if (burstinessScore > 0.55) {
+          aiPoints -= 12;
+          indicators.push('Alternancia rítmica natural');
+        }
+
+        // 4. Ventana de simetría de IA
+        if (meanLength >= 15 && meanLength <= 28 && stdDev < 4.0) {
+          aiPoints += 14;
+          indicators.push('Simetría estructural sintética');
+        } else if (stdDev > 7.0) {
+          aiPoints -= 8;
+        }
       }
-    }
 
-    // 5. Variedad léxica (Type-Token Ratio) y Hapax Legomena
-    if (words.length > 25) {
-      if (ttr < 0.45 && hapaxRatio < 0.55) {
-        probabilityPoints += 14;
-        indicators.push('Baja variación léxica');
-      } else if (ttr > 0.70 && hapaxRatio > 0.75 && clicheCount === 0) {
-        probabilityPoints -= 14;
-        indicators.push('Riqueza léxica orgánica');
+      // 5. Variedad léxica (Type-Token Ratio) y Hapax Legomena
+      if (words.length > 25) {
+        if (ttr < 0.45 && hapaxRatio < 0.55) {
+          aiPoints += 12;
+          indicators.push('Baja variación léxica');
+        } else if (ttr > 0.70 && hapaxRatio > 0.75) {
+          aiPoints -= 8;
+          indicators.push('Riqueza léxica orgánica');
+        }
       }
+
+      // 6. Repetición de inicios sintácticos
+      if (startUniformity > 0.35) {
+        aiPoints += 12;
+        indicators.push('Patrones sintácticos repetitivos');
+      }
+
+      // 7. Micro-variación determinista (±2%)
+      const jitter = (textHash % 5) - 2;
+      aiPoints += jitter;
+
+      finalScore = Math.max(16, Math.min(Math.round(aiPoints), 99));
     }
-
-    // 6. Repetición de inicios sintácticos
-    if (startUniformity > 0.35) {
-      probabilityPoints += 14;
-      indicators.push('Patrones sintácticos repetitivos');
-    }
-
-    // 7. Micro-variación determinista para reflejar la unicidad de cada texto (±2%)
-    const jitter = (textHash % 5) - 2;
-    probabilityPoints += jitter;
-
-    // Indicadores positivos de naturalidad si el puntaje es bajo
-    if (probabilityPoints < 25 && indicators.length === 0) {
-      indicators.push('Cadencia natural y autoría humana');
-    } else if (probabilityPoints >= 65 && indicators.length === 0) {
-      indicators.push('Estructura formal altamente predecible');
-    }
-
-    // Clampear la puntuación a un rango realista entre 4% y 98%
-    const finalScore = Math.max(4, Math.min(Math.round(probabilityPoints), 98));
 
     let explanation = '';
     if (finalScore >= 70) {
       explanation = `Presenta una alta concentración de giros de modelos generativos (${clicheCount} detectados), uniformidad en la longitud de oraciones (${meanLength.toFixed(0)} palabras promedio) y cadencia sintética.`;
-    } else if (finalScore >= 35) {
+    } else if (finalScore >= 25) {
       explanation = `Muestra características híbridas: cierta uniformidad estructural combinada con modulaciones de ritmo de redacción natural.`;
     } else {
       explanation = `Estructura orgánica con alternancia rítmica marcada, ausencia de muletillas de IA y rica variedad léxica propia de la redacción humana.`;
@@ -432,11 +515,11 @@ export class LinguisticEngine {
       weightedScore += p.paragraphAiScore * weight;
     }
 
-    // Micro-ajuste determinista global para evitar agrupamientos artificiales en números fijos
+    // Micro-ajuste determinista global según la huella única del documento
     const docHash = this.deterministicHash(text);
-    const globalJitter = (docHash % 3) - 1;
+    const globalJitter = weightedScore <= 14 ? ((docHash % 7) - 3) * 0.35 : (docHash % 3) - 1;
 
-    const overallAiScore = Math.max(4, Math.min(Math.round(weightedScore + globalJitter), 99));
+    const overallAiScore = Math.max(1, Math.min(Math.round(weightedScore + globalJitter), 99));
 
     // Recopilar todos los indicadores globales observados
     const indicatorFrequency: Record<string, number> = {};
@@ -487,13 +570,15 @@ export class LinguisticEngine {
   } {
     const paragraphs = this.splitParagraphs(text);
     const summaryOfChanges: string[] = [
-      'Eliminación total de auto-identificaciones de chatbot, metadatos y fórmulas de asistente virtual',
+      'Erradicación total de notas al pie numéricas ([n]), corchetes y artefactos de copiado enciclopédico',
+      'Suavizado de paréntesis mecánicos y conversión en incisos naturales',
+      'Eliminación de auto-identificaciones de chatbot, metadatos y fórmulas de asistente virtual',
       'Ruptura de cadencia simétrica: alternancia intencional de oraciones cortas e incisivas con estructuras compuestas (burstiness orgánico)',
       'Erradicación total de más de 40 conectores cliché y fórmulas de énfasis típicas de IA',
       'Diversificación de arranques de oración para eliminar patrones sintácticos predecibles',
       'Enriquecimiento léxico dinámico y sustitución por giros expresivos humanos',
-      'Inclusión de puntuación orgánica (guiones explicativos, pausas reflexivas y puntos seguidos)',
-      'Preservación absoluta de citas entre comillas, cifras numéricas y terminología especializada'
+      'Normalización de puntuación orgánica y limpieza de signos tipográficos anómalos',
+      'Preservación absoluta de citas textuales entre comillas, cifras numéricas y terminología especializada'
     ];
 
     // Diccionario de reemplazos (incluyendo eliminación de bot confessions y metadatos de chatbot)
@@ -571,6 +656,22 @@ export class LinguisticEngine {
       [/\btestament to\b/gi, 'reflection of'],
       [/\bseamlessly\b/gi, 'naturally'],
 
+      // Clichés temporales y de apertura de IA
+      [/\ben el vertiginoso mundo contempor[aá]neo\b/gi, 'al presente'],
+      [/\ben el vertiginoso mundo\b/gi, 'en el contexto actual'],
+      [/\ba lo largo de la historia de la humanidad\b/gi, 'históricamente'],
+      [/\bmarcar un antes y un despu[eé]s\b/gi, 'generar una transformación profunda'],
+      [/\bparadigma emergente\b/gi, 'nuevo modelo'],
+      [/\bsinergia transformadora\b/gi, 'integración efectiva'],
+      [/\bun catalizador para\b/gi, 'un impulso para'],
+      [/\bpiedra angular\b/gi, 'eje principal'],
+      [/\bun recordatorio constante\b/gi, 'una muestra'],
+      [/\bno se puede subestimar\b/gi, 'conviene valorar con atención'],
+      [/\bnavegar por las complejidades\b/gi, 'afrontar los desafíos'],
+      [/\bnavegamos hacia\b/gi, 'avanzamos hacia'],
+      [/\bresulta imperativo se[nñ]alar que\b/gi, 'conviene indicar que'],
+      [/\bresulta imperativo\b/gi, 'es prioritario'],
+
       // Locuciones redundantes
       [/\bcon el fin de\b/gi, 'para'],
       [/\bcon el objetivo de\b/gi, 'con miras a'],
@@ -586,21 +687,34 @@ export class LinguisticEngine {
     ];
 
     const improvedParagraphs = paragraphs.map((paragraph) => {
-      // 1. Proteger citas textuales entre comillas para dejarlas estrictamente intactas
+      // 1. Proteger citas textuales directas entre comillas ("...", «...», “...”)
       const quotes: string[] = [];
-      let sanitized = paragraph.replace(/"([^"]*)"/g, (match) => {
+      let sanitized = paragraph.replace(/(?:"[^"]*"|«[^»]*»|“[^”]*”)/g, (match) => {
         quotes.push(match);
         return `__QUOTE_${quotes.length - 1}__`;
       });
 
-      // Proteger citas de formato académico (García, 2023)
-      const citations: string[] = [];
-      sanitized = sanitized.replace(/\([A-ZÁÉÍÓÚÑa-záéíóúñ]+,\s*\d{4}[^)]*\)/g, (match) => {
-        citations.push(match);
-        return `__CITATION_${citations.length - 1}__`;
-      });
+      // 2. Erradicar notas al pie tipo Wikipedia o corchetes numéricos ([1], [1, 2], [1-3], [8][9], [10])
+      sanitized = sanitized.replace(/\[\s*\d+(?:[,\s-]+\d+)*\s*\]/g, '');
 
-      // 2. Aplicar reemplazos de clichés y conectores algorítmicos con soporte para grupos ($1, $2)
+      // 3. Limpiar corchetes residuales, huérfanos o vacíos ([], [, ], [10][ -> se elimina el residuo)
+      sanitized = sanitized.replace(/\[\s*\]/g, '');
+      sanitized = sanitized.replace(/\[(?!\w)/g, '');
+      sanitized = sanitized.replace(/(?<!\w)\]/g, '');
+      sanitized = sanitized.replace(/\[\s*$/g, '');
+
+      // 4. Suavizar paréntesis innecesarios o académicos para que fluyan como incisos naturales entre comas
+      // Ej: "perro (Canis lupus) llamado" -> "perro, Canis lupus, llamado"
+      sanitized = sanitized.replace(/\s*\(([^)]{2,120})\)\s*/g, ', $1, ');
+      sanitized = sanitized.replace(/\s*\([^)]*\)\s*/g, ' ');
+
+      // 5. Limpiar signos de interrogación y exclamación anómalos o repetidos (ej: ¿?, ??, !!, espacios antes de ?)
+      sanitized = sanitized.replace(/[¿?]{2,}/g, '?');
+      sanitized = sanitized.replace(/[¡!]{2,}/g, '!');
+      sanitized = sanitized.replace(/\s+[?]/g, '?');
+      sanitized = sanitized.replace(/\s+[!]/g, '!');
+
+      // 6. Aplicar reemplazos de clichés y conectores algorítmicos con soporte para grupos ($1, $2)
       for (const [pattern, replacement] of replacements) {
         sanitized = sanitized.replace(pattern, (...args) => {
           let rep = replacement;
@@ -616,10 +730,15 @@ export class LinguisticEngine {
         });
       }
 
-      // 3. Normalizar puntuación y mayúsculas tras comas
-      sanitized = sanitized.replace(/,\s*([A-ZÁÉÍÓÚÑ])/g, (m, letter) => `, ${letter.toLowerCase()}`);
+      // 7. Normalizar puntuación duplicada o mal espaciada tras limpieza
+      sanitized = sanitized.replace(/\s*,\s*,+/g, ',');
+      sanitized = sanitized.replace(/,\s*\./g, '.');
+      sanitized = sanitized.replace(/\s+,/g, ',');
+      sanitized = sanitized.replace(/\s+\./g, '.');
+      sanitized = sanitized.replace(/;\s*;/g, ';');
+      sanitized = sanitized.replace(/\s+;/g, ';');
 
-      // 4. Inyección de Burstiness Orgánico y Ruptura de Simetría de Oraciones
+      // 8. Inyección de Burstiness Orgánico y Ruptura de Simetría de Oraciones
       const rawSentences = LinguisticEngine.splitSentences(sanitized);
       const transformedSentences: string[] = [];
 
@@ -627,44 +746,29 @@ export class LinguisticEngine {
         let sent = rawSentences[i].trim();
         if (!sent) continue;
 
-        // Asegurar que comience con mayúscula
-        sent = sent.charAt(0).toUpperCase() + sent.slice(1);
+        // Asegurar que comience con mayúscula sin alterar placeholders
+        if (!sent.startsWith('__')) {
+          sent = sent.charAt(0).toUpperCase() + sent.slice(1);
+        }
         const words = sent.split(/\s+/);
 
-        // Si dos oraciones consecutivas tienen longitud similar (~14 a 22 palabras),
-        // romper la simetría inyectando una oración incisiva corta o un giro subordinado
-        if (i === 1 && words.length > 15 && !sent.includes('—') && !sent.includes(';')) {
-          if (sent.includes(', ')) {
-            const parts = sent.split(', ');
-            if (parts.length >= 2 && parts[0].split(/\s+/).length >= 5) {
-              const firstPart = parts[0];
-              const rest = parts.slice(1).join(', ');
-              transformedSentences.push(`${firstPart}.`);
-              transformedSentences.push(`Y no es un asunto menor: ${rest}`);
-              continue;
-            } else if (sent.indexOf(',') > 15 && sent.indexOf(',') < sent.length - 15) {
-              const commaIdx = sent.indexOf(',');
-              sent = sent.slice(0, commaIdx) + ' —y esto resulta determinante—' + sent.slice(commaIdx);
-            }
-          }
-        }
-
-        if (words.length > 26 && sent.includes(', que ')) {
+        // Dividir oraciones excesivamente largas en ideas concisas para mejorar legibilidad
+        if (words.length > 25 && sent.includes(', que ')) {
           sent = sent.replace(', que ', '. Esto ');
-        } else if (words.length > 28 && sent.includes(', y ')) {
+        } else if (words.length > 26 && sent.includes(', y ')) {
           sent = sent.replace(', y ', '. Además, ');
         } else if (words.length > 22 && sent.includes(' pero ')) {
-          sent = sent.replace(' pero ', ' —aunque ');
+          sent = sent.replace(' pero ', '; no obstante, ');
         }
 
-        // Variar inicios repetitivos si dos oraciones consecutivas arrancan igual
+        // Variar inicios repetitivos si dos oraciones consecutivas arrancan con el mismo determinante
         if (transformedSentences.length > 0) {
           const prevStart = transformedSentences[transformedSentences.length - 1].split(/\s+/)[0]?.toLowerCase();
           const currStart = words[0]?.toLowerCase();
 
           if (prevStart && currStart && prevStart === currStart) {
             if (currStart === 'el' || currStart === 'la' || currStart === 'este' || currStart === 'esta') {
-              sent = `En efecto, ${sent.charAt(0).toLowerCase()}${sent.slice(1)}`;
+              sent = `Asimismo, ${sent.charAt(0).toLowerCase()}${sent.slice(1)}`;
             }
           }
         }
@@ -672,26 +776,15 @@ export class LinguisticEngine {
         transformedSentences.push(sent);
       }
 
-      // Asegurar variabilidad en longitudes finales
-      const finalLengths = transformedSentences.map((s) => s.split(/\s+/).filter(Boolean).length);
-      const finalMean = finalLengths.reduce((a, b) => a + b, 0) / (finalLengths.length || 1);
-      const finalVariance = finalLengths.reduce((a, b) => a + Math.pow(b - finalMean, 2), 0) / (finalLengths.length || 1);
-      const finalStdDev = Math.sqrt(finalVariance);
-
-      if (finalStdDev < 4.5 && transformedSentences.length >= 3) {
-        transformedSentences.push('El impacto en la práctica es rotundo.');
-      }
-
       let reconstructed = transformedSentences.join(' ');
 
-      // 5. Restaurar citas textuales y referencias bibliográficas protegidas
-      citations.forEach((citation, idx) => {
-        reconstructed = reconstructed.replace(`__CITATION_${idx}__`, citation);
-      });
-
+      // 9. Restaurar citas textuales protegidas intactas
       quotes.forEach((quote, idx) => {
         reconstructed = reconstructed.replace(`__QUOTE_${idx}__`, quote);
       });
+
+      // 10. Limpieza final de espacios colapsados
+      reconstructed = reconstructed.replace(/[ \t]+/g, ' ').replace(/\s+([.,;:?!])/g, '$1').trim();
 
       return reconstructed;
     });

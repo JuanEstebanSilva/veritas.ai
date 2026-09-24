@@ -27,6 +27,10 @@ describe('5. Módulo de Pagos, Webhooks y Activación Premium Segura', () => {
   });
 
   afterAll(async () => {
+    // Integridad referencial (Lab 5): las FKs son ON DELETE RESTRICT,
+    // por lo que hay que retirar primero los registros dependientes.
+    await prisma.payment.deleteMany({ where: { user_id: userId } });
+    await prisma.analysis.deleteMany({ where: { user_id: userId } });
     await prisma.user.delete({ where: { id: userId } });
     await prisma.$disconnect();
   });

@@ -6,6 +6,7 @@ import { CountUp } from '../motion';
 import { Dialog, Skeleton, SkeletonRows, useConfirm, useToast } from '../components/ui';
 import { sound } from '../utils/soundEffects';
 import { Crown, UserPlus, Pencil, Trash2, Power, Search, AlertCircle, X, RefreshCw, Loader2 } from 'lucide-react';
+import { validarPassword, PASSWORD_MAX } from '../utils/passwordPolicy';
 
 const emptyForm = { name: '', last_name: '', email: '', password: '', is_premium: false, is_active: true };
 
@@ -52,7 +53,11 @@ export const AdminDashboard: React.FC = () => {
     if (saving) return;
     setFormError(null);
     if (!modalForm.name || !modalForm.last_name || !modalForm.email) { sound.playError(); setFormError('Por favor completa todos los campos requeridos.'); return; }
-    if (!editingUserId && (!modalForm.password || modalForm.password.length < 8)) { sound.playError(); setFormError('La contraseña inicial debe contener al menos 8 caracteres.'); return; }
+    // Obligatoria al crear; opcional al editar, pero si se escribe debe cumplir la política
+    if (!editingUserId || modalForm.password) {
+      const errorPassword = validarPassword(modalForm.password);
+      if (errorPassword) { sound.playError(); setFormError(errorPassword); return; }
+    }
 
     setSaving(true);
     if (editingUserId) {
@@ -273,7 +278,7 @@ export const AdminDashboard: React.FC = () => {
             <div className="flex flex-col gap-2"><label htmlFor="adm-email" className="field-label">Correo electrónico</label><input id="adm-email" type="email" required value={modalForm.email} onChange={(e) => setModalForm({ ...modalForm, email: e.target.value })} className="field h-11 text-[13.5px]" /></div>
             <div className="flex flex-col gap-2">
               <label htmlFor="adm-pass" className="field-label">{editingUserId ? 'Nueva contraseña (vacío para no cambiar)' : 'Contraseña inicial'}</label>
-              <input id="adm-pass" type="password" autoComplete="new-password" value={modalForm.password} onChange={(e) => setModalForm({ ...modalForm, password: e.target.value })} placeholder="••••••••" className="field h-11 text-[13.5px]" />
+              <input id="adm-pass" type="password" autoComplete="new-password" maxLength={PASSWORD_MAX} value={modalForm.password} onChange={(e) => setModalForm({ ...modalForm, password: e.target.value })} placeholder="••••••••" className="field h-11 text-[13.5px]" />
             </div>
             <div className="flex items-center gap-6 pt-1">
               <label className="flex items-center gap-2.5 text-[13px] text-mid cursor-pointer"><input type="checkbox" checked={modalForm.is_premium} onChange={(e) => setModalForm({ ...modalForm, is_premium: e.target.checked })} className="w-4 h-4 accent-[rgb(var(--azure))]" /> Licencia vitalicia</label>

@@ -4,13 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import { sound } from '../utils/soundEffects';
 import { AuthShell } from '../components/auth/AuthShell';
 import { Mail, Lock, ArrowRight, AlertCircle, Loader2, Check } from 'lucide-react';
+import { validarPassword, PASSWORD_MIN, PASSWORD_MAX } from '../utils/passwordPolicy';
 
 /** Fortaleza orientativa: longitud y variedad de clases de caracteres. */
 const strengthOf = (pw: string) => {
   if (!pw) return { score: 0, label: '' };
   let s = 0;
-  if (pw.length >= 8) s++;
-  if (pw.length >= 12) s++;
+  if (pw.length >= PASSWORD_MIN) s++;
+  if (pw.length >= 14) s++;
   if (/[A-ZÁÉÍÓÚÑ]/.test(pw) && /[a-záéíóúñ]/.test(pw)) s++;
   if (/\d/.test(pw) && /[^\w\s]/.test(pw)) s++;
   return { score: s, label: ['Muy débil', 'Débil', 'Aceptable', 'Sólida', 'Muy sólida'][s] };
@@ -41,7 +42,8 @@ export const RegisterPage: React.FC = () => {
       sound.playError(); setError('Todos los campos son obligatorios.'); return;
     }
     if (formData.password !== formData.confirm_password) { sound.playError(); setError('Las contraseñas ingresadas no coinciden.'); return; }
-    if (formData.password.length < 8) { sound.playError(); setError('La contraseña debe contener al menos 8 caracteres.'); return; }
+    const errorPassword = validarPassword(formData.password);
+    if (errorPassword) { sound.playError(); setError(errorPassword); return; }
     if (loading) return;
 
     setLoading(true);
@@ -108,7 +110,7 @@ export const RegisterPage: React.FC = () => {
           <label htmlFor="reg-password" className="field-label">Contraseña</label>
           <div className="relative">
             <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-low pointer-events-none" strokeWidth={1.6} />
-            <input id="reg-password" name="password" type="password" required autoComplete="new-password" aria-describedby="reg-strength" value={formData.password} onChange={handleChange} placeholder="••••••••" className="field pl-11" />
+            <input id="reg-password" name="password" type="password" required maxLength={PASSWORD_MAX} autoComplete="new-password" aria-describedby="reg-strength" value={formData.password} onChange={handleChange} placeholder="••••••••" className="field pl-11" />
           </div>
           <div id="reg-strength" className="flex items-center gap-3 mt-0.5" aria-live="polite">
             <div className="flex-1 flex gap-1" aria-hidden="true">
@@ -116,7 +118,7 @@ export const RegisterPage: React.FC = () => {
                 <span key={n} className={`h-[3px] flex-1 rounded-full transition-colors duration-450 ${strength.score >= n ? strengthColor : 'bg-hair'}`} />
               ))}
             </div>
-            <span className={`text-[11.5px] font-semibold min-w-[70px] text-right ${strength.label ? strengthText : 'text-low'}`}>{strength.label || 'Mínimo 8'}</span>
+            <span className={`text-[11.5px] font-semibold min-w-[70px] text-right ${strength.label ? strengthText : 'text-low'}`}>{strength.label || `Mínimo ${PASSWORD_MIN}`}</span>
           </div>
         </div>
 
@@ -124,7 +126,7 @@ export const RegisterPage: React.FC = () => {
           <label htmlFor="reg-confirm" className="field-label">Repetir contraseña</label>
           <div className="relative">
             <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-low pointer-events-none" strokeWidth={1.6} />
-            <input id="reg-confirm" name="confirm_password" type="password" required autoComplete="new-password" value={formData.confirm_password} onChange={handleChange}
+            <input id="reg-confirm" name="confirm_password" type="password" required maxLength={PASSWORD_MAX} autoComplete="new-password" value={formData.confirm_password} onChange={handleChange}
               placeholder="••••••••" className={`field pl-11 pr-11 ${matchOk ? 'border-human/40' : ''}`} />
             {matchOk && <Check className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-human" strokeWidth={2.2} />}
           </div>

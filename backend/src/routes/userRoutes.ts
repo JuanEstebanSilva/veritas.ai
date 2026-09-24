@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { UserController } from '../controllers/UserController';
 import { authenticateJWT } from '../middleware/authMiddleware';
 import { requireAdmin } from '../middleware/roleGuard';
+import { validateUuidParam } from '../middleware/validateUuidParam';
 
 const router = Router();
 
@@ -11,11 +12,11 @@ router.use(requireAdmin);
 
 router.get('/stats', UserController.getAdminStats);
 router.get('/', UserController.getAllUsers);
-router.get('/:id', UserController.getUserById);
+router.get('/:id', validateUuidParam('id'), UserController.getUserById);
 router.post('/', UserController.createUser);
-router.put('/:id', UserController.updateUser);
-router.patch('/:id/toggle-active', UserController.toggleActive);
-router.patch('/:id/toggle-premium', UserController.togglePremium);
-router.delete('/:id', UserController.deleteUser);
+router.put('/:id', validateUuidParam('id'), UserController.updateUser);
+router.patch('/:id/toggle-active', validateUuidParam('id'), UserController.toggleActive);
+router.patch('/:id/toggle-premium', validateUuidParam('id'), UserController.togglePremium);
+router.delete('/:id', validateUuidParam('id'), UserController.deleteUser);
 
 export default router;

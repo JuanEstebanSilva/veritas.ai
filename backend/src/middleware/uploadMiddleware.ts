@@ -15,19 +15,25 @@ const fileFilter = (
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/zip',
     'application/octet-stream',
+    'application/pdf',
   ];
 
-  if (ext === '.docx' && (validMimes.includes(file.mimetype) || file.mimetype.includes('word'))) {
+  const isDocx = ext === '.docx' && (validMimes.includes(file.mimetype) || file.mimetype.includes('word'));
+  const isPdf = ext === '.pdf' && (validMimes.includes(file.mimetype) || file.mimetype.includes('pdf'));
+
+  if (isDocx || isPdf) {
     cb(null, true);
   } else {
-    cb(new Error('Formato inválido. Únicamente se permite cargar documentos con extensión .docx'));
+    cb(new Error('Formato inválido. Solo se admiten documentos en formato .docx o .pdf'));
   }
 };
 
-export const uploadDocx = multer({
+export const uploadDocument = multer({
   storage,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10 MB máximo
   },
   fileFilter,
 });
+
+export const uploadDocx = uploadDocument;

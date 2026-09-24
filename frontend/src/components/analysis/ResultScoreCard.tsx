@@ -12,7 +12,7 @@ interface ResultScoreCardProps {
 }
 
 const similarityLabel = (score: number) =>
-  score >= 40 ? 'Coincidencia significativa' : score >= 20 ? 'Coincidencia moderada' : 'Fuentes legítimas';
+  score >= 35 ? 'Similitud alta · Posible plagio' : score >= 18 ? 'Coincidencia moderada' : 'Fuentes legítimas / Citas';
 
 /** Las dos cifras del informe: probabilidad de IA e índice de similitud, como arcos. */
 export const ResultScoreCard: React.FC<ResultScoreCardProps> = ({
@@ -21,6 +21,8 @@ export const ResultScoreCard: React.FC<ResultScoreCardProps> = ({
   const mood = getScoreMood(aiScore);
   const humanScore = Math.max(0, 100 - Math.round(aiScore));
   const originality = Math.max(0, 100 - similarityScore);
+  const isHighPlagiarism = similarityScore >= 35;
+  const isModeratePlagiarism = similarityScore >= 18;
 
   return (
     <div className="flex flex-col gap-5">
@@ -53,19 +55,29 @@ export const ResultScoreCard: React.FC<ResultScoreCardProps> = ({
         </div>
 
         {/* Índice de similitud */}
-        <div className="card p-6 sm:p-7 flex flex-col gap-6">
+        <div className={`card p-6 sm:p-7 flex flex-col gap-6 transition-all ${isHighPlagiarism ? 'ring-2 ring-red-500/40 dark:ring-red-500/30' : ''}`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="eyebrow">Índice de similitud</span>
-            <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-azure">
-              <span className="status-dot" style={{ color: 'rgb(var(--azure) / .18)', background: 'rgb(var(--azure))' }} />
+            <span className={`inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] ${
+              isHighPlagiarism ? 'text-red-500 dark:text-red-400' : isModeratePlagiarism ? 'text-amber-500 dark:text-amber-400' : 'text-azure'
+            }`}>
+              <span
+                className="status-dot"
+                style={{
+                  color: isHighPlagiarism ? 'rgba(239, 68, 68, 0.2)' : isModeratePlagiarism ? 'rgba(245, 158, 11, 0.2)' : 'rgb(var(--azure) / .18)',
+                  background: isHighPlagiarism ? '#ef4444' : isModeratePlagiarism ? '#f59e0b' : 'rgb(var(--azure))',
+                }}
+              />
               {similarityLabel(similarityScore)}
             </span>
           </div>
 
           <div className="flex items-center gap-6">
-            <Gauge value={Math.round(similarityScore)} tone="azure" label="Índice de similitud" />
+            <Gauge value={Math.round(similarityScore)} tone={isHighPlagiarism ? 'ai' : 'azure'} label="Índice de similitud" />
             <div className="flex flex-col gap-4 min-w-0">
-              <p className="text-[13px] leading-[1.55] text-mid">Solapamiento con el corpus público cotejado.</p>
+              <p className="text-[13px] leading-[1.55] text-mid">
+                {isHighPlagiarism ? 'Atención: fragmentos con coincidencia directa detectada.' : 'Solapamiento con el corpus público cotejado.'}
+              </p>
               <div className="flex flex-col gap-0.5">
                 <span className="num text-[22px] leading-none text-hi"><CountUp value={originality} suffix="%" /></span>
                 <span className="eyebrow">Originalidad</span>
@@ -74,8 +86,12 @@ export const ResultScoreCard: React.FC<ResultScoreCardProps> = ({
           </div>
 
           <p className="flex items-start gap-2.5 pt-4 border-t hair text-[12px] leading-[1.6] text-low">
-            <Info className="w-3.5 h-3.5 shrink-0 mt-[3px] text-azure" strokeWidth={1.8} />
-            <span>Mide solapamiento textual. Las coincidencias con citas legítimas, nombres propios o terminología técnica no constituyen plagio.</span>
+            <Info className={`w-3.5 h-3.5 shrink-0 mt-[3px] ${isHighPlagiarism ? 'text-red-500' : 'text-azure'}`} strokeWidth={1.8} />
+            <span>
+              {isHighPlagiarism
+                ? 'Se identificaron fragmentos con similitud significativa. Revisa las citas APA 7 generadas abajo para atribuir la autoría.'
+                : 'Mide solapamiento textual. Las coincidencias con citas legítimas, nombres propios o terminología técnica no constituyen plagio.'}
+            </span>
           </p>
         </div>
       </div>

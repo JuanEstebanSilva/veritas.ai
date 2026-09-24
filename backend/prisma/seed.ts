@@ -136,22 +136,7 @@ async function main() {
           ],
         },
         sources: {
-          create: [
-            {
-              source_url: 'https://es.wikipedia.org/wiki/Inteligencia_artificial',
-              source_title: 'Wikipedia: Inteligencia Artificial',
-              matched_text: 'La inteligencia artificial es un campo de la informática...',
-              user_snippet: sampleText.slice(0, 100),
-              similarity_percentage: 16.0,
-            },
-            {
-              source_url: 'https://dialnet.unirioja.es/descarga/articulo/educacion-metodologia.pdf',
-              source_title: 'Dialnet: Metodología de la Investigación',
-              matched_text: 'La metodología de la investigación comprende el conjunto de procedimientos...',
-              user_snippet: sampleText.slice(120, 220),
-              similarity_percentage: 8.0,
-            },
-          ],
+          create: [],
         },
       },
     });

@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../config/prisma';
 import { ENV } from '../config/env';
 import { Role } from '@prisma/client';
 import { AuthenticatedRequest } from '../middleware/authMiddleware';
 import { isSameCalendarDay, FREE_DAILY_LIMIT } from '../middleware/dailyLimitGuard';
+import { validarPassword, generarPasswordHash, verificarPassword } from '../utils/passwordPolicy';
 
 export class AuthController {
   /**
@@ -13,43 +13,55 @@ export class AuthController {
    */
   public static async register(req: Request, res: Response): Promise<void> {
     try {
-      const { name, last_name, email, password, confirm_password } = req.body;
+      const rawName = req.body.name ?? req.body.nombre;
+      const rawLastName = req.body.last_name ?? req.body.apellido ?? (rawName ? 'Usuario' : '');
+      const rawEmail = req.body.email;
+      const rawPassword = req.body.password;
+      const rawConfirm = req.body.confirm_password ?? req.body.confirmPassword ?? rawPassword;
 
-      // 1. Validaciones de presencia
-      if (!name || !last_name || !email || !password || !confirm_password) {
+      // 1. Validaciones de presencia y de tipo (un número u objeto no es un correo)
+      if (!rawName || typeof rawName !== 'string' ||
+          !rawLastName || typeof rawLastName !== 'string' ||
+          !rawEmail || typeof rawEmail !== 'string' ||
+          !rawPassword || typeof rawPassword !== 'string' ||
+          typeof rawConfirm !== 'string') {
         res.status(400).json({
           success: false,
           message: 'Todos los campos son obligatorios: Nombre, Apellido, Email y Contraseñas.',
+          mensaje: 'Datos inválidos',
         });
         return;
       }
 
+      const name = rawName.trim();
+      const last_name = rawLastName.trim();
+
       // 2. Validación de formato de email
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const normalizedEmail = email.toLowerCase().trim();
+      const normalizedEmail = rawEmail.toLowerCase().trim();
       if (!emailRegex.test(normalizedEmail)) {
         res.status(400).json({
           success: false,
           message: 'Por favor, proporciona un correo electrónico válido.',
+          mensaje: 'Debe proporcionar un correo electrónico válido',
         });
         return;
       }
 
       // 3. Validación de coincidencia de contraseña
-      if (password !== confirm_password) {
+      if (rawPassword !== rawConfirm) {
         res.status(400).json({
           success: false,
           message: 'Las contraseñas no coinciden.',
+          mensaje: 'Las contraseñas no coinciden.',
         });
         return;
       }
 
-      // 4. Validación de seguridad de contraseña
-      if (password.length < 8) {
-        res.status(400).json({
-          success: false,
-          message: 'La contraseña debe tener al menos 8 caracteres.',
-        });
+      // 4. Política de contraseñas (Lab 7): entre 10 y 72 caracteres, máximo 72 bytes
+      const errorPassword = validarPassword(rawPassword);
+      if (errorPassword) {
+        res.status(400).json({ success: false, message: errorPassword, mensaje: errorPassword });
         return;
       }
 
@@ -62,19 +74,19 @@ export class AuthController {
         res.status(409).json({
           success: false,
           message: 'El correo electrónico ya está registrado. Inicia sesión en su lugar.',
+          mensaje: 'Ya existe un usuario con ese correo electrónico',
         });
         return;
       }
 
-      // 6. Hasheo seguro de contraseña
-      const salt = await bcrypt.genSalt(12);
-      const passwordHash = await bcrypt.hash(password, salt);
+      // 6. Hash con bcrypt: salt aleatorio incluido en el propio hash y coste 12
+      const passwordHash = await generarPasswordHash(rawPassword);
 
       // 7. Creación de usuario (rol estricto USER, sin posibilidad de escalada)
       const newUser = await prisma.user.create({
         data: {
-          name: name.trim(),
-          last_name: last_name.trim(),
+          name,
+          last_name,
           email: normalizedEmail,
           password_hash: passwordHash,
           role: Role.USER, // Siempre USER en registro público
@@ -98,6 +110,7 @@ export class AuthController {
       res.status(201).json({
         success: true,
         message: '¡Registro exitoso! Bienvenido a Plagelio.',
+        mensaje: 'Usuario registrado correctamente',
         token,
         user: {
           id: newUser.id,
@@ -107,6 +120,13 @@ export class AuthController {
           role: newUser.role,
           is_premium: newUser.is_premium,
           daily_analysis_count: newUser.daily_analysis_count,
+        },
+        usuario: {
+          id: newUser.id,
+          nombre: `${newUser.name} ${newUser.last_name}`.trim(),
+          email: newUser.email,
+          rol: newUser.role.toLowerCase(),
+          activo: newUser.is_active,
         },
       });
     } catch (error: any) {
@@ -125,7 +145,7 @@ export class AuthController {
     try {
       const { email, password } = req.body;
 
-      if (!email || !password) {
+      if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
         res.status(400).json({
           success: false,
           message: 'Por favor, proporciona el correo electrónico y la contraseña.',
@@ -150,52 +170,28 @@ export class AuthController {
         }
       }
 
-      // Si aún no existe y corresponde a una cuenta demo oficial, asegurar su existencia
-      if (!user) {
-        const isAdminDemo = normalizedEmail === 'admin@plagelio.com' || normalizedEmail === 'admin@veritas.ai';
-        const isUserDemo = normalizedEmail === 'usuario@plagelio.com' || normalizedEmail === 'usuario@veritas.ai';
+      // bcrypt se ejecuta SIEMPRE, exista o no la cuenta (Lab 7). Si el correo no
+      // existe se compara contra un hash ficticio del mismo coste: así ambos caminos
+      // tardan lo mismo y el tiempo de respuesta no revela qué correos están
+      // registrados. Tampoco se crean cuentas desde aquí: el login ya no da de alta
+      // usuarios con contraseñas escritas en el código.
+      const passwordValida = await verificarPassword(password, user?.password_hash);
 
-        if (isAdminDemo || isUserDemo) {
-          const demoPassword = isAdminDemo ? (process.env.ADMIN_PASSWORD || 'Admin123!Secure*') : 'User123!Secure*';
-          const salt = await bcrypt.genSalt(12);
-          const passwordHash = await bcrypt.hash(demoPassword, salt);
-
-          user = await prisma.user.create({
-            data: {
-              name: isAdminDemo ? 'Administrador' : 'Usuario de prueba',
-              last_name: isAdminDemo ? 'Sistema' : 'Demo',
-              email: normalizedEmail,
-              password_hash: passwordHash,
-              role: isAdminDemo ? Role.ADMIN : Role.USER,
-              is_active: true,
-              is_premium: isAdminDemo,
-              daily_analysis_count: 0,
-            },
-          });
-        }
-      }
-
-      if (!user) {
+      if (!user || !passwordValida) {
         res.status(401).json({
           success: false,
           message: 'Credenciales inválidas. Verifica tu correo y contraseña.',
+          mensaje: 'Credenciales inválidas',
         });
         return;
       }
 
+      // El estado de la cuenta solo se revela a quien demuestra conocer la contraseña
       if (!user.is_active) {
         res.status(403).json({
           success: false,
           message: 'Esta cuenta ha sido desactivada. Por favor contacta al administrador.',
-        });
-        return;
-      }
-
-      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-      if (!isPasswordValid) {
-        res.status(401).json({
-          success: false,
-          message: 'Credenciales inválidas. Verifica tu correo y contraseña.',
+          mensaje: 'Usuario deshabilitado',
         });
         return;
       }
@@ -225,6 +221,7 @@ export class AuthController {
       res.status(200).json({
         success: true,
         message: 'Sesión iniciada correctamente.',
+        mensaje: 'Autenticación correcta',
         token,
         user: {
           id: user.id,
@@ -235,6 +232,12 @@ export class AuthController {
           is_premium: user.is_premium,
           premium_since: user.premium_since,
           daily_analysis_count: dailyCount,
+        },
+        usuario: {
+          id: user.id,
+          nombre: `${user.name} ${user.last_name}`.trim(),
+          email: user.email,
+          rol: user.role.toLowerCase(),
         },
       });
     } catch (error: any) {

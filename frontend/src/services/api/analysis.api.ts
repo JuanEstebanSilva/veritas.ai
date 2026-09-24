@@ -8,10 +8,19 @@ export const analysisApi = {
       body: JSON.stringify({ text, title }),
     }),
 
+  analyzeDocument: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request<{ success: boolean; analysis: Analysis }>('/analyses/document', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
   analyzeDocx: (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    return request<{ success: boolean; analysis: Analysis }>('/analyses/docx', {
+    return request<{ success: boolean; analysis: Analysis }>('/analyses/document', {
       method: 'POST',
       body: formData,
     });

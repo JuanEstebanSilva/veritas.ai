@@ -12,7 +12,10 @@
     "prisma:push": "prisma db push",
     "prisma:seed": "ts-node prisma/seed.ts",
     "test": "jest --detectOpenHandles --runInBand",
-    "test:dast": "jest tests/security.dast.test.ts --detectOpenHandles --runInBand"
+    "test:dast": "jest tests/security.dast.test.ts --detectOpenHandles --runInBand",
+    "vault:secure": "ts-node scripts/vaultCli.ts secure-env",
+    "vault:check": "ts-node scripts/vaultCli.ts check-env",
+    "lab5:fixtures": "ts-node scripts/lab5Fixtures.ts"
   },
   "keywords": [
     "turnitin",
@@ -25,6 +28,7 @@
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^6.4.1",
+    "@types/pdf-parse": "^1.1.5",
     "@types/pg": "^8.23.1",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
@@ -34,8 +38,11 @@
     "jsonwebtoken": "^9.0.2",
     "mammoth": "^1.9.0",
     "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^2.4.5",
     "pg": "^8.23.0",
-    "stripe": "^17.7.0"
+    "stripe": "^17.7.0",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -46,6 +53,8 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^22.13.9",
     "@types/supertest": "^6.0.2",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "jest": "^29.7.0",
     "prisma": "^6.4.1",
     "supertest": "^7.0.0",

@@ -83,13 +83,13 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 
   return (
     <div className="flex flex-col gap-5 animate-page-in">
-      {/* Reescritura lista */}
+      {/* Texto Humanizado */}
       <div className="card p-7 flex flex-col gap-6 border-l-2 border-l-human">
         <div className="flex flex-wrap items-start justify-between gap-5">
           <div className="flex flex-col gap-1.5">
-            <span className="eyebrow text-human">Reescritura lista</span>
-            <h3 className="text-d-5 font-semibold">Texto optimizado para usar</h3>
-            <p className="text-[13px] text-low">Léxico variado, cadencia natural y citas intactas.</p>
+            <span className="eyebrow text-human">Texto Humanizado</span>
+            <h3 className="text-d-5 font-semibold">Texto humanizado listo para usar</h3>
+            <p className="text-[13px] text-low">Léxico enriquecido, cadencia orgánica y citas intactas.</p>
           </div>
 
           {reduction !== null && reduction > 0 && moodBefore && moodAfter && (
@@ -110,7 +110,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 
         <div className="rounded-xl border hair bg-ground/60 overflow-hidden">
           <div className="flex items-center justify-between px-5 h-10 border-b hair">
-            <span className="text-[12px] font-semibold text-mid">Contenido final</span>
+            <span className="text-[12px] font-semibold text-mid">Contenido final humanizado</span>
             <span className="font-mono text-[11px] text-low">{words(improvedText)} palabras · {improvedText.length} caracteres</span>
           </div>
           <div className="p-5 max-h-[300px] overflow-y-auto text-[14.5px] leading-[1.75] text-hi whitespace-pre-wrap">{improvedText}</div>
@@ -118,7 +118,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <button type="button" onClick={handleCopy} className={`btn ${copied ? 'bg-human text-[rgb(var(--on-accent))]' : 'btn-primary'}`}>
-            {copied ? (<><Check className="w-4 h-4" strokeWidth={2.5} /> Copiado</>) : (<><Copy className="w-4 h-4" strokeWidth={1.8} /> Copiar texto</>)}
+            {copied ? (<><Check className="w-4 h-4" strokeWidth={2.5} /> Copiado</>) : (<><Copy className="w-4 h-4" strokeWidth={1.8} /> Copiar texto humanizado</>)}
           </button>
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" disabled={downloadingTxt} onClick={handleDownloadTxt} className="btn btn-ghost btn-sm">

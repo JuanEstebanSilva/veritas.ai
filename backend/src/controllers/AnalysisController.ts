@@ -5,6 +5,7 @@ import { AIService } from '../services/AIService';
 import { DocxService } from '../services/DocxService';
 import { recordSuccessfulAnalysis } from '../middleware/dailyLimitGuard';
 import { AnalysisType } from '@prisma/client';
+import { SimilarityEngine } from '../utils/similarityCorpus';
 
 export class AnalysisController {
   /**
@@ -24,7 +25,9 @@ export class AnalysisController {
       }
 
       const trimmedText = text.trim();
-      const analysisTitle = title && title.trim().length > 0 ? title.trim() : 'Análisis de texto';
+      const firstWords = trimmedText.split(/\s+/).slice(0, 6).join(' ');
+      const autoTitle = firstWords ? `${firstWords}${trimmedText.length > firstWords.length ? '...' : ''}` : 'Análisis de texto';
+      const analysisTitle = title && title.trim().length > 0 ? title.trim() : autoTitle;
 
       // 1. Ejecutar análisis completo mediante AIService
       const { aiReport, similarityReport } = await AIService.runFullAnalysis(trimmedText);
@@ -87,13 +90,14 @@ export class AnalysisController {
             indicators: JSON.parse(r.indicators),
             explanation: r.explanation,
           })),
-          sources: analysis.sources.map((s) => ({
-            id: s.id,
-            url: s.source_url,
-            title: s.source_title,
-            matchedText: s.matched_text,
-            userSnippet: s.user_snippet,
-            similarityPercentage: s.similarity_percentage,
+          sources: similarityReport.sources.map((s, idx) => ({
+            id: analysis.sources[idx]?.id || `src-${idx}`,
+            url: s.sourceUrl,
+            title: s.sourceTitle,
+            matchedText: s.matchedText,
+            userSnippet: s.userSnippet,
+            similarityPercentage: s.similarityPercentage,
+            apaCitation: s.apaCitation,
           })),
           createdAt: analysis.created_at,
           dailyCount: updatedDailyCount,
@@ -109,31 +113,33 @@ export class AnalysisController {
   }
 
   /**
-   * Analizar documento DOCX cargado
+   * Analizar documento (.docx o .pdf) cargado
    */
-  public static async analyzeDocx(req: AuthenticatedRequest, res: Response): Promise<void> {
+  public static async analyzeDocument(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const user = req.user!;
 
       if (!req.file) {
         res.status(400).json({
           success: false,
-          message: 'No se ha adjuntado ningún documento .docx para analizar.',
+          message: 'No se ha adjuntado ningún documento (.docx o .pdf) para analizar.',
         });
         return;
       }
 
       const originalName = req.file.originalname;
 
-      // 1. Extraer texto estructurado del DOCX
-      const { text: extractedText, paragraphsCount } = await DocxService.extractTextFromBuffer(
-        req.file.buffer
-      );
+      // 1. Extraer texto estructurado del documento (.docx o .pdf)
+      const { text: extractedText, fileType } = await DocxService.extractTextFromDocument({
+        buffer: req.file.buffer,
+        originalname: originalName,
+        mimetype: req.file.mimetype,
+      });
 
       if (!extractedText || extractedText.length < 15) {
         res.status(400).json({
           success: false,
-          message: 'El documento DOCX está vacío o no contiene suficiente texto procesable.',
+          message: `El documento ${fileType.toUpperCase()} está vacío o no contiene suficiente texto procesable.`,
         });
         return;
       }
@@ -180,11 +186,11 @@ export class AnalysisController {
 
       res.status(201).json({
         success: true,
-        message: 'Documento DOCX analizado exitosamente.',
+        message: `Documento ${fileType.toUpperCase()} analizado exitosamente.`,
         analysis: {
           id: analysis.id,
           title: analysis.title_or_filename,
-          type: analysis.type,
+          type: fileType.toUpperCase(),
           originalText: analysis.original_text,
           aiScore: analysis.ai_score,
           similarityScore: analysis.similarity_score,
@@ -199,26 +205,31 @@ export class AnalysisController {
             indicators: JSON.parse(r.indicators),
             explanation: r.explanation,
           })),
-          sources: analysis.sources.map((s) => ({
-            id: s.id,
-            url: s.source_url,
-            title: s.source_title,
-            matchedText: s.matched_text,
-            userSnippet: s.user_snippet,
-            similarityPercentage: s.similarity_percentage,
+          sources: similarityReport.sources.map((s, idx) => ({
+            id: analysis.sources[idx]?.id || `src-${idx}`,
+            url: s.sourceUrl,
+            title: s.sourceTitle,
+            matchedText: s.matchedText,
+            userSnippet: s.userSnippet,
+            similarityPercentage: s.similarityPercentage,
+            apaCitation: s.apaCitation,
           })),
           createdAt: analysis.created_at,
           dailyCount: updatedDailyCount,
         },
       });
     } catch (error: any) {
-      console.error('Error en analyzeDocx:', error);
+      console.error('Error en analyzeDocument:', error);
       res.status(500).json({
         success: false,
-        message: 'Ocurrió un error al procesar el archivo DOCX.',
+        message: 'Ocurrió un error al procesar el archivo cargado.',
       });
     }
   }
+
+  // Alias para retrocompatibilidad con clientes anteriores
+  public static analyzeDocx = AnalysisController.analyzeDocument;
+
 
   /**
    * Obtener historial de análisis del usuario autenticado
@@ -308,6 +319,7 @@ export class AnalysisController {
             matchedText: s.matched_text,
             userSnippet: s.user_snippet,
             similarityPercentage: s.similarity_percentage,
+            apaCitation: SimilarityEngine.buildApaCitation(s.source_title, s.source_url),
           })),
         },
       });
