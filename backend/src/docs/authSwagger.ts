@@ -1,23 +1,24 @@
-// authSwagger.ts - Documentación OpenAPI para los endpoints de Autenticación
+// authSwagger.ts - Documentación OpenAPI para los endpoints de Autenticación (Laboratorio 8)
 /**
  * @swagger
  * tags:
- *   name: Auth
- *   description: Endpoints de autenticación, registro, inicio de sesión y perfil de usuario
+ *   - name: Autenticación
+ *     description: Endpoints de autenticación, registro, inicio de sesión y perfil de usuario
+ *   - name: Auth
+ *     description: Alias en inglés para autenticación
  */
 
 /**
  * @swagger
- * /api/auth/register:
+ * /api/auth/registro:
  *   post:
+ *     tags:
+ *       - Autenticación
  *     summary: Registrar un nuevo usuario
- *     description: |
- *       Crea una cuenta con rol **USER**. Requiere API Key: el cliente se identifica antes que la persona.
- *
- *       La contraseña se guarda con **bcrypt** (salt aleatorio y coste 12) y nunca aparece en la respuesta.
- *       Los campos privilegiados que se envíen en el cuerpo (`role`, `is_active`, `is_premium`,
- *       `password_hash`…) se descartan: el servidor solo lee los campos de `RegistroUsuario`.
- *     tags: [Auth]
+ *     description: >
+ *       Registra un nuevo usuario utilizando bcrypt para proteger
+ *       la contraseña. El rol es asignado por el servidor y no puede
+ *       ser definido por el cliente.
  *     security:
  *       - ApiKeyAuth: []
  *     requestBody:
@@ -28,15 +29,43 @@
  *             $ref: '#/components/schemas/RegistroUsuario'
  *     responses:
  *       201:
- *         description: Usuario registrado. Devuelve el token JWT y los datos públicos del usuario (sin hash).
+ *         description: Usuario registrado correctamente
  *       400:
- *         description: Datos inválidos, contraseñas distintas o contraseña fuera de 10–72 caracteres.
+ *         description: Datos inválidos
  *       401:
- *         description: API Key requerida o inválida.
- *       403:
- *         description: API Key deshabilitada.
+ *         description: API Key requerida o inválida
  *       409:
- *         description: El correo electrónico ya está registrado.
+ *         description: Correo electrónico ya registrado
+ */
+
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     tags:
+ *       - Autenticación
+ *     summary: Registrar un nuevo usuario (Alias /register)
+ *     description: >
+ *       Registra un nuevo usuario utilizando bcrypt para proteger
+ *       la contraseña. El rol es asignado por el servidor y no puede
+ *       ser definido por el cliente.
+ *     security:
+ *       - ApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RegistroUsuario'
+ *     responses:
+ *       201:
+ *         description: Usuario registrado correctamente
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: API Key requerida o inválida
+ *       409:
+ *         description: Correo electrónico ya registrado
  */
 
 /**
@@ -50,7 +79,8 @@
  *       - **401 «Credenciales inválidas»** tanto si el correo no existe como si la contraseña falla:
  *         el mensaje y el tiempo de respuesta son los mismos, para no revelar qué correos están registrados.
  *       - **403** solo si la contraseña es correcta pero la cuenta está desactivada.
- *     tags: [Auth]
+ *     tags:
+ *       - Autenticación
  *     security:
  *       - ApiKeyAuth: []
  *     requestBody:
@@ -76,10 +106,11 @@
  *   get:
  *     summary: Obtener perfil del usuario actual
  *     description: Retorna la información del usuario autenticado actualmente mediante JWT.
- *     tags: [Auth]
+ *     tags:
+ *       - Autenticación
  *     security:
  *       - ApiKeyAuth: []
- *         BearerAuth: []
+ *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: Datos del perfil del usuario.
@@ -93,10 +124,11 @@
  *   put:
  *     summary: Actualizar perfil del usuario actual
  *     description: Permite actualizar el nombre o apellido del usuario autenticado.
- *     tags: [Auth]
+ *     tags:
+ *       - Autenticación
  *     security:
  *       - ApiKeyAuth: []
- *         BearerAuth: []
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -123,38 +155,42 @@
  *   schemas:
  *     RegistroUsuario:
  *       type: object
- *       description: Únicos campos que el servidor lee al registrar. Cualquier otro se descarta.
- *       required: [name, last_name, email, password, confirm_password]
+ *       required:
+ *         - nombre
+ *         - email
+ *         - password
  *       properties:
- *         name:
+ *         nombre:
  *           type: string
- *           example: Ana
- *         last_name:
- *           type: string
- *           example: Torres
+ *           example: Estudiante Veritas
  *         email:
  *           type: string
  *           format: email
- *           example: ana.torres@universidad.edu
+ *           example: estudiante@veritas.ai
  *         password:
  *           type: string
  *           format: password
- *           minLength: 10
- *           maxLength: 72
- *           description: Entre 10 y 72 caracteres (bcrypt solo procesa 72 bytes).
  *           example: ClaveSegura2026!
+ *         name:
+ *           type: string
+ *           example: Estudiante
+ *         last_name:
+ *           type: string
+ *           example: Veritas
  *         confirm_password:
  *           type: string
  *           format: password
  *           example: ClaveSegura2026!
  *     LoginUsuario:
  *       type: object
- *       required: [email, password]
+ *       required:
+ *         - email
+ *         - password
  *       properties:
  *         email:
  *           type: string
  *           format: email
- *           example: ana.torres@universidad.edu
+ *           example: estudiante@veritas.ai
  *         password:
  *           type: string
  *           format: password

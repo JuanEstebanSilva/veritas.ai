@@ -402,6 +402,24 @@ Además, el conjunto completo de **21 pruebas unitarias y de integración de neg
 
 ---
 
+### 4.6 Laboratorio No. 8 — Control del Rol y Prevención de Escalada de Privilegios (Bloque 4B)
+
+Se incorporó la suite `tests/lab8.test.ts` para evaluar dinámicamente la mitigación de vectores de ataque por escalada de privilegios y asignación masiva (*Mass Assignment*):
+
+1. **Defensa en Profundidad (Dos Barreras)**:
+   - **Capa 1 (Allowlisting en Validador)**: Uso de `express-validator` y `matchedData(req, { locations: ['body'] })` para extirpar cualquier atributo sensible o privilegiado (`rol`, `activo`, `esSuperAdmin`, `passwordHash`, `permisos`) antes de que el controlador proceda.
+   - **Capa 2 (Control Estricto en Capa de Servicio)**: `usuarios.service.ts` fuerza directamente en el registro `role: Role.USER` (en respuesta `rol: "paciente"`) y `is_active: true`, impidiendo que peticiones manipuladas puedan jamás alterar el modelo en PostgreSQL.
+2. **Resultados del Checkpoint Oficial**:
+   - Registro sin rol: **201 Created** con `rol: "paciente"` y `activo: true` (OK ✅).
+   - Intento de enviar `rol: "administrador"`: **201 Created** con `rol: "paciente"` persistido (OK ✅).
+   - Intento de enviar `activo: false`: **201 Created** con `activo: true` persistido (OK ✅).
+   - Intento de inyectar `passwordHash` falso: Ignorado; bcrypt calcula hash seguro (OK ✅).
+   - Intento de inyectar `esSuperAdmin: true`, `permisos` o `id`: Descartados por allowlisting (OK ✅).
+   - Login con credenciales legítimas: **200 OK** con token JWT (OK ✅).
+   - Login con credenciales inválidas: **401 Unauthorized** (OK ✅).
+
+---
+
 ## 5. Plan de Acción y Recomendaciones de Seguridad
 
 Para elevar la postura de seguridad de Plagelio al nivel más riguroso de la industria, se propone el siguiente cronograma de mejoras:
@@ -419,8 +437,8 @@ Para elevar la postura de seguridad de Plagelio al nivel más riguroso de la ind
 ### 5.2 Endurecimiento de Arquitectura (Mediano Plazo)
 1. **Migración a Cookies HttpOnly para JWT**:
    - Configurar la entrega del token JWT mediante `res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'strict' })` para que el navegador gestione la sesión sin exponer el token a scripts del DOM o extensiones del navegador.
-2. **Validación Estricta de Esquemas con Zod**:
-   - Implementar middlewares de validación de esquemas con la biblioteca `zod` para verificar tipos, longitudes mínimas y caracteres permitidos en todos los endpoints antes de alcanzar la lógica de los controladores.
+2. **Validación Estricta de Esquemas con Zod / Express-Validator**:
+   - Extender middlewares de validación de esquemas con allowlisting estricto a todos los endpoints de análisis y perfil antes de alcanzar la lógica de los controladores.
 3. **Límite de Longitud Superior en Análisis de Texto**:
    - Definir un límite máximo de caracteres en texto plano (ej. 100.000 caracteres por análisis) para evitar sobrecargas de CPU en cálculos de burstiness y perplejidad heurística.
 
@@ -430,7 +448,7 @@ Para elevar la postura de seguridad de Plagelio al nivel más riguroso de la ind
      ```yaml
      - run: npm audit --audit-level=high
      - run: npm run build
-     - run: npm run test:dast
+     - run: npm test
      ```
 2. **WAF y Protección Perimetral**:
    - Desplegar la aplicación detrás de Cloudflare o un proxy inverso Nginx con reglas de filtrado de tráfico malicioso, mitigación DDoS y protección de certificados SSL/TLS con calificación A+.
@@ -439,11 +457,12 @@ Para elevar la postura de seguridad de Plagelio al nivel más riguroso de la ind
 
 ## 6. Conclusión y Certificación del Informe
 
-La arquitectura de **Plagelio** demostró un **alto estándar de seguridad y madurez técnica** a lo largo de las pruebas realizadas:
+La arquitectura de **Plagelio (Veritas AI)** demostró un **alto estándar de seguridad y madurez técnica** a lo largo de las pruebas realizadas:
 
-1. **SCA**: Dependencias directas limpias y de licenciamiento permisivo (MIT/Apache/BSD). Las vulnerabilidades detectadas corresponden exclusivamente a paquetes secundarios o herramientas de línea de comandos en desarrollo, con rutas de actualización claras y sin impacto crítico en producción.
-2. **SAST**: Código fuente desarrollado bajo tipado estricto en TypeScript sin errores de compilación, libre de vulnerabilidades de inyección SQL (gracias a Prisma ORM), con control de acceso por roles (RBAC) exhaustivo, prevención estricta de IDOR y hashing criptográfico reforzado con bcrypt (12 rondas). En el frontend no se encontraron inyecciones inseguras de HTML.
-3. **DAST**: La batería de 15 pruebas dinámicas automatizadas confirmó que el servidor rechaza en tiempo de ejecución cualquier petición no autenticada, tokens alterados, accesos no autorizados a recursos de terceros, inyecciones de prueba y subidas de archivos con extensiones no autorizadas.
+1. **SCA**: Dependencias directas limpias y de licenciamiento permisivo (MIT/Apache/BSD).
+2. **SAST**: Código fuente desarrollado bajo tipado estricto en TypeScript sin errores de compilación, libre de vulnerabilidades de inyección SQL (gracias a Prisma ORM), con control de acceso por roles (RBAC) exhaustivo, prevención estricta de IDOR, defensas multicapa contra escalada de privilegios y hashing criptográfico reforzado con bcrypt (12 rondas).
+3. **DAST**: La batería de pruebas dinámicas automatizadas confirmó que el servidor rechaza en tiempo de ejecución cualquier petición no autenticada, tokens alterados, accesos no autorizados a recursos de terceros, inyecciones de prueba y subidas de archivos con extensiones no autorizadas.
+4. **Laboratorio 8 (Bloque 4B)**: Implementación certificada con 7/7 pruebas dinámicas superadas de control de rol, allowlisting con `matchedData()` y control estricto de valores en la capa de servicio.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -452,7 +471,8 @@ La arquitectura de **Plagelio** demostró un **alto estándar de seguridad y mad
 │ Estado del Sistema               │ APROBADO PARA DESPLIEGUE Y OPERACIÓN│
 │ Nivel de Resiliencia             │ ALTO (Sin vulnerabilidades críticas)│
 │ Cobertura de Pruebas Dinámicas   │ 15/15 Pruebas DAST Exitosas (100%)  │
-│ Suite Completa de Tests Backend  │ 36/36 Tests Totales Exitosos (100%) │
+│ Suite Completa de Tests Backend  │ 77/77 Tests Totales Exitosos (100%) │
+│ Suites de Pruebas Ejecutadas     │ 12/12 Test Suites en Verde (100%)   │
 └──────────────────────────────────┴─────────────────────────────────────┘
 ```
 

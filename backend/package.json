@@ -13,6 +13,7 @@
     "prisma:seed": "ts-node prisma/seed.ts",
     "test": "jest --detectOpenHandles --runInBand",
     "test:dast": "jest tests/security.dast.test.ts --detectOpenHandles --runInBand",
+    "test:lab8": "jest tests/lab8.test.ts --detectOpenHandles --runInBand",
     "vault:secure": "ts-node scripts/vaultCli.ts secure-env",
     "vault:check": "ts-node scripts/vaultCli.ts check-env",
     "lab5:fixtures": "ts-node scripts/lab5Fixtures.ts"
@@ -35,6 +36,7 @@
     "docx": "^9.2.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "express-validator": "^7.3.2",
     "jsonwebtoken": "^9.0.2",
     "mammoth": "^1.9.0",
     "multer": "^1.4.5-lts.1",

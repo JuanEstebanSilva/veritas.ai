@@ -5,38 +5,38 @@ import { ENV } from '../config/env';
 import { Role } from '@prisma/client';
 import { AuthenticatedRequest } from '../middleware/authMiddleware';
 import { isSameCalendarDay, FREE_DAILY_LIMIT } from '../middleware/dailyLimitGuard';
-import { validarPassword, generarPasswordHash, verificarPassword } from '../utils/passwordPolicy';
+import { validarPassword } from '../utils/passwordPolicy';
+import { matchedData } from 'express-validator';
+import usuariosService from '../services/usuarios.service';
 
 export class AuthController {
   /**
-   * Registro de nuevo usuario (rol USER únicamente)
+   * Registro de nuevo usuario (Laboratorio 8 — Control de rol y defensa en profundidad)
    */
   public static async register(req: Request, res: Response): Promise<void> {
     try {
-      const rawName = req.body.name ?? req.body.nombre;
-      const rawLastName = req.body.last_name ?? req.body.apellido ?? (rawName ? 'Usuario' : '');
-      const rawEmail = req.body.email;
-      const rawPassword = req.body.password;
-      const rawConfirm = req.body.confirm_password ?? req.body.confirmPassword ?? rawPassword;
+      // 1. PRIMERA DEFENSA: Extraer únicamente campos validados y permitidos mediante matchedData()
+      // Cualquier campo adicional (rol, activo, esSuperAdmin, id, etc.) es completamente descartado
+      const datosFiltrados = matchedData(req, { locations: ['body'] }) as Record<string, any>;
 
-      // 1. Validaciones de presencia y de tipo (un número u objeto no es un correo)
+      const rawName = datosFiltrados.name ?? datosFiltrados.nombre ?? req.body.name ?? req.body.nombre;
+      const rawLastName = datosFiltrados.last_name ?? datosFiltrados.apellido ?? req.body.last_name ?? req.body.apellido ?? '';
+      const rawEmail = datosFiltrados.email ?? req.body.email;
+      const rawPassword = datosFiltrados.password ?? req.body.password;
+      const rawConfirm = datosFiltrados.confirm_password ?? req.body.confirm_password ?? req.body.confirmPassword ?? rawPassword;
+
+      // Validación de presencia y tipos
       if (!rawName || typeof rawName !== 'string' ||
-          !rawLastName || typeof rawLastName !== 'string' ||
           !rawEmail || typeof rawEmail !== 'string' ||
-          !rawPassword || typeof rawPassword !== 'string' ||
-          typeof rawConfirm !== 'string') {
+          !rawPassword || typeof rawPassword !== 'string') {
         res.status(400).json({
           success: false,
-          message: 'Todos los campos son obligatorios: Nombre, Apellido, Email y Contraseñas.',
+          message: 'Todos los campos son obligatorios: Nombre, Email y Contraseña.',
           mensaje: 'Datos inválidos',
         });
         return;
       }
 
-      const name = rawName.trim();
-      const last_name = rawLastName.trim();
-
-      // 2. Validación de formato de email
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       const normalizedEmail = rawEmail.toLowerCase().trim();
       if (!emailRegex.test(normalizedEmail)) {
@@ -48,7 +48,6 @@ export class AuthController {
         return;
       }
 
-      // 3. Validación de coincidencia de contraseña
       if (rawPassword !== rawConfirm) {
         res.status(400).json({
           success: false,
@@ -58,45 +57,35 @@ export class AuthController {
         return;
       }
 
-      // 4. Política de contraseñas (Lab 7): entre 10 y 72 caracteres, máximo 72 bytes
       const errorPassword = validarPassword(rawPassword);
       if (errorPassword) {
         res.status(400).json({ success: false, message: errorPassword, mensaje: errorPassword });
         return;
       }
 
-      // 5. Verificar si el email ya se encuentra registrado
-      const existingUser = await prisma.user.findUnique({
-        where: { email: normalizedEmail },
-      });
-
+      // Verificar si el email ya existe
+      const existingUser = await usuariosService.obtenerUsuarioPorEmail(normalizedEmail);
       if (existingUser) {
         res.status(409).json({
           success: false,
           message: 'El correo electrónico ya está registrado. Inicia sesión en su lugar.',
-          mensaje: 'Ya existe un usuario con ese correo electrónico',
+          mensaje: 'Correo electrónico ya registrado',
         });
         return;
       }
 
-      // 6. Hash con bcrypt: salt aleatorio incluido en el propio hash y coste 12
-      const passwordHash = await generarPasswordHash(rawPassword);
-
-      // 7. Creación de usuario (rol estricto USER, sin posibilidad de escalada)
-      const newUser = await prisma.user.create({
-        data: {
-          name,
-          last_name,
-          email: normalizedEmail,
-          password_hash: passwordHash,
-          role: Role.USER, // Siempre USER en registro público
-          is_active: true,
-          is_premium: false,
-          daily_analysis_count: 0,
-        },
+      // 2. SEGUNDA DEFENSA: Delegar en el servicio, quien decide explícitamente qué valores
+      // persistir (rol: Role.USER / "paciente", activo: true controlados por el servidor)
+      const newUser = await usuariosService.crearUsuario({
+        name: rawName,
+        nombre: rawName,
+        last_name: rawLastName,
+        apellido: rawLastName,
+        email: normalizedEmail,
+        password: rawPassword,
       });
 
-      // 8. Generación de Token JWT
+      // 3. Generación de Token JWT
       const token = jwt.sign(
         {
           userId: newUser.id,
@@ -125,7 +114,7 @@ export class AuthController {
           id: newUser.id,
           nombre: `${newUser.name} ${newUser.last_name}`.trim(),
           email: newUser.email,
-          rol: newUser.role.toLowerCase(),
+          rol: newUser.role.toLowerCase(), // 'user' (rol asignado por el servidor)
           activo: newUser.is_active,
         },
       });
@@ -139,45 +128,27 @@ export class AuthController {
   }
 
   /**
-   * Inicio de sesión para USER y ADMIN
+   * Inicio de sesión para USER y ADMIN (Laboratorio 8)
    */
   public static async login(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password } = req.body;
+      const datosFiltrados = matchedData(req, { locations: ['body'] }) as { email?: string; password?: string };
+      const email = datosFiltrados.email ?? req.body.email;
+      const password = datosFiltrados.password ?? req.body.password;
 
       if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
         res.status(400).json({
           success: false,
           message: 'Por favor, proporciona el correo electrónico y la contraseña.',
+          mensaje: 'Datos inválidos',
         });
         return;
       }
 
-      const normalizedEmail = email.toLowerCase().trim();
+      // Verificar credenciales usando el servicio de usuarios
+      const user = await usuariosService.verificarCredenciales(email, password);
 
-      let user = await prisma.user.findUnique({
-        where: { email: normalizedEmail },
-      });
-
-      // Compatibilidad y transición transparente entre @plagelio.com y @veritas.ai
       if (!user) {
-        if (normalizedEmail.endsWith('@plagelio.com')) {
-          const legacyEmail = normalizedEmail.replace('@plagelio.com', '@veritas.ai');
-          user = await prisma.user.findUnique({ where: { email: legacyEmail } });
-        } else if (normalizedEmail.endsWith('@veritas.ai')) {
-          const newEmail = normalizedEmail.replace('@veritas.ai', '@plagelio.com');
-          user = await prisma.user.findUnique({ where: { email: newEmail } });
-        }
-      }
-
-      // bcrypt se ejecuta SIEMPRE, exista o no la cuenta (Lab 7). Si el correo no
-      // existe se compara contra un hash ficticio del mismo coste: así ambos caminos
-      // tardan lo mismo y el tiempo de respuesta no revela qué correos están
-      // registrados. Tampoco se crean cuentas desde aquí: el login ya no da de alta
-      // usuarios con contraseñas escritas en el código.
-      const passwordValida = await verificarPassword(password, user?.password_hash);
-
-      if (!user || !passwordValida) {
         res.status(401).json({
           success: false,
           message: 'Credenciales inválidas. Verifica tu correo y contraseña.',
@@ -237,7 +208,7 @@ export class AuthController {
           id: user.id,
           nombre: `${user.name} ${user.last_name}`.trim(),
           email: user.email,
-          rol: user.role.toLowerCase(),
+          rol: user.role.toLowerCase(), // 'user' o 'admin'
         },
       });
     } catch (error: any) {
