@@ -30,6 +30,16 @@ declare global {
     interface Request {
       /** Lo fija apiKeyMiddleware cuando la API Key es válida y el cliente está activo. */
       apiClient?: ApiClientIdentity;
+      clienteApi?: {
+        id: number;
+        nombre: string;
+      };
+      usuario?: {
+        id: number | string;
+        email: string;
+        rol: string;
+      };
+      user?: User;
     }
   }
 }

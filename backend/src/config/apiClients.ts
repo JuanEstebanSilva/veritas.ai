@@ -21,6 +21,9 @@ export const CLIENTES_API: DefinicionClienteApi[] = [
   { variable: 'API_KEY_POSTMAN', nombre: 'Postman Laboratorio', activoAlCrear: true },
   { variable: 'API_KEY_WEB', nombre: 'Frontend Web Plagelio', activoAlCrear: true },
   { variable: 'API_KEY_MOVIL', nombre: 'Aplicación Móvil', activoAlCrear: false },
+  ...(process.env.API_KEY_ADMIN
+    ? [{ variable: 'API_KEY_ADMIN', nombre: 'Aplicación Administrativa', activoAlCrear: true }]
+    : []),
 ];
 
 /** Longitud mínima aceptada: 32 bytes en hexadecimal generan 64 caracteres. */
@@ -36,7 +39,16 @@ export const leerClavesDeEntorno = (): Array<DefinicionClienteApi & { clave: str
   const faltan: string[] = [];
   const debiles: string[] = [];
 
-  const claves = CLIENTES_API.map((def) => {
+  const clientesDefinidos: DefinicionClienteApi[] = [
+    { variable: 'API_KEY_POSTMAN', nombre: 'Postman Laboratorio', activoAlCrear: true },
+    { variable: 'API_KEY_WEB', nombre: 'Frontend Web Plagelio', activoAlCrear: true },
+    { variable: 'API_KEY_MOVIL', nombre: 'Aplicación Móvil', activoAlCrear: false },
+    ...(process.env.API_KEY_ADMIN
+      ? [{ variable: 'API_KEY_ADMIN', nombre: 'Aplicación Administrativa', activoAlCrear: true }]
+      : []),
+  ];
+
+  const claves = clientesDefinidos.map((def) => {
     const clave = CryptoVault.decrypt(process.env[def.variable] || '').trim();
     if (!clave) faltan.push(def.variable);
     else if (clave.length < LONGITUD_MINIMA_API_KEY) debiles.push(def.variable);

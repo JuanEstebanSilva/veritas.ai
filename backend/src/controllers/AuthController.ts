@@ -8,6 +8,7 @@ import { isSameCalendarDay, FREE_DAILY_LIMIT } from '../middleware/dailyLimitGua
 import { validarPassword } from '../utils/passwordPolicy';
 import { matchedData } from 'express-validator';
 import usuariosService from '../services/usuarios.service';
+import { generarToken } from '../utils/jwt.util';
 
 export class AuthController {
   /**
@@ -85,16 +86,12 @@ export class AuthController {
         password: rawPassword,
       });
 
-      // 3. Generación de Token JWT
-      const token = jwt.sign(
-        {
-          userId: newUser.id,
-          email: newUser.email,
-          role: newUser.role,
-        },
-        ENV.JWT_SECRET,
-        { expiresIn: ENV.JWT_EXPIRES_IN as any }
-      );
+      // 3. Generación de Token JWT (Laboratorio 9)
+      const token = generarToken({
+        id: newUser.id,
+        email: newUser.email,
+        rol: newUser.role.toLowerCase(),
+      });
 
       res.status(201).json({
         success: true,
@@ -178,16 +175,12 @@ export class AuthController {
         });
       }
 
-      // Generación de Token JWT
-      const token = jwt.sign(
-        {
-          userId: user.id,
-          email: user.email,
-          role: user.role,
-        },
-        ENV.JWT_SECRET,
-        { expiresIn: ENV.JWT_EXPIRES_IN as any }
-      );
+      // Generación de Token JWT (Laboratorio 9)
+      const token = generarToken({
+        id: user.id,
+        email: user.email,
+        rol: user.role.toLowerCase(),
+      });
 
       res.status(200).json({
         success: true,

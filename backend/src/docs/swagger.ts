@@ -26,21 +26,21 @@ const options: swaggerJsdoc.Options = {
           type: 'apiKey',
           in: 'header',
           name: 'X-API-Key',
-          description: 'API Key requerida para autenticar el cliente en los endpoints de la API.',
+          description: 'API Key requerida para consumir los endpoints protegidos.',
         },
         BearerAuth: {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          description: 'Token JWT obtenido al iniciar sesión en /api/auth/login. Formato: Bearer <token>',
+          description: 'JWT obtenido mediante el endpoint de login.',
         },
       },
     },
-    // Seguridad global: por defecto Swagger UI permitirá autorizar ambos esquemas
+    // Seguridad global: por defecto nuestros endpoints requieren API Key.
+    // Endpoints específicos (como /api/auth/perfil) sobrescriben con ApiKeyAuth + BearerAuth.
     security: [
       {
         ApiKeyAuth: [],
-        BearerAuth: [],
       },
     ],
   },

@@ -56,7 +56,11 @@ export const validarApiKey = async (req: Request, res: Response, next: NextFunct
  * prueba aparte, llamando a validarApiKey directamente (tests/apiClients.test.ts).
  */
 export const apiKeyMiddleware = (req: Request, res: Response, next: NextFunction): void => {
-  if (process.env.NODE_ENV === 'test') {
+  if (process.env.NODE_ENV === 'test' && !process.env.ENFORCE_API_KEY_IN_TEST) {
+    if (req.get('X-API-Key')) {
+      void validarApiKey(req, res, next);
+      return;
+    }
     next();
     return;
   }
