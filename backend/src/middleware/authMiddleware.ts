@@ -53,10 +53,20 @@ export const authenticateJWT = async (
 
     req.user = user;
     next();
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.name === 'TokenExpiredError') {
+      res.status(401).json({
+        success: false,
+        message: 'Token expirado',
+        mensaje: 'Token expirado',
+      });
+      return;
+    }
+
     res.status(401).json({
       success: false,
       message: 'Tu sesión ha expirado o el token es inválido. Inicia sesión nuevamente.',
+      mensaje: 'Token inválido',
     });
   }
 };
