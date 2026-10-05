@@ -1,58 +1,75 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { ENV } from '../config/env';
 import { prisma } from '../config/prisma';
-import { User } from '@prisma/client';
+import { verificarToken, TokenPayload } from '../utils/jwt.util';
 
-import { AuthenticatedRequest, JwtPayload } from '../types';
+import { AuthenticatedRequest } from '../types';
 export type { AuthenticatedRequest };
 
+const rechazar = (res: Response, status: number, message: string): void => {
+  res.status(status).json({ success: false, message });
+};
+
+/**
+ * Autenticación de la PERSONA mediante JWT (Lab 9). Corre después de la API Key,
+ * que ya identificó a la APLICACIÓN: así cada petición protegida responde a
+ * «¿qué cliente?» (req.apiClient) y «¿qué usuario?» (req.user).
+ *
+ * Authorization → Bearer <token> → jwt.verify (firma + exp + HS256) → BD → req.user
+ */
 export const authenticateJWT = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const authHeader = req.headers.authorization;
+  const authorization = req.get('Authorization');
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({
-      success: false,
-      message: 'Debes iniciar sesión para utilizar el analizador.',
-    });
+  if (!authorization) {
+    rechazar(res, 401, 'Token de autenticación requerido.');
     return;
   }
 
-  const token = authHeader.split(' ')[1];
+  const partes = authorization.split(' ');
+  if (partes.length !== 2 || partes[0] !== 'Bearer' || !partes[1]) {
+    rechazar(res, 401, 'Formato de token inválido. Usa: Authorization: Bearer <token>.');
+    return;
+  }
+
+  let payload: TokenPayload;
+  try {
+    payload = verificarToken(partes[1]);
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      rechazar(res, 401, 'Token expirado. Inicia sesión nuevamente.');
+      return;
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      rechazar(res, 401, 'Token inválido.');
+      return;
+    }
+    next(error);
+    return;
+  }
 
   try {
-    const decoded = jwt.verify(token, ENV.JWT_SECRET) as JwtPayload;
-
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-    });
+    // El token solo dice QUIÉN es (sub). El rol y el estado se leen de la base de
+    // datos en cada petición: si el administrador desactiva una cuenta o le cambia
+    // el rol, sus tokens ya emitidos dejan de dar esos privilegios al instante.
+    const user = await prisma.user.findUnique({ where: { id: payload.sub } });
 
     if (!user) {
-      res.status(401).json({
-        success: false,
-        message: 'Usuario no encontrado o sesión inválida.',
-      });
+      rechazar(res, 401, 'Token inválido.');
       return;
     }
 
     if (!user.is_active) {
-      res.status(403).json({
-        success: false,
-        message: 'Tu cuenta ha sido desactivada. Comunícate con el administrador.',
-      });
+      rechazar(res, 403, 'Tu cuenta ha sido desactivada. Comunícate con el administrador.');
       return;
     }
 
     req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({
-      success: false,
-      message: 'Tu sesión ha expirado o el token es inválido. Inicia sesión nuevamente.',
-    });
+    next(error);
   }
 };

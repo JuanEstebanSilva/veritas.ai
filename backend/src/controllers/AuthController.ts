@@ -1,11 +1,10 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
 import { prisma } from '../config/prisma';
-import { ENV } from '../config/env';
 import { Role } from '@prisma/client';
 import { AuthenticatedRequest } from '../middleware/authMiddleware';
 import { isSameCalendarDay, FREE_DAILY_LIMIT } from '../middleware/dailyLimitGuard';
 import { validarPassword, generarPasswordHash, verificarPassword } from '../utils/passwordPolicy';
+import { generarToken } from '../utils/jwt.util';
 
 export class AuthController {
   /**
@@ -96,16 +95,8 @@ export class AuthController {
         },
       });
 
-      // 8. Generación de Token JWT
-      const token = jwt.sign(
-        {
-          userId: newUser.id,
-          email: newUser.email,
-          role: newUser.role,
-        },
-        ENV.JWT_SECRET,
-        { expiresIn: ENV.JWT_EXPIRES_IN as any }
-      );
+      // 8. Token de sesión (Lab 9): HS256, sub = id, expira según JWT_EXPIRES_IN
+      const token = generarToken(newUser);
 
       res.status(201).json({
         success: true,
@@ -207,16 +198,8 @@ export class AuthController {
         });
       }
 
-      // Generación de Token JWT
-      const token = jwt.sign(
-        {
-          userId: user.id,
-          email: user.email,
-          role: user.role,
-        },
-        ENV.JWT_SECRET,
-        { expiresIn: ENV.JWT_EXPIRES_IN as any }
-      );
+      // Token de sesión (Lab 9): HS256, sub = id, expira según JWT_EXPIRES_IN
+      const token = generarToken(user);
 
       res.status(200).json({
         success: true,
@@ -298,6 +281,9 @@ export class AuthController {
           available_today: user.is_premium ? 'Ilimitados' : Math.max(0, FREE_DAILY_LIMIT - dailyCount),
           created_at: user.created_at,
         },
+        // Dos identidades distintas en la misma petición (Lab 9):
+        // la aplicación (API Key → req.apiClient) y la persona (JWT → req.user).
+        client: req.apiClient ?? null,
       });
     } catch (error: any) {
       res.status(500).json({ success: false, message: 'Error al consultar perfil.' });

@@ -3,9 +3,15 @@ import { ENV } from './config/env';
 import { prisma } from './config/prisma';
 import { ConfiguracionApiKeysError } from './config/apiClients';
 import { sincronizarClientesApi } from './services/apiClients.service';
+import { obtenerConfiguracionJWT, ConfiguracionJwtError } from './utils/jwt.util';
 
 const startServer = async () => {
   try {
+    // Lab 9 (fail-fast): sin un JWT_SECRET propio y robusto el servidor no arranca,
+    // en vez de arrancar y fallar en el primer login (o firmar con un secreto público).
+    const jwtConfig = obtenerConfiguracionJWT();
+    console.log(`✓ JWT: HS256, secreto de ${jwtConfig.secret.length} caracteres, vigencia ${jwtConfig.expiresIn}.`);
+
     // Verificar conexión a la base de datos
     await prisma.$connect();
     console.log('✓ Conexión establecida exitosamente con la base de datos PostgreSQL.');
@@ -26,7 +32,7 @@ const startServer = async () => {
       console.log(`===================================================`);
     });
   } catch (error) {
-    if (error instanceof ConfiguracionApiKeysError) {
+    if (error instanceof ConfiguracionApiKeysError || error instanceof ConfiguracionJwtError) {
       console.error(`❌ Arranque detenido: ${error.message}`);
     } else {
       console.error('❌ Error al iniciar el servidor Plagelio:', error);

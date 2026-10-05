@@ -32,11 +32,12 @@ const options: swaggerJsdoc.Options = {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          description: 'Token JWT obtenido al iniciar sesión en /api/auth/login. Formato: Bearer <token>',
+          description: 'JWT obtenido en /api/auth/login. Pega solo el token: Swagger antepone «Bearer ».',
         },
       },
     },
-    // Seguridad global: por defecto Swagger UI permitirá autorizar ambos esquemas
+    // Seguridad global: API Key Y JWT (un solo objeto = AND). Registro y login la
+    // sobrescriben con solo ApiKeyAuth: sería imposible exigir JWT para obtener el JWT.
     security: [
       {
         ApiKeyAuth: [],

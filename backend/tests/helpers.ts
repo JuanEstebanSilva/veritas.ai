@@ -1,7 +1,6 @@
-import jwt from 'jsonwebtoken';
-import { ENV } from '../src/config/env';
 import { Role } from '@prisma/client';
+import { generarToken } from '../src/utils/jwt.util';
 
-export const createTestToken = (payload: { userId: string; email: string; role: Role }) => {
-  return jwt.sign(payload, ENV.JWT_SECRET, { expiresIn: '1h' });
-};
+/** Token firmado igual que en el login real (HS256, sub = id del usuario). */
+export const createTestToken = (payload: { userId: string; email: string; role: Role }) =>
+  generarToken({ id: payload.userId, email: payload.email, role: payload.role });

@@ -47,6 +47,8 @@
  *     summary: Iniciar sesión
  *     description: |
  *       Verifica correo y contraseña con bcrypt y devuelve un token JWT para usar en BearerAuth.
+ *       El token va firmado con HS256 (no cifrado): lleva `sub` (id), `email`, `role`, `iat` y `exp`
+ *       (vigencia según `JWT_EXPIRES_IN`, 1 h por defecto). Este endpoint no exige JWT: es quien lo crea.
  *
  *       - **401 «Credenciales inválidas»** tanto si el correo no existe como si la contraseña falla:
  *         el mensaje y el tiempo de respuesta son los mismos, para no revelar qué correos están registrados.
@@ -76,16 +78,23 @@
  * /api/auth/me:
  *   get:
  *     summary: Obtener perfil del usuario actual
- *     description: Retorna la información del usuario autenticado actualmente mediante JWT.
+ *     description: |
+ *       Requiere **API Key y JWT a la vez** (ambos esquemas en el mismo objeto de `security` = AND).
+ *       Devuelve las dos identidades de la petición: `client` (la aplicación, por su API Key)
+ *       y `user` (la persona, por su JWT). El rol se lee de la base de datos, no del token.
  *     tags: [Auth]
  *     security:
  *       - ApiKeyAuth: []
  *         BearerAuth: []
  *     responses:
  *       200:
- *         description: Datos del perfil del usuario.
+ *         description: Perfil del usuario autenticado y cliente que hizo la petición.
  *       401:
- *         description: No autenticado (Token JWT inválido o ausente, o API Key ausente).
+ *         description: |
+ *           API Key ausente o inválida, o JWT rechazado: «Token de autenticación requerido»,
+ *           «Formato de token inválido», «Token expirado» o «Token inválido».
+ *       403:
+ *         description: Cuenta desactivada o API Key deshabilitada.
  */
 
 /**

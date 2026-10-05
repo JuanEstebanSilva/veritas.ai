@@ -39,17 +39,22 @@ cd backend
 # 2. Instalar todas las dependencias
 npm install
 
-# 3. Crear el .env a partir de la plantilla y generar una API Key por cliente.
-#    Ejecuta este comando tres veces y pega cada resultado en API_KEY_POSTMAN,
-#    API_KEY_WEB y API_KEY_MOVIL. Sin las tres, el servidor no arranca.
+# 3. Crear el .env a partir de la plantilla y generar sus secretos (nunca a mano).
+#    a) Una API Key por cliente: ejecuta este comando tres veces y pega cada
+#       resultado en API_KEY_POSTMAN, API_KEY_WEB y API_KEY_MOVIL.
+#    b) JWT_SECRET (firma de los tokens de sesión, mínimo 64 caracteres).
+#    c) ADMIN_PASSWORD (contraseña del administrador único, entre 10 y 72 caracteres).
+#    Si falta cualquiera, es corta o es un valor publicado, el servidor (o el seed) no arranca.
 cp .env.example .env
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # a) x3
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"   # b)
+node -e "console.log(require('crypto').randomBytes(18).toString('base64url'))"   # c)
 
 # 4. Sincronizar el esquema de Prisma con PostgreSQL
 npx prisma db push
 
 # 5. Poblar la base de datos con las cuentas iniciales (Admin y Usuario Demo)
-npm run seed
+npm run prisma:seed
 
 # 6. Iniciar el servidor backend en modo desarrollo
 npm run dev
@@ -96,15 +101,16 @@ npm test
 
 ## 🔑 Credenciales Predeterminadas para Pruebas (Seed)
 
-El comando `npm run seed` inicializa de forma determinista las siguientes cuentas de prueba:
+El comando `npm run prisma:seed` inicializa las siguientes cuentas:
 
 | Rol | Correo Electrónico | Contraseña | Privilegios y Funcionalidades |
 | :--- | :--- | :--- | :--- |
-| 👑 **ADMIN** | `admin@plagelio.com` | `Admin123!Secure*` | Panel administrativo exclusivo (`/admin`), métricas globales en tiempo real, auditoría de transacciones y gestión completa (CRUD) de usuarios del sistema. |
+| 👑 **ADMIN** | `ADMIN_EMAIL` de tu `.env` | `ADMIN_PASSWORD` de tu `.env` (propia de cada despliegue) | Panel administrativo exclusivo (`/admin`), métricas globales en tiempo real, auditoría de transacciones y gestión completa (CRUD) de usuarios del sistema. |
 | 👤 **USER (Demo)** | `usuario@plagelio.com` | `User123!Secure*` | 5 análisis diarios gratuitos con contador en tiempo real, analizador de texto y archivos DOCX, y simulación de pase Premium Vitalicio por US$2. |
 
 > [!TIP]
-> En la página de **Inicio de Sesión** (`/login`) del Frontend, puedes hacer clic en los botones de acceso rápido o navegar a `/login?demo=admin` o `/login?demo=user` para que las credenciales se completen automáticamente.
+> En la página de **Inicio de Sesión** (`/login`) el botón de acceso de demostración completa las credenciales del usuario de prueba (rol USER).
+> No existe acceso rápido de administrador: el único ADMIN lo crea el seed con la contraseña de tu `.env`, y ninguna ruta de la API asigna ese rol.
 
 ---
 
@@ -245,7 +251,7 @@ PASS tests/payments.test.ts (5 tests)
 4. Presiona **"Descargar .DOCX"**: el sistema generará y descargará automáticamente el archivo `documento_mejorado.docx` listo para ser abierto en Microsoft Word o LibreOffice.
 
 ### 6. Probar el Panel Administrativo (ADMIN)
-1. Cierra sesión e ingresa con las credenciales del Administrador: `admin@plagelio.com` / `Admin123!Secure*`.
+1. Cierra sesión e ingresa con las credenciales del Administrador: `ADMIN_EMAIL` / `ADMIN_PASSWORD` de tu `backend/.env`.
 2. Dirígete a **Panel Admin** (`/admin`).
 3. Inspecciona las métricas globales del sistema (total de usuarios, análisis del día, suscripciones activas).
 4. En la tabla de gestión de usuarios puedes crear usuarios, editar información, activar/desactivar accesos y alternar el estado Premium de cualquier cuenta. El sistema cuenta con protección activa para evitar que el Administrador sea eliminado o desactivado.

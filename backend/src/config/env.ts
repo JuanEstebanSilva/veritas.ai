@@ -8,8 +8,7 @@ export const ENV = {
   PORT: parseInt(process.env.PORT || '5000', 10),
   NODE_ENV: process.env.NODE_ENV || 'development',
   DATABASE_URL: process.env.DATABASE_URL || '',
-  JWT_SECRET: process.env.JWT_SECRET || 'veritas_ai_default_jwt_secret_change_me_123',
-  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
+  // JWT_SECRET y JWT_EXPIRES_IN se leen y validan en utils/jwt.util.ts (sin valores por defecto)
   STRIPE_SECRET_KEY: CryptoVault.decrypt(process.env.STRIPE_SECRET_KEY || ''),
   STRIPE_WEBHOOK_SECRET: CryptoVault.decrypt(process.env.STRIPE_WEBHOOK_SECRET || ''),
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',

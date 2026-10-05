@@ -214,7 +214,7 @@ Ambos entornos compilan al 100% de manera limpia, garantizando la integridad de 
 
 #### A01: Broken Access Control (Control de Acceso Roto & IDOR)
 - **Implementación**:
-  - `authMiddleware.ts` intercepta cada petición a rutas protegidas, extrae el token Bearer del encabezado `Authorization` y verifica criptográficamente su firma con `jwt.verify(token, ENV.JWT_SECRET)`.
+  - `authMiddleware.ts` intercepta cada petición a rutas protegidas, extrae el token Bearer del encabezado `Authorization` y verifica firma, expiración y algoritmo con `verificarToken()` (`jwt.verify(token, secret, { algorithms: ['HS256'] })`, en `utils/jwt.util.ts`). El rol y el estado se leen de la base de datos en cada petición, no del token.
   - Si el usuario ha sido desactivado por un administrador (`!user.is_active`), se deniega el acceso con código `403 Forbidden`.
   - **Prevención de IDOR (Insecure Direct Object Reference)** en `AnalysisController.ts`:
     ```typescript
@@ -233,8 +233,9 @@ Ambos entornos compilan al 100% de manera limpia, garantizando la integridad de 
 #### A02: Cryptographic Failures (Fallas Criptográficas)
 - **Hashing de Contraseñas**: Se utiliza `bcryptjs` con un factor de trabajo de **12 rondas de salting** (`bcrypt.genSalt(12)`). Esto excede el estándar recomendado por OWASP (10 rondas), ofreciendo una protección robusta contra ataques de fuerza bruta y diccionarios con tablas arcoíris.
 - **Manejo de Tokens JWT**:
-  - Clave secreta configurable en `ENV.JWT_SECRET`.
-  - Expiración delimitada (`ENV.JWT_EXPIRES_IN="7d"`).
+  - `JWT_SECRET` obligatorio, sin valor por defecto: el servidor no arranca si falta, si tiene menos de 64 caracteres o si es un valor publicado en el repositorio (Lab 9).
+  - Algoritmo fijo `HS256` al firmar y al verificar; claims `sub` (id), `email`, `role`, `iat` y `exp`.
+  - Expiración delimitada (`JWT_EXPIRES_IN="1h"` por defecto).
   - El hash de la contraseña (`password_hash`) se omite explícitamente de todos los objetos JSON retornados al cliente.
 - **Webhooks de Stripe**: Verificación de firmas criptográficas HMAC mediante `stripe.webhooks.constructEvent(rawBody, signature, ENV.STRIPE_WEBHOOK_SECRET)`, impidiendo la inyección de eventos falsos de pago.
 
