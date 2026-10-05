@@ -7,7 +7,7 @@ const router = Router();
 
 router.post(['/register', '/registro'], preventPrivilegeEscalation, AuthController.register);
 router.post('/login', AuthController.login);
-router.get('/me', authenticateJWT, AuthController.getProfile);
+router.get(['/me', '/perfil'], authenticateJWT, AuthController.getProfile);
 router.put('/me', authenticateJWT, preventPrivilegeEscalation, AuthController.updateProfile);
 
 export default router;

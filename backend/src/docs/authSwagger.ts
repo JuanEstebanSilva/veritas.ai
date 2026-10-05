@@ -82,6 +82,8 @@
  *       Requiere **API Key y JWT a la vez** (ambos esquemas en el mismo objeto de `security` = AND).
  *       Devuelve las dos identidades de la petición: `client` (la aplicación, por su API Key)
  *       y `user` (la persona, por su JWT). El rol se lee de la base de datos, no del token.
+ *       También responde en `GET /api/auth/perfil` (alias con el contrato de la API del Hospital:
+ *       `usuario` y `clienteApi`).
  *     tags: [Auth]
  *     security:
  *       - ApiKeyAuth: []

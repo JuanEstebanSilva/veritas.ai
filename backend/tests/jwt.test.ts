@@ -101,10 +101,19 @@ describe('Lab 9 · emisión y verificación del token', () => {
     expect(res.body).toHaveProperty('client');
   });
 
+  it('GET /api/auth/perfil (alias con el contrato del Hospital) devuelve usuario y clienteApi', async () => {
+    const res = await request(app).get('/api/auth/perfil').set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.mensaje).toBe('Usuario autenticado mediante JWT');
+    expect(res.body.usuario).toEqual({ id: user.id, email: user.email, rol: 'user' });
+    expect(res.body).toHaveProperty('clienteApi');
+  });
+
   it('sin cabecera → 401 «Token de autenticación requerido»', async () => {
     const res = await perfil();
     expect(res.status).toBe(401);
     expect(res.body.message).toMatch(/requerido/);
+    expect(res.body.mensaje).toBe('Token de autenticación requerido');
   });
 
   it('formato distinto de «Bearer <token>» → 401 «Formato de token inválido»', async () => {

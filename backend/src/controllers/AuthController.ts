@@ -268,6 +268,7 @@ export class AuthController {
 
       res.status(200).json({
         success: true,
+        mensaje: 'Usuario autenticado mediante JWT',
         user: {
           id: user.id,
           name: user.name,
@@ -284,6 +285,8 @@ export class AuthController {
         // Dos identidades distintas en la misma petición (Lab 9):
         // la aplicación (API Key → req.apiClient) y la persona (JWT → req.user).
         client: req.apiClient ?? null,
+        usuario: { id: user.id, email: user.email, rol: user.role.toLowerCase() },
+        clienteApi: req.apiClient ? { id: req.apiClient.id, nombre: req.apiClient.name } : null,
       });
     } catch (error: any) {
       res.status(500).json({ success: false, message: 'Error al consultar perfil.' });

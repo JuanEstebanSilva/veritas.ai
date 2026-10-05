@@ -6,8 +6,9 @@ import { verificarToken, TokenPayload } from '../utils/jwt.util';
 import { AuthenticatedRequest } from '../types';
 export type { AuthenticatedRequest };
 
-const rechazar = (res: Response, status: number, message: string): void => {
-  res.status(status).json({ success: false, message });
+// message: texto para la web; mensaje: el mismo contrato que la API del Hospital (Labs 6–9)
+const rechazar = (res: Response, status: number, message: string, mensaje: string): void => {
+  res.status(status).json({ success: false, message, mensaje });
 };
 
 /**
@@ -25,13 +26,13 @@ export const authenticateJWT = async (
   const authorization = req.get('Authorization');
 
   if (!authorization) {
-    rechazar(res, 401, 'Token de autenticación requerido.');
+    rechazar(res, 401, 'Token de autenticación requerido.', 'Token de autenticación requerido');
     return;
   }
 
   const partes = authorization.split(' ');
   if (partes.length !== 2 || partes[0] !== 'Bearer' || !partes[1]) {
-    rechazar(res, 401, 'Formato de token inválido. Usa: Authorization: Bearer <token>.');
+    rechazar(res, 401, 'Formato de token inválido. Usa: Authorization: Bearer <token>.', 'Formato de token inválido');
     return;
   }
 
@@ -40,11 +41,11 @@ export const authenticateJWT = async (
     payload = verificarToken(partes[1]);
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      rechazar(res, 401, 'Token expirado. Inicia sesión nuevamente.');
+      rechazar(res, 401, 'Token expirado. Inicia sesión nuevamente.', 'Token expirado');
       return;
     }
     if (error instanceof jwt.JsonWebTokenError) {
-      rechazar(res, 401, 'Token inválido.');
+      rechazar(res, 401, 'Token inválido.', 'Token inválido');
       return;
     }
     next(error);
@@ -58,12 +59,12 @@ export const authenticateJWT = async (
     const user = await prisma.user.findUnique({ where: { id: payload.sub } });
 
     if (!user) {
-      rechazar(res, 401, 'Token inválido.');
+      rechazar(res, 401, 'Token inválido.', 'Token inválido');
       return;
     }
 
     if (!user.is_active) {
-      rechazar(res, 403, 'Tu cuenta ha sido desactivada. Comunícate con el administrador.');
+      rechazar(res, 403, 'Tu cuenta ha sido desactivada. Comunícate con el administrador.', 'Usuario deshabilitado');
       return;
     }
 
