@@ -244,6 +244,22 @@ export class UserController {
       const id = req.params.id as string;
       const { name, last_name, email, is_active, is_premium, password } = req.body;
 
+      // Los indicadores de estado solo aceptan booleanos reales: Boolean("false") es true.
+      if ((is_active !== undefined && typeof is_active !== 'boolean') ||
+          (is_premium !== undefined && typeof is_premium !== 'boolean')) {
+        res.status(400).json({ success: false, message: 'is_active e is_premium deben ser true o false.' });
+        return;
+      }
+
+      // Misma regla que toggle-active: el administrador único no puede bloquearse a sí mismo
+      if (req.user?.id === id && is_active === false) {
+        res.status(400).json({
+          success: false,
+          message: 'No puedes desactivar tu propia cuenta de administrador.',
+        });
+        return;
+      }
+
       const existing = await prisma.user.findUnique({ where: { id } });
       if (!existing) {
         res.status(404).json({ success: false, message: 'Usuario no encontrado.' });

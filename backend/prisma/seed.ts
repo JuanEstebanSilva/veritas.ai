@@ -1,22 +1,52 @@
 import { PrismaClient, Role, AnalysisType } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import dotenv from 'dotenv';
 import path from 'path';
+import { validarPassword, generarPasswordHash } from '../src/utils/passwordPolicy';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const prisma = new PrismaClient();
 
+/**
+ * Contraseñas que han estado publicadas en el repositorio (plantilla .env.example
+ * y botón de demostración del login). Conocerlas no puede dar el rol ADMIN.
+ */
+const CONTRASENAS_PUBLICADAS = ['Admin123!Secure*', 'REEMPLAZAR_CON_CONTRASENA_SEGURA'];
+
+class ConfiguracionSeedError extends Error {}
+
+/**
+ * El administrador único sale SOLO de aquí (Lab 8): el registro público siempre
+ * crea USER y ninguna ruta de la API asigna el rol ADMIN. Por eso el seed no
+ * tiene valores por defecto: sin ADMIN_EMAIL y ADMIN_PASSWORD propios no hay admin.
+ */
+function leerAdministradorInicial(): { email: string; password: string } {
+  const email = (process.env.ADMIN_EMAIL || '').toLowerCase().trim();
+  const password = process.env.ADMIN_PASSWORD || '';
+
+  if (!email || !password) {
+    throw new ConfiguracionSeedError('define ADMIN_EMAIL y ADMIN_PASSWORD en backend/.env (no hay valores por defecto).');
+  }
+  if (CONTRASENAS_PUBLICADAS.includes(password)) {
+    throw new ConfiguracionSeedError('ADMIN_PASSWORD es un valor publicado en el repositorio; genera uno nuevo.');
+  }
+  const errorPassword = validarPassword(password);
+  if (errorPassword) {
+    throw new ConfiguracionSeedError(`ADMIN_PASSWORD no cumple la política: ${errorPassword}`);
+  }
+  return { email, password };
+}
+
 async function main() {
   console.log('🌱 Iniciando sembrado de datos (Seed) para Plagelio...');
 
-  const adminEmail = (process.env.ADMIN_EMAIL || 'admin@plagelio.com').toLowerCase().trim();
-  const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123!Secure*';
+  const admin = leerAdministradorInicial();
 
   // 1. Crear o actualizar el Administrador Único
-  const adminPasswordHash = await bcrypt.hash(adminPassword, 12);
+  const adminPasswordHash = await generarPasswordHash(admin.password);
   const adminUser = await prisma.user.upsert({
-    where: { email: adminEmail },
+    where: { email: admin.email },
     update: {
       password_hash: adminPasswordHash,
       role: Role.ADMIN,
@@ -26,7 +56,7 @@ async function main() {
     create: {
       name: process.env.ADMIN_NAME || 'Administrador',
       last_name: process.env.ADMIN_LAST_NAME || 'Sistema',
-      email: adminEmail,
+      email: admin.email,
       password_hash: adminPasswordHash,
       role: Role.ADMIN,
       is_active: true,
@@ -36,29 +66,29 @@ async function main() {
   });
   console.log(`✓ Administrador verificado: ${adminUser.email} (Rol: ${adminUser.role})`);
 
-  // Asegurar compatibilidad si se configuró admin@veritas.ai previamente
-  if (adminEmail !== 'admin@veritas.ai') {
-    try {
-      await prisma.user.upsert({
-        where: { email: 'admin@veritas.ai' },
-        update: { password_hash: adminPasswordHash, role: Role.ADMIN, is_active: true, is_premium: true },
-        create: {
-          name: 'Administrador (Legacy)',
-          last_name: 'Sistema',
-          email: 'admin@veritas.ai',
-          password_hash: adminPasswordHash,
-          role: Role.ADMIN,
-          is_active: true,
-          is_premium: true,
-          premium_since: new Date(),
-        },
-      });
-    } catch { /* ignorar si falla */ }
+  // Administrador único: cualquier otra cuenta ADMIN (p. ej. la heredada
+  // admin@veritas.ai, creada por versiones anteriores de este seed con la misma
+  // contraseña pública) pasa a USER, queda desactivada y recibe una contraseña
+  // aleatoria que nadie conoce.
+  const otrosAdmins = await prisma.user.findMany({
+    where: { role: Role.ADMIN, email: { not: admin.email } },
+    select: { id: true, email: true },
+  });
+  for (const otro of otrosAdmins) {
+    await prisma.user.update({
+      where: { id: otro.id },
+      data: {
+        role: Role.USER,
+        is_active: false,
+        password_hash: await generarPasswordHash(crypto.randomBytes(32).toString('hex')),
+      },
+    });
+    console.log(`✓ Cuenta ADMIN adicional retirada: ${otro.email} (ahora USER y desactivada)`);
   }
 
   // 2. Crear un usuario estándar de demostración
   const demoEmail = 'usuario@plagelio.com';
-  const demoPasswordHash = await bcrypt.hash('User123!Secure*', 12);
+  const demoPasswordHash = await generarPasswordHash('User123!Secure*');
   const demoUser = await prisma.user.upsert({
     where: { email: demoEmail },
     update: {},
@@ -148,7 +178,11 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error('Error en seed:', e);
+    if (e instanceof ConfiguracionSeedError) {
+      console.error(`❌ Seed detenido: ${e.message}`);
+    } else {
+      console.error('Error en seed:', e);
+    }
     process.exit(1);
   })
   .finally(async () => {

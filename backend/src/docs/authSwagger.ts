@@ -13,6 +13,7 @@
  *     summary: Registrar un nuevo usuario
  *     description: |
  *       Crea una cuenta con rol **USER**. Requiere API Key: el cliente se identifica antes que la persona.
+ *       El rol lo asigna el servidor y no puede definirlo el cliente: el único ADMIN sale del seed.
  *
  *       La contraseña se guarda con **bcrypt** (salt aleatorio y coste 12) y nunca aparece en la respuesta.
  *       Los campos privilegiados que se envíen en el cuerpo (`role`, `is_active`, `is_premium`,
