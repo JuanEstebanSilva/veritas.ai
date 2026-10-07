@@ -455,14 +455,44 @@ Para elevar la postura de seguridad de Plagelio al nivel más riguroso de la ind
 
 ---
 
-## 6. Conclusión y Certificación del Informe
+## 7. Módulo 4: Auditoría Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/BOLA y Control de Acceso a Recursos (Bloques 6A, 6B y 6C)
 
-La arquitectura de **Plagelio (Veritas AI)** demostró un **alto estándar de seguridad y madurez técnica** a lo largo de las pruebas realizadas:
+### 7.1. Alcance y Objetivos
+El Laboratorio No. 10 audita e implementa la defensa en profundidad de autorización en **Veritas AI**:
+- **Bloque 6A — RBAC (Role-Based Access Control)**: Separación clara entre Autenticación (`401 Unauthorized`) y Autorización (`403 Forbidden`), control de acceso multinivel por roles (`administrador`, `medico`, `paciente`) y bootstrap inicial seguro del primer administrador desde variables de entorno.
+- **Bloque 6B — Gestión Administrativa de Usuarios**: Separación de rutas de creación (Registro público -> siempre paciente vs Gestión administrativa `POST /api/usuarios` -> médico/administrador) y neutralización total de ataques de Mass Assignment y escalamiento de privilegios.
+- **Bloque 6C — Autorización a Nivel de Objeto (IDOR/BOLA)**: Mitigación de la vulnerabilidad No. 1 de OWASP API Security Top 10 (*Broken Object Level Authorization*), garantizando que un usuario autenticado con rol válido únicamente pueda consultar o manipular sus propios recursos mediante el middleware de propiedad (`propiedad.middleware.ts`), además del endpoint inmune `/api/citas/mis-citas`.
+
+### 7.2. Matriz Consolidada de Pruebas Automatizadas de Laboratorio 10 (`tests/lab10.test.ts`)
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│               LABORATORIO 10: RESUMEN DE EJECUCIÓN (JEST)              │
+├───────────────────────────────────────────────────┬──────────┬─────────┤
+│ Bloque de Auditoría                               │ Casos    │ Estado  │
+├───────────────────────────────────────────────────┼──────────┼─────────┤
+│ Bloque 6A: RBAC y Autenticación en Capas (1-10,30)│ 10 tests │ PASS    │
+│ Bloque 6B: Gestión Administrativa de Usuarios     │ 7 tests  │ PASS    │
+│ Bloque 6C: Autorización a Nivel de Objeto (BOLA)  │ 24 tests │ PASS    │
+├───────────────────────────────────────────────────┼──────────┼─────────┤
+│ TOTAL SUITE LAB 10 (Veritas AI)                   │ 41 tests │ 100% OK │
+└───────────────────────────────────────────────────┴──────────┴─────────┘
+```
+
+Todas las pruebas se encuentran completamente adaptadas y verificadas contra el dominio institucional **`@veritas.com`** y **`@veritas.ai`**.
+
+---
+
+## 8. Conclusión y Certificación del Informe Actualizado
+
+La arquitectura de **Veritas AI** demostró un **alto estándar de seguridad y madurez técnica** a lo largo de las pruebas realizadas:
 
 1. **SCA**: Dependencias directas limpias y de licenciamiento permisivo (MIT/Apache/BSD).
 2. **SAST**: Código fuente desarrollado bajo tipado estricto en TypeScript sin errores de compilación, libre de vulnerabilidades de inyección SQL (gracias a Prisma ORM), con control de acceso por roles (RBAC) exhaustivo, prevención estricta de IDOR, defensas multicapa contra escalada de privilegios y hashing criptográfico reforzado con bcrypt (12 rondas).
 3. **DAST**: La batería de pruebas dinámicas automatizadas confirmó que el servidor rechaza en tiempo de ejecución cualquier petición no autenticada, tokens alterados, accesos no autorizados a recursos de terceros, inyecciones de prueba y subidas de archivos con extensiones no autorizadas.
 4. **Laboratorio 8 (Bloque 4B)**: Implementación certificada con 7/7 pruebas dinámicas superadas de control de rol, allowlisting con `matchedData()` y control estricto de valores en la capa de servicio.
+5. **Laboratorio 9 (Bloque 5)**: Autenticación segura con JWT (HS256), verificación estricta de firma y expiración, y mitigación de fuga de algoritmos (17/17 checkpoints superados).
+6. **Laboratorio 10 (Bloque 6)**: Implementación y certificación completa de RBAC, Bootstrap administrativo, gestión privilegiada y prevención integral de IDOR/BOLA con 41/41 pruebas automatizadas superadas y matriz de 30 evidencias obligatorias documentada en `GUIA_LABORATORIO_10_WORD.md`.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -471,9 +501,10 @@ La arquitectura de **Plagelio (Veritas AI)** demostró un **alto estándar de se
 │ Estado del Sistema               │ APROBADO PARA DESPLIEGUE Y OPERACIÓN│
 │ Nivel de Resiliencia             │ ALTO (Sin vulnerabilidades críticas)│
 │ Cobertura de Pruebas Dinámicas   │ 15/15 Pruebas DAST Exitosas (100%)  │
-│ Suite Completa de Tests Backend  │ 77/77 Tests Totales Exitosos (100%) │
-│ Suites de Pruebas Ejecutadas     │ 12/12 Test Suites en Verde (100%)   │
+│ Suite Completa de Tests Backend  │ 135/135 Tests Totales (100% GREEN)  │
+│ Suites de Pruebas Ejecutadas     │ 14/14 Test Suites en Verde (100%)   │
 └──────────────────────────────────┴─────────────────────────────────────┘
 ```
 
-**Documento elaborado para el equipo de desarrollo, auditoría y operaciones de Plagelio.**
+**Documento elaborado para el equipo de desarrollo, auditoría y operaciones de Veritas AI.**
+

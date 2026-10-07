@@ -17,7 +17,33 @@ const options: swaggerJsdoc.Options = {
     servers: [
       {
         url: 'http://localhost:5000',
-        description: 'Servidor local de desarrollo',
+        description: 'Servidor local de desarrollo Veritas AI',
+      },
+    ],
+    tags: [
+      {
+        name: 'Autenticación',
+        description: 'Registro público, login y obtención de tokens JWT',
+      },
+      {
+        name: 'Usuarios',
+        description: 'Gestión administrativa de usuarios del sistema (Bloque 6B)',
+      },
+      {
+        name: 'Pacientes',
+        description: 'Control de acceso a recursos de pacientes y perfiles (Bloque 6A)',
+      },
+      {
+        name: 'Médicos',
+        description: 'Gestión de médicos y perfiles autorizados (Bloque 6A)',
+      },
+      {
+        name: 'Citas',
+        description: 'Gestión segura de citas médicas, defensa contra IDOR/BOLA y /mis-citas (Bloque 6C)',
+      },
+      {
+        name: 'Análisis IA',
+        description: 'Detección de IA, citas académicas y auditoría de documentos',
       },
     ],
     components: {

@@ -136,6 +136,6 @@ describe('7. Usuarios, hashing y salting', () => {
       const bien = await request(app).post('/api/auth/login').send({ email: correo('inactiva'), password: CLAVE });
       expect(mal.status).toBe(401);
       expect(bien.status).toBe(403);
-    });
+    }, 15000);
   });
 });

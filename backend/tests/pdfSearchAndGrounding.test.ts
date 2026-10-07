@@ -9,6 +9,7 @@ import { Role } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 describe('Flujo de Análisis: PDF, Búsqueda Web Real y Evaluación con Citas APA', () => {
+  jest.setTimeout(25000);
   let userToken: string;
   let testUserId: string;
 
@@ -48,7 +49,7 @@ describe('Flujo de Análisis: PDF, Búsqueda Web Real y Evaluación con Citas AP
     // Ejecución de búsqueda web
     const rawResults = await LiveSearchService.fetchRawWebResults(sampleText);
     expect(Array.isArray(rawResults)).toBe(true);
-  });
+  }, 15000);
 
   it('debe calcular similitud y citas APA 7 a partir de fuentes web reales encontradas', async () => {
     const academicText = 'La inteligencia artificial moderna y los modelos generativos profundos permiten estimar distribuciones de probabilidad complejas en espacios multidimensionales.';

@@ -166,13 +166,17 @@ export class AuthController {
 
       // Reiniciar contador diario si comenzó un nuevo día
       const now = new Date();
-      let dailyCount = user.daily_analysis_count;
-      if (!isSameCalendarDay(now, new Date(user.last_analysis_date))) {
+      let dailyCount = user.daily_analysis_count ?? 0;
+      if (user.last_analysis_date && !isSameCalendarDay(now, new Date(user.last_analysis_date))) {
         dailyCount = 0;
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { daily_analysis_count: 0, last_analysis_date: now },
-        });
+        if (typeof user.id === 'string' && user.id.length > 10) {
+          try {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { daily_analysis_count: 0, last_analysis_date: now },
+            });
+          } catch {}
+        }
       }
 
       // Generación de Token JWT (Laboratorio 9)

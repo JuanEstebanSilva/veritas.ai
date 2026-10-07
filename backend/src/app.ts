@@ -7,6 +7,12 @@ import writingRoutes from './routes/writingRoutes';
 import userRoutes from './routes/userRoutes';
 import paymentRoutes from './routes/paymentRoutes';
 import securityRoutes from './routes/securityRoutes';
+import usuariosRoutes from './routes/usuarios.routes';
+import pacientesRoutes from './routes/pacientes.routes';
+import medicosRoutes from './routes/medicos.routes';
+import especialidadesRoutes from './routes/especialidades.routes';
+import consultoriosRoutes from './routes/consultorios.routes';
+import citasRoutes from './routes/citas.routes';
 import { errorHandler } from './middleware/errorHandler';
 import { apiKeyMiddleware } from './middleware/apiKeyMiddleware';
 import { setupSwagger } from './docs/swagger';
@@ -79,6 +85,14 @@ app.use('/api/users', userRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/security', securityRoutes);
 app.use('/api/seguridad', securityRoutes);
+
+// Rutas de Autorización Segura, RBAC y BOLA (Lab 10 - Veritas AI)
+app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/pacientes', pacientesRoutes);
+app.use('/api/medicos', medicosRoutes);
+app.use('/api/especialidades', especialidadesRoutes);
+app.use('/api/consultorios', consultoriosRoutes);
+app.use('/api/citas', citasRoutes);
 
 // Manejo de rutas 404
 app.use((_req: Request, res: Response) => {

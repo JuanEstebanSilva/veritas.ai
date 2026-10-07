@@ -3,6 +3,7 @@ import { ENV } from './config/env';
 import { prisma } from './config/prisma';
 import { ConfiguracionApiKeysError } from './config/apiClients';
 import { sincronizarClientesApi } from './services/apiClients.service';
+import usuariosService from './services/usuarios.service';
 
 const startServer = async () => {
   try {
@@ -14,6 +15,9 @@ const startServer = async () => {
     // Si falta alguna clave, el servidor no arranca en lugar de funcionar a medias.
     const clientes = await sincronizarClientesApi();
     console.log(`✓ API Keys: ${clientes.length} clientes registrados (solo se guarda su hash SHA-256).`);
+
+    // Lab 10: Bootstrap del Administrador Inicial (Bloque 6A, Parte 15 & 16)
+    await usuariosService.crearAdministradorInicial();
 
     app.listen(ENV.PORT, () => {
       console.log(`===================================================`);
