@@ -461,7 +461,7 @@ Para elevar la postura de seguridad de Plagelio al nivel más riguroso de la ind
 El Laboratorio No. 10 audita e implementa la defensa en profundidad de autorización en **Veritas AI**:
 - **Bloque 6A — RBAC (Role-Based Access Control)**: Separación clara entre Autenticación (`401 Unauthorized`) y Autorización (`403 Forbidden`), control de acceso multinivel por roles (`administrador`, `docente` / `auditor`, `estudiante` / `usuario`) y bootstrap inicial seguro del primer administrador desde variables de entorno.
 - **Bloque 6B — Gestión Administrativa de Usuarios**: Separación de rutas de creación (Registro público -> siempre estudiante/usuario vs Gestión administrativa `POST /api/usuarios` -> docente/administrador) y neutralización total de ataques de Mass Assignment y escalamiento de privilegios.
-- **Bloque 6C — Autorización a Nivel de Objeto (IDOR/BOLA)**: Mitigación de la vulnerabilidad No. 1 de OWASP API Security Top 10 (*Broken Object Level Authorization*), garantizando que un usuario autenticado con rol válido únicamente pueda consultar o manipular sus propios recursos mediante el middleware de propiedad (`propiedad.middleware.ts`), además del endpoint inmune `/api/revisiones/mis-revisiones` (o `/api/citas/mis-citas`).
+- **Bloque 6C — Autorización a Nivel de Objeto (IDOR/BOLA)**: Mitigación de la vulnerabilidad No. 1 de OWASP API Security Top 10 (*Broken Object Level Authorization*), garantizando que un usuario autenticado con rol válido únicamente pueda consultar o manipular sus propios recursos mediante el middleware de propiedad (`propiedad.middleware.ts`), además del endpoint inmune `/api/revisiones/mis-revisiones`.
 
 ### 7.2. Matriz Consolidada de Pruebas Automatizadas de Laboratorio 10 (`tests/lab10.test.ts`)
 

@@ -1,46 +1,44 @@
 import { Request, Response, NextFunction } from 'express';
 import { matchedData } from 'express-validator';
-import medicosService from '../services/medicos.service';
+import docentesService from '../services/docentes.service';
 import usuariosService from '../services/usuarios.service';
-import citasService from '../services/citas.service';
+import revisionesService from '../services/revisiones.service';
 
 /**
- * Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/BOLA
- * BLOQUE 6A & 6C — Controlador de Médicos
+ * Veritas AI — Controlador de Docentes / Auditores de Integridad Académica
  */
 
-export const obtenerMedicos = (req: Request, res: Response): void => {
-  const lista = medicosService.obtenerMedicos();
+export const obtenerDocentes = (req: Request, res: Response): void => {
+  const lista = docentesService.obtenerDocentes();
   res.status(200).json({
     success: true,
-    mensaje: 'Lista de docentes / médicos obtenida correctamente',
-    medicos: lista,
+    total: lista.length,
+    mensaje: 'Lista de docentes / auditores obtenida correctamente',
     docentes: lista,
-    profesores: lista,
+    medicos: lista,
   });
 };
 
-export const obtenerMedicoPorId = (req: Request, res: Response): void => {
+export const obtenerDocentePorId = (req: Request, res: Response): void => {
   const id = req.params.id as string;
-  const medico = medicosService.obtenerMedicoPorId(id);
+  const docente = docentesService.obtenerDocentePorId(id);
 
-  if (!medico) {
+  if (!docente) {
     res.status(404).json({
       success: false,
-      mensaje: 'Médico no encontrado',
+      mensaje: 'Docente no encontrado',
     });
     return;
   }
 
   res.status(200).json({
     success: true,
-    medico,
-    docente: medico,
-    profesor: medico,
+    docente,
+    medico: docente,
   });
 };
 
-export const crearMedico = async (
+export const crearDocente = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -48,9 +46,6 @@ export const crearMedico = async (
   try {
     const datos = matchedData(req, { locations: ['body'] }) as any;
 
-    // ------------------------------------
-    // Validar asociación lógica con usuario (Bloque 6C / Test 24, 25, 26)
-    // ------------------------------------
     if (datos.usuarioId !== undefined && datos.usuarioId !== null) {
       const usuario = await usuariosService.obtenerUsuarioPorId(datos.usuarioId);
 
@@ -73,44 +68,42 @@ export const crearMedico = async (
       ) {
         res.status(409).json({
           success: false,
-          mensaje: 'El usuario asociado no tiene rol medico',
-          message: 'El usuario asociado no tiene rol docente o auditor',
+          mensaje: 'El usuario asociado no tiene rol docente',
+          message: 'El usuario asociado no tiene rol docente',
         });
         return;
       }
 
-      const medicoExistente = medicosService.obtenerMedicoPorUsuarioId(
+      const docenteExistente = docentesService.obtenerDocentePorUsuarioId(
         datos.usuarioId,
         datos.email
       );
-      if (medicoExistente) {
+      if (docenteExistente) {
         res.status(409).json({
           success: false,
-          mensaje: 'El usuario ya está asociado a un médico',
-          message: 'El usuario ya está asociado a un docente o auditor',
-          medico: medicoExistente,
-          docente: medicoExistente,
-          profesor: medicoExistente,
+          mensaje: 'El usuario ya está asociado a un docente',
+          message: 'El usuario ya está asociado a un docente',
+          docente: docenteExistente,
+          medico: docenteExistente,
         });
         return;
       }
     }
 
-    const medico = medicosService.crearMedico(datos);
+    const docente = docentesService.crearDocente(datos);
 
     res.status(201).json({
       success: true,
-      mensaje: 'Médico creado correctamente',
-      medico,
-      docente: medico,
-      profesor: medico,
+      mensaje: 'Docente creado correctamente',
+      docente,
+      medico: docente,
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const actualizarMedico = async (
+export const actualizarDocente = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -130,41 +123,48 @@ export const actualizarMedico = async (
       }
 
       const rolUsuario = String(usuario.rol || usuario.role || '').toLowerCase().trim();
-      if (rolUsuario !== 'medico' && rolUsuario !== 'doctor' && rolUsuario !== 'auditor') {
+      if (
+        rolUsuario !== 'medico' &&
+        rolUsuario !== 'doctor' &&
+        rolUsuario !== 'auditor' &&
+        rolUsuario !== 'docente' &&
+        rolUsuario !== 'profesor'
+      ) {
         res.status(409).json({
           success: false,
-          mensaje: 'El usuario asociado no tiene rol medico',
+          mensaje: 'El usuario asociado no tiene rol docente',
         });
         return;
       }
 
-      const existente = medicosService.obtenerMedicoPorUsuarioId(datos.usuarioId);
+      const existente = docentesService.obtenerDocentePorUsuarioId(datos.usuarioId);
       if (existente && existente.id !== Number(id)) {
         res.status(409).json({
           success: false,
-          mensaje: 'El usuario ya está asociado a un médico',
+          mensaje: 'El usuario ya está asociado a un docente',
         });
         return;
       }
     }
 
-    const medico = medicosService.actualizarMedico(id, datos);
-    if (!medico) {
-      res.status(404).json({ success: false, mensaje: 'Médico no encontrado' });
+    const docente = docentesService.actualizarDocente(id, datos);
+    if (!docente) {
+      res.status(404).json({ success: false, mensaje: 'Docente no encontrado' });
       return;
     }
 
     res.status(200).json({
       success: true,
-      mensaje: 'Médico actualizado correctamente',
-      medico,
+      mensaje: 'Docente actualizado correctamente',
+      docente,
+      medico: docente,
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const actualizarMedicoParcial = async (
+export const actualizarDocenteParcial = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -184,72 +184,86 @@ export const actualizarMedicoParcial = async (
       }
 
       const rolUsuario = String(usuario.rol || usuario.role || '').toLowerCase().trim();
-      if (rolUsuario !== 'medico' && rolUsuario !== 'doctor' && rolUsuario !== 'auditor') {
+      if (
+        rolUsuario !== 'medico' &&
+        rolUsuario !== 'doctor' &&
+        rolUsuario !== 'auditor' &&
+        rolUsuario !== 'docente' &&
+        rolUsuario !== 'profesor'
+      ) {
         res.status(409).json({
           success: false,
-          mensaje: 'El usuario asociado no tiene rol medico',
+          mensaje: 'El usuario asociado no tiene rol docente',
         });
         return;
       }
 
-      const existente = medicosService.obtenerMedicoPorUsuarioId(datos.usuarioId);
+      const existente = docentesService.obtenerDocentePorUsuarioId(datos.usuarioId);
       if (existente && existente.id !== Number(id)) {
         res.status(409).json({
           success: false,
-          mensaje: 'El usuario ya está asociado a un médico',
+          mensaje: 'El usuario ya está asociado a un docente',
         });
         return;
       }
     }
 
-    const medico = medicosService.actualizarMedicoParcial(id, datos);
-    if (!medico) {
-      res.status(404).json({ success: false, mensaje: 'Médico no encontrado' });
+    const docente = docentesService.actualizarDocenteParcial(id, datos);
+    if (!docente) {
+      res.status(404).json({ success: false, mensaje: 'Docente no encontrado' });
       return;
     }
 
     res.status(200).json({
       success: true,
-      mensaje: 'Médico actualizado correctamente',
-      medico,
+      mensaje: 'Perfil de docente actualizado correctamente',
+      docente,
+      medico: docente,
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const eliminarMedico = (req: Request, res: Response): void => {
+export const eliminarDocente = (req: Request, res: Response): void => {
   const id = req.params.id as string;
-  const medico = medicosService.obtenerMedicoPorId(id);
+  const docente = docentesService.obtenerDocentePorId(id);
 
-  if (!medico) {
-    res.status(404).json({ success: false, mensaje: 'Médico no encontrado' });
+  if (!docente) {
+    res.status(404).json({ success: false, mensaje: 'Docente no encontrado' });
     return;
   }
 
-  const citasAsociadas = citasService.obtenerCitasPorMedico(id);
-  if (citasAsociadas.length > 0) {
+  const revisionesAsociadas = revisionesService.obtenerRevisionesPorDocente(id);
+  if (revisionesAsociadas.length > 0) {
     res.status(409).json({
       success: false,
-      mensaje: 'No se puede eliminar el médico porque tiene citas asociadas',
-      message: 'No se puede eliminar el médico porque tiene citas asociadas',
+      mensaje: 'No se puede eliminar el docente porque tiene revisiones asignadas',
+      message: 'No se puede eliminar el docente porque tiene revisiones asignadas',
     });
     return;
   }
 
-  medicosService.eliminarMedico(id);
+  docentesService.eliminarDocente(id);
 
   res.status(200).json({
     success: true,
-    mensaje: 'Médico eliminado correctamente',
+    mensaje: 'Docente eliminado correctamente',
   });
 };
 
 export default {
-  obtenerMedicos,
-  obtenerMedicoPorId,
-  crearMedico,
-  actualizarMedico,
-  actualizarMedicoParcial,
-  eliminarMedico,
+  obtenerDocentes,
+  obtenerDocentePorId,
+  crearDocente,
+  actualizarDocente,
+  actualizarDocenteParcial,
+  eliminarDocente,
+  // Alias
+  obtenerMedicos: obtenerDocentes,
+  obtenerMedicoPorId: obtenerDocentePorId,
+  crearMedico: crearDocente,
+  actualizarMedico: actualizarDocente,
+  actualizarMedicoParcial: actualizarDocenteParcial,
+  eliminarMedico: eliminarDocente,
 };

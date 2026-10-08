@@ -1,4 +1,4 @@
-export interface Paciente {
+export interface Estudiante {
   id: number;
   usuarioId: number | string | null;
   nombre: string;
@@ -8,7 +8,7 @@ export interface Paciente {
   fechaNacimiento: string;
 }
 
-export const pacientes: Paciente[] = [
+export const estudiantes: Estudiante[] = [
   {
     id: 1,
     usuarioId: null,
@@ -38,4 +38,4 @@ export const pacientes: Paciente[] = [
   },
 ];
 
-export default pacientes;
+export default estudiantes;

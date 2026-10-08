@@ -8,11 +8,11 @@ import userRoutes from './routes/userRoutes';
 import paymentRoutes from './routes/paymentRoutes';
 import securityRoutes from './routes/securityRoutes';
 import usuariosRoutes from './routes/usuarios.routes';
-import pacientesRoutes from './routes/pacientes.routes';
-import medicosRoutes from './routes/medicos.routes';
-import especialidadesRoutes from './routes/especialidades.routes';
-import consultoriosRoutes from './routes/consultorios.routes';
-import citasRoutes from './routes/citas.routes';
+import estudiantesRoutes from './routes/estudiantes.routes';
+import docentesRoutes from './routes/docentes.routes';
+import departamentosRoutes from './routes/departamentos.routes';
+import laboratoriosRoutes from './routes/laboratorios.routes';
+import revisionesRoutes from './routes/revisiones.routes';
 import { errorHandler } from './middleware/errorHandler';
 import { apiKeyMiddleware } from './middleware/apiKeyMiddleware';
 import { setupSwagger } from './docs/swagger';
@@ -65,7 +65,7 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 app.get('/api/health', (_req: Request, res: Response) => {
   res.status(200).json({
     status: 'online',
-    platform: 'Plagelio',
+    platform: 'Veritas AI',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
   });
@@ -86,13 +86,13 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/security', securityRoutes);
 app.use('/api/seguridad', securityRoutes);
 
-// Rutas de Autorización Segura, RBAC y BOLA (Lab 10 - Veritas AI con soporte nativo Académico y Hospitalario)
+// Rutas de Autorización Segura, RBAC y BOLA (Lab 10 - Veritas AI: Dominio Académico)
 app.use(['/api/usuarios', '/api/users'], usuariosRoutes);
-app.use(['/api/pacientes', '/api/estudiantes'], pacientesRoutes);
-app.use(['/api/medicos', '/api/docentes', '/api/profesores'], medicosRoutes);
-app.use(['/api/especialidades', '/api/materias', '/api/departamentos'], especialidadesRoutes);
-app.use(['/api/consultorios', '/api/aulas', '/api/oficinas'], consultoriosRoutes);
-app.use(['/api/citas', '/api/revisiones', '/api/asesorias'], citasRoutes);
+app.use(['/api/estudiantes', '/api/pacientes'], estudiantesRoutes);
+app.use(['/api/docentes', '/api/auditores', '/api/profesores', '/api/medicos'], docentesRoutes);
+app.use(['/api/departamentos', '/api/materias', '/api/especialidades'], departamentosRoutes);
+app.use(['/api/laboratorios', '/api/nodos', '/api/consultorios'], laboratoriosRoutes);
+app.use(['/api/revisiones', '/api/escaneos', '/api/citas'], revisionesRoutes);
 
 // Manejo de rutas 404
 app.use((_req: Request, res: Response) => {

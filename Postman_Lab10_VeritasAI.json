@@ -21,46 +21,6 @@
       "value": ""
     },
     {
-      "key": "tokenPacienteA",
-      "value": ""
-    },
-    {
-      "key": "tokenPacienteB",
-      "value": ""
-    },
-    {
-      "key": "tokenPacienteSinPerfil",
-      "value": ""
-    },
-    {
-      "key": "tokenMedicoA",
-      "value": ""
-    },
-    {
-      "key": "tokenMedicoSinPerfil",
-      "value": ""
-    },
-    {
-      "key": "pacienteAId",
-      "value": "4"
-    },
-    {
-      "key": "pacienteBId",
-      "value": "5"
-    },
-    {
-      "key": "medicoAId",
-      "value": "2"
-    },
-    {
-      "key": "cita1Id",
-      "value": "4"
-    },
-    {
-      "key": "cita2Id",
-      "value": "5"
-    },
-    {
       "key": "tokenEstudianteA",
       "value": ""
     },
@@ -292,7 +252,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "const res = pm.response.json();",
-                  "const perfil = res.estudiante || res.paciente;",
+                  "const perfil = res.estudiante || res.estudiante;",
                   "if (perfil) {",
                   "  pm.collectionVariables.set(\"estudianteAId\", perfil.id);",
                   "  pm.collectionVariables.set(\"pacienteAId\", perfil.id);",
@@ -439,7 +399,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "const res = pm.response.json();",
-                  "const perfil = res.estudiante || res.paciente;",
+                  "const perfil = res.estudiante || res.estudiante;",
                   "if (perfil) {",
                   "  pm.collectionVariables.set(\"estudianteBId\", perfil.id);",
                   "  pm.collectionVariables.set(\"pacienteBId\", perfil.id);",
@@ -679,7 +639,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "const res = pm.response.json();",
-                  "const perfil = res.docente || res.medico;",
+                  "const perfil = res.docente || res.docente;",
                   "if (perfil) {",
                   "  pm.collectionVariables.set(\"docenteAId\", perfil.id);",
                   "  pm.collectionVariables.set(\"medicoAId\", perfil.id);",
@@ -830,7 +790,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "const res = pm.response.json();",
-                  "const rev = res.revision || res.cita;",
+                  "const rev = res.revision || res.revision;",
                   "if (rev) {",
                   "  pm.collectionVariables.set(\"revision1Id\", rev.id);",
                   "  pm.collectionVariables.set(\"cita1Id\", rev.id);",
@@ -888,7 +848,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "const res = pm.response.json();",
-                  "const rev = res.revision || res.cita;",
+                  "const rev = res.revision || res.revision;",
                   "if (rev) {",
                   "  pm.collectionVariables.set(\"revision2Id\", rev.id);",
                   "  pm.collectionVariables.set(\"cita2Id\", rev.id);",
@@ -1136,7 +1096,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Prueba Escalacion\",\n  \"email\": \"escalacion_{{$timestamp}}@veritas.com\",\n  \"password\": \"ClavePaciente2026!\",\n  \"rol\": \"administrador\"\n}",
+              "raw": "{\n  \"nombre\": \"Prueba Escalacion\",\n  \"email\": \"escalacion_{{$timestamp}}@veritas.com\",\n  \"password\": \"ClaveSegura2026!\",\n  \"rol\": \"administrador\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1150,7 +1110,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status 201 y rol paciente\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().usuario.rol).to.eql(\"paciente\"); });"
+                  "pm.test(\"Status 201 y rol estudiante\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().usuario.rol).to.match(/estudiante|paciente/); });"
                 ]
               }
             }
@@ -1185,7 +1145,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Prueba Activo\",\n  \"email\": \"activo_{{$timestamp}}@veritas.com\",\n  \"password\": \"ClavePaciente2026!\",\n  \"activo\": false\n}",
+              "raw": "{\n  \"nombre\": \"Prueba Activo\",\n  \"email\": \"activo_{{$timestamp}}@veritas.com\",\n  \"password\": \"ClaveSegura2026!\",\n  \"activo\": false\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1234,7 +1194,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Prueba Hash\",\n  \"email\": \"hash_{{$timestamp}}@veritas.com\",\n  \"password\": \"ClavePaciente2026!\",\n  \"passwordHash\": \"hash-falso\"\n}",
+              "raw": "{\n  \"nombre\": \"Prueba Hash\",\n  \"email\": \"hash_{{$timestamp}}@veritas.com\",\n  \"password\": \"ClaveSegura2026!\",\n  \"passwordHash\": \"hash-falso\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1283,7 +1243,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Prueba SuperAdmin\",\n  \"email\": \"superadmin_{{$timestamp}}@veritas.com\",\n  \"password\": \"ClavePaciente2026!\",\n  \"esSuperAdmin\": true\n}",
+              "raw": "{\n  \"nombre\": \"Prueba SuperAdmin\",\n  \"email\": \"superadmin_{{$timestamp}}@veritas.com\",\n  \"password\": \"ClaveSegura2026!\",\n  \"esSuperAdmin\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"

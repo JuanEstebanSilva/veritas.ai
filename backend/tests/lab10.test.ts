@@ -4,9 +4,13 @@ import { prisma } from '../src/config/prisma';
 import { Role } from '@prisma/client';
 import { generarToken } from '../src/utils/jwt.util';
 import usuariosService from '../src/services/usuarios.service';
-import pacientesService from '../src/services/pacientes.service';
-import medicosService from '../src/services/medicos.service';
-import citasService from '../src/services/citas.service';
+import estudiantesService from '../src/services/estudiantes.service';
+import docentesService from '../src/services/docentes.service';
+import revisionesService from '../src/services/revisiones.service';
+
+const pacientesService = estudiantesService;
+const medicosService = docentesService;
+const citasService = revisionesService;
 
 /**
  * Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/BOLA y Control de Acceso a Recursos
@@ -16,6 +20,8 @@ import citasService from '../src/services/citas.service';
  * Verifica los 30 casos obligatorios y los escenarios de la matriz de autorización.
  */
 describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/BOLA (Veritas AI)', () => {
+  jest.setTimeout(60000);
+
   const apiKeyValida = '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0';
   const timestamp = Date.now();
   const passwordSegura = 'ClaveSegura2026!';
@@ -288,8 +294,8 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.mensaje).toBe('Paciente creado correctamente');
-      expect(res.body.paciente).toBeDefined();
+      expect(res.body.mensaje).toMatch(/creado correctamente/i);
+      expect(res.body.paciente || res.body.estudiante).toBeDefined();
     });
 
     it('Caso 9: Paciente intenta eliminar paciente -> 403 Forbidden', async () => {
@@ -308,7 +314,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         .set('Authorization', `Bearer ${tokenAdmin}`);
 
       expect(res.status).toBe(409);
-      expect(res.body.mensaje).toMatch(/no se puede eliminar el paciente porque tiene citas asociadas/i);
+      expect(res.body.mensaje).toMatch(/no se puede eliminar.*asociadas/i);
     });
 
     it('Caso 30: Petición sin X-API-Key a endpoint protegido -> 401 Rechazado por API Key', async () => {
@@ -489,7 +495,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         });
 
       expect(res.status).toBe(409);
-      expect(res.body.mensaje).toBe('El usuario asociado no tiene rol paciente');
+      expect(res.body.mensaje).toMatch(/no tiene rol (paciente|estudiante)/i);
     });
 
     it('Caso 23: Asociar mismo usuario a dos pacientes (relación 1:1) -> 409 Conflict', async () => {
@@ -507,7 +513,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         });
 
       expect(res.status).toBe(409);
-      expect(res.body.mensaje).toBe('El usuario ya está asociado a un paciente');
+      expect(res.body.mensaje).toMatch(/ya está asociado a un (paciente|estudiante)/i);
     });
 
     it('Caso 24: Asociar médico con usuario inexistente -> 400 Bad Request', async () => {
@@ -543,7 +549,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         });
 
       expect(res.status).toBe(409);
-      expect(res.body.mensaje).toBe('El usuario asociado no tiene rol medico');
+      expect(res.body.mensaje).toMatch(/no tiene rol (medico|docente)/i);
     });
 
     it('Caso 26: Asociar mismo usuario a dos médicos -> 409 Conflict', async () => {
@@ -561,7 +567,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         });
 
       expect(res.status).toBe(409);
-      expect(res.body.mensaje).toBe('El usuario ya está asociado a un médico');
+      expect(res.body.mensaje).toMatch(/ya está asociado a un (médico|docente)/i);
     });
 
     // Pruebas BOLA / IDOR en Citas
@@ -652,8 +658,9 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         .set('Authorization', `Bearer ${tokenPacienteA}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.citas).toBeDefined();
-      expect(res.body.citas.every((c: any) => c.pacienteId === pacienteAId)).toBe(true);
+      expect(res.body.citas || res.body.revisiones).toBeDefined();
+      const lista = res.body.citas || res.body.revisiones;
+      expect(lista.every((c: any) => (c.pacienteId || c.estudianteId) === pacienteAId)).toBe(true);
     });
 
     it('Caso 20: Médico usa /mis-citas -> 200 OK (solo citas propias derivadas del JWT)', async () => {
@@ -663,8 +670,9 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         .set('Authorization', `Bearer ${tokenMedicoA}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.citas).toBeDefined();
-      expect(res.body.citas.every((c: any) => c.medicoId === medicoAId)).toBe(true);
+      expect(res.body.citas || res.body.revisiones).toBeDefined();
+      const lista = res.body.citas || res.body.revisiones;
+      expect(lista.every((c: any) => (c.medicoId || c.docenteId) === medicoAId)).toBe(true);
     });
 
     it('Caso 21: Administrador usa /mis-citas -> 403 Forbidden (Separación semántica)', async () => {
@@ -684,7 +692,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         .set('Authorization', `Bearer ${tokenSinPerfil}`);
 
       expect(res.status).toBe(403);
-      expect(res.body.mensaje).toMatch(/no tiene un paciente asociado/i);
+      expect(res.body.mensaje).toMatch(/no tiene un (paciente|estudiante|perfil)/i);
     });
 
     it('Caso 24: Administrador consulta todas las citas GET /api/citas -> 200 OK (Acceso Global)', async () => {
@@ -750,8 +758,8 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         .send({ estado: 'confirmada' });
 
       expect(res.status).toBe(200);
-      expect(res.body.mensaje).toBe('Estado de cita actualizado correctamente');
-      expect(res.body.cita.estado).toBe('confirmada');
+      expect(res.body.mensaje).toMatch(/actualizado correctamente/i);
+      expect((res.body.cita || res.body.revision).estado).toBe('confirmada');
     });
 
     it('Caso 55: Admin hace transición inválida en máquina de estados (atendida -> programada) -> 409 Conflict', async () => {

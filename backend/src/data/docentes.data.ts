@@ -1,25 +1,25 @@
-export interface Medico {
+export interface Docente {
   id: number;
   usuarioId: number | string | null;
   nombre: string;
-  registroMedico: string;
+  registroAcademico: string;
   email: string;
   telefono: string;
-  especialidadId: number;
+  departamentoId: number;
   activo: boolean;
 }
 
-export const medicos: Medico[] = [
+export const docentes: Docente[] = [
   {
     id: 1,
     usuarioId: null,
     nombre: 'Carlos Rodríguez',
-    registroMedico: 'RM-45871',
+    registroAcademico: 'DOC-45871',
     email: 'carlos.rodriguez@veritas.com',
     telefono: '3109876543',
-    especialidadId: 2,
+    departamentoId: 2,
     activo: true,
   },
 ];
 
-export default medicos;
+export default docentes;

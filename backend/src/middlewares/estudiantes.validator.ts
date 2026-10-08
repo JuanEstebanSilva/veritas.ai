@@ -1,11 +1,6 @@
 import { body, param } from 'express-validator';
 
-/**
- * Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/BOLA
- * BLOQUE 6C — Validador para médicos con soporte de usuarioId
- */
-
-export const validarCreacionMedico = [
+export const validarCreacionEstudiante = [
   body('nombre')
     .isString()
     .withMessage('El nombre debe ser texto')
@@ -13,12 +8,12 @@ export const validarCreacionMedico = [
     .notEmpty()
     .withMessage('El nombre es obligatorio'),
 
-  body('registroMedico')
+  body('documento')
     .isString()
-    .withMessage('El registro médico debe ser texto')
+    .withMessage('El documento debe ser texto')
     .trim()
     .notEmpty()
-    .withMessage('El registro médico es obligatorio'),
+    .withMessage('El documento es obligatorio'),
 
   body('email')
     .isEmail()
@@ -32,10 +27,11 @@ export const validarCreacionMedico = [
     .notEmpty()
     .withMessage('El teléfono es obligatorio'),
 
-  body('especialidadId')
-    .isInt({ min: 1 })
-    .withMessage('La especialidadId debe ser un entero positivo')
-    .toInt(),
+  body('fechaNacimiento')
+    .isString()
+    .withMessage('La fecha de nacimiento debe ser texto')
+    .notEmpty()
+    .withMessage('La fecha de nacimiento es obligatoria'),
 
   body('usuarioId')
     .optional({ nullable: true })
@@ -63,13 +59,12 @@ export const validarCreacionMedico = [
     }),
 ];
 
-export const validarMedicoParcial = [
+export const validarEstudianteParcial = [
   body('nombre').optional().isString().trim(),
-  body('registroMedico').optional().isString().trim(),
+  body('documento').optional().isString().trim(),
   body('email').optional().isEmail().normalizeEmail(),
   body('telefono').optional().isString().trim(),
-  body('especialidadId').optional().isInt({ min: 1 }).toInt(),
-  body('activo').optional().isBoolean(),
+  body('fechaNacimiento').optional().isString(),
   body('usuarioId')
     .optional({ nullable: true })
     .custom((val) => {
@@ -96,21 +91,30 @@ export const validarMedicoParcial = [
     }),
 ];
 
-export const validarIdMedico = [
+export const validarIdEstudiante = [
   param('id')
     .optional()
     .isInt({ min: 1 })
-    .withMessage('El ID de médico debe ser un entero positivo')
+    .withMessage('El ID de estudiante debe ser un entero positivo')
     .toInt(),
-  param('medicoId')
+  param('estudianteId')
     .optional()
     .isInt({ min: 1 })
-    .withMessage('El ID de médico debe ser un entero positivo')
+    .withMessage('El ID de estudiante debe ser un entero positivo')
+    .toInt(),
+  param('pacienteId')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('El ID de estudiante debe ser un entero positivo')
     .toInt(),
 ];
 
 export default {
-  validarCreacionMedico,
-  validarMedicoParcial,
-  validarIdMedico,
+  validarCreacionEstudiante,
+  validarEstudianteParcial,
+  validarIdEstudiante,
+  // Alias de compatibilidad
+  validarCreacionPaciente: validarCreacionEstudiante,
+  validarPacienteParcial: validarEstudianteParcial,
+  validarIdPaciente: validarIdEstudiante,
 };

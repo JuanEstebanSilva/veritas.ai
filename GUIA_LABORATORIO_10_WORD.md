@@ -174,7 +174,7 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
 
 ### PRUEBA 1: Acceso sin JWT a Recurso Protegido
 - **Objetivo**: Demostrar que un recurso protegido rechaza solicitudes anónimas sin cabecera `Authorization`.
-- **Método y URL**: `GET /api/estudiantes` (o `/api/pacientes`)
+- **Método y URL**: `GET /api/estudiantes`
 - **Cabeceras**:
   - `X-API-Key: 61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0`
   - *(Sin cabecera Authorization)*
@@ -639,7 +639,7 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
   }
   ```
 - **Qué capturar para Word**: Código 200 OK mostrando la revisión individual autorizada.
-- **Justificación**: `autorizarAccesoCita` verifica que el usuario autenticado es el autor de la revisión consultada.
+- **Justificación**: `autorizarAccesoRevision` verifica que el usuario autenticado es el autor de la revisión consultada.
 
 ---
 
@@ -682,7 +682,7 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
   }
   ```
 - **Qué capturar para Word**: Código 200 OK con las revisiones asignadas al Docente A.
-- **Justificación**: `autorizarMedicoPropio` valida la correspondencia entre la identidad del JWT y el ID de docente solicitado.
+- **Justificación**: `autorizarDocentePropio` valida la correspondencia entre la identidad del JWT y el ID de docente solicitado.
 
 ---
 

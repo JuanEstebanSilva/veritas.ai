@@ -1,44 +1,44 @@
 import { Request, Response, NextFunction } from 'express';
 import { matchedData } from 'express-validator';
-import pacientesService from '../services/pacientes.service';
+import estudiantesService from '../services/estudiantes.service';
 import usuariosService from '../services/usuarios.service';
-import citasService from '../services/citas.service';
+import revisionesService from '../services/revisiones.service';
 
 /**
- * Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/BOLA
- * BLOQUE 6A & 6C — Controlador de Pacientes
+ * Veritas AI — Controlador de Estudiantes / Autores de Trabajos
  */
 
-export const obtenerPacientes = (req: Request, res: Response): void => {
-  const lista = pacientesService.obtenerPacientes();
+export const obtenerEstudiantes = (req: Request, res: Response): void => {
+  const lista = estudiantesService.obtenerEstudiantes();
   res.status(200).json({
     success: true,
-    mensaje: 'Lista de estudiantes / pacientes obtenida correctamente',
-    pacientes: lista,
+    total: lista.length,
+    mensaje: 'Lista de estudiantes obtenida correctamente',
     estudiantes: lista,
+    pacientes: lista,
   });
 };
 
-export const obtenerPacientePorId = (req: Request, res: Response): void => {
+export const obtenerEstudiantePorId = (req: Request, res: Response): void => {
   const id = req.params.id as string;
-  const paciente = pacientesService.obtenerPacientePorId(id);
+  const estudiante = estudiantesService.obtenerEstudiantePorId(id);
 
-  if (!paciente) {
+  if (!estudiante) {
     res.status(404).json({
       success: false,
-      mensaje: 'Paciente no encontrado',
+      mensaje: 'Estudiante no encontrado',
     });
     return;
   }
 
   res.status(200).json({
     success: true,
-    paciente,
-    estudiante: paciente,
+    estudiante,
+    paciente: estudiante,
   });
 };
 
-export const crearPaciente = async (
+export const crearEstudiante = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -46,9 +46,6 @@ export const crearPaciente = async (
   try {
     const datos = matchedData(req, { locations: ['body'] }) as any;
 
-    // ------------------------------------
-    // Validar asociación lógica con usuario (Bloque 6C, Partes 9, 10 y 11)
-    // ------------------------------------
     if (datos.usuarioId !== undefined && datos.usuarioId !== null) {
       const usuario = await usuariosService.obtenerUsuarioPorId(datos.usuarioId);
 
@@ -70,42 +67,42 @@ export const crearPaciente = async (
       ) {
         res.status(409).json({
           success: false,
-          mensaje: 'El usuario asociado no tiene rol paciente',
-          message: 'El usuario asociado no tiene rol paciente',
+          mensaje: 'El usuario asociado no tiene rol estudiante',
+          message: 'El usuario asociado no tiene rol estudiante',
         });
         return;
       }
 
-      const pacienteExistente = pacientesService.obtenerPacientePorUsuarioId(
+      const estudianteExistente = estudiantesService.obtenerEstudiantePorUsuarioId(
         datos.usuarioId,
         datos.email
       );
-      if (pacienteExistente) {
+      if (estudianteExistente) {
         res.status(409).json({
           success: false,
-          mensaje: 'El usuario ya está asociado a un paciente',
-          message: 'El usuario ya está asociado a un paciente',
-          paciente: pacienteExistente,
-          estudiante: pacienteExistente,
+          mensaje: 'El usuario ya está asociado a un estudiante',
+          message: 'El usuario ya está asociado a un estudiante',
+          estudiante: estudianteExistente,
+          paciente: estudianteExistente,
         });
         return;
       }
     }
 
-    const paciente = pacientesService.crearPaciente(datos);
+    const estudiante = estudiantesService.crearEstudiante(datos);
 
     res.status(201).json({
       success: true,
-      mensaje: 'Paciente creado correctamente',
-      paciente,
-      estudiante: paciente,
+      mensaje: 'Estudiante creado correctamente',
+      estudiante,
+      paciente: estudiante,
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const actualizarPaciente = async (
+export const actualizarEstudiante = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -133,39 +130,39 @@ export const actualizarPaciente = async (
       ) {
         res.status(409).json({
           success: false,
-          mensaje: 'El usuario asociado no tiene rol paciente',
+          mensaje: 'El usuario asociado no tiene rol estudiante',
         });
         return;
       }
 
-      const existente = pacientesService.obtenerPacientePorUsuarioId(datos.usuarioId);
+      const existente = estudiantesService.obtenerEstudiantePorUsuarioId(datos.usuarioId);
       if (existente && existente.id !== Number(id)) {
         res.status(409).json({
           success: false,
-          mensaje: 'El usuario ya está asociado a un paciente',
+          mensaje: 'El usuario ya está asociado a un estudiante',
         });
         return;
       }
     }
 
-    const paciente = pacientesService.actualizarPaciente(id, datos);
-    if (!paciente) {
-      res.status(404).json({ success: false, mensaje: 'Paciente no encontrado' });
+    const estudiante = estudiantesService.actualizarEstudiante(id, datos);
+    if (!estudiante) {
+      res.status(404).json({ success: false, mensaje: 'Estudiante no encontrado' });
       return;
     }
 
     res.status(200).json({
       success: true,
-      mensaje: 'Paciente actualizado correctamente',
-      paciente,
-      estudiante: paciente,
+      mensaje: 'Estudiante actualizado correctamente',
+      estudiante,
+      paciente: estudiante,
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const actualizarPacienteParcial = async (
+export const actualizarEstudianteParcial = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -193,73 +190,78 @@ export const actualizarPacienteParcial = async (
       ) {
         res.status(409).json({
           success: false,
-          mensaje: 'El usuario asociado no tiene rol estudiante / paciente',
+          mensaje: 'El usuario asociado no tiene rol estudiante',
         });
         return;
       }
 
-      const existente = pacientesService.obtenerPacientePorUsuarioId(datos.usuarioId);
+      const existente = estudiantesService.obtenerEstudiantePorUsuarioId(datos.usuarioId);
       if (existente && existente.id !== Number(id)) {
         res.status(409).json({
           success: false,
-          mensaje: 'El usuario ya está asociado a un paciente',
+          mensaje: 'El usuario ya está asociado a un estudiante',
         });
         return;
       }
     }
 
-    const paciente = pacientesService.actualizarPacienteParcial(id, datos);
-    if (!paciente) {
-      res.status(404).json({ success: false, mensaje: 'Paciente no encontrado' });
+    const estudiante = estudiantesService.actualizarEstudianteParcial(id, datos);
+    if (!estudiante) {
+      res.status(404).json({ success: false, mensaje: 'Estudiante no encontrado' });
       return;
     }
 
     res.status(200).json({
       success: true,
-      mensaje: 'Perfil actualizado correctamente',
-      paciente,
-      estudiante: paciente,
+      mensaje: 'Perfil de estudiante actualizado correctamente',
+      estudiante,
+      paciente: estudiante,
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const eliminarPaciente = (req: Request, res: Response): void => {
+export const eliminarEstudiante = (req: Request, res: Response): void => {
   const id = req.params.id as string;
-  const paciente = pacientesService.obtenerPacientePorId(id);
+  const estudiante = estudiantesService.obtenerEstudiantePorId(id);
 
-  if (!paciente) {
-    res.status(404).json({ success: false, mensaje: 'Paciente no encontrado' });
+  if (!estudiante) {
+    res.status(404).json({ success: false, mensaje: 'Estudiante no encontrado' });
     return;
   }
 
-  // ------------------------------------
-  // Integridad Referencial: Un paciente con citas no puede eliminarse (Bloque 6A, Parte 12 / Test 10)
-  // ------------------------------------
-  const citasAsociadas = citasService.obtenerCitasPorPaciente(id);
-  if (citasAsociadas.length > 0) {
+  // Integridad Referencial: Un estudiante con revisiones no puede eliminarse
+  const revisionesAsociadas = revisionesService.obtenerRevisionesPorEstudiante(id);
+  if (revisionesAsociadas.length > 0) {
     res.status(409).json({
       success: false,
-      mensaje: 'No se puede eliminar el paciente porque tiene citas asociadas',
-      message: 'No se puede eliminar el paciente porque tiene citas asociadas',
+      mensaje: 'No se puede eliminar el estudiante porque tiene revisiones asociadas',
+      message: 'No se puede eliminar el estudiante porque tiene revisiones asociadas',
     });
     return;
   }
 
-  pacientesService.eliminarPaciente(id);
+  estudiantesService.eliminarEstudiante(id);
 
   res.status(200).json({
     success: true,
-    mensaje: 'Paciente eliminado correctamente',
+    mensaje: 'Estudiante eliminado correctamente',
   });
 };
 
 export default {
-  obtenerPacientes,
-  obtenerPacientePorId,
-  crearPaciente,
-  actualizarPaciente,
-  actualizarPacienteParcial,
-  eliminarPaciente,
+  obtenerEstudiantes,
+  obtenerEstudiantePorId,
+  crearEstudiante,
+  actualizarEstudiante,
+  actualizarEstudianteParcial,
+  eliminarEstudiante,
+  // Alias
+  obtenerPacientes: obtenerEstudiantes,
+  obtenerPacientePorId: obtenerEstudiantePorId,
+  crearPaciente: crearEstudiante,
+  actualizarPaciente: actualizarEstudiante,
+  actualizarPacienteParcial: actualizarEstudianteParcial,
+  eliminarPaciente: eliminarEstudiante,
 };

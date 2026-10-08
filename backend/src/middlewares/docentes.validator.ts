@@ -1,11 +1,6 @@
 import { body, param } from 'express-validator';
 
-/**
- * Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/BOLA
- * BLOQUE 6C — PARTE 7: Agregar usuarioId a validación de pacientes
- */
-
-export const validarCreacionPaciente = [
+export const validarCreacionDocente = [
   body('nombre')
     .isString()
     .withMessage('El nombre debe ser texto')
@@ -13,12 +8,24 @@ export const validarCreacionPaciente = [
     .notEmpty()
     .withMessage('El nombre es obligatorio'),
 
-  body('documento')
+  body('registroAcademico')
+    .optional()
     .isString()
-    .withMessage('El documento debe ser texto')
-    .trim()
-    .notEmpty()
-    .withMessage('El documento es obligatorio'),
+    .withMessage('El registro académico debe ser texto')
+    .trim(),
+
+  body('registroMedico')
+    .optional()
+    .isString()
+    .withMessage('El registro médico debe ser texto')
+    .trim(),
+
+  body().custom((value, { req }) => {
+    if (!req.body.registroAcademico && !req.body.registroMedico) {
+      throw new Error('El registro académico es obligatorio');
+    }
+    return true;
+  }),
 
   body('email')
     .isEmail()
@@ -32,11 +39,24 @@ export const validarCreacionPaciente = [
     .notEmpty()
     .withMessage('El teléfono es obligatorio'),
 
-  body('fechaNacimiento')
-    .isString()
-    .withMessage('La fecha de nacimiento debe ser texto')
-    .notEmpty()
-    .withMessage('La fecha de nacimiento es obligatoria'),
+  body('departamentoId')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('El departamentoId debe ser un entero positivo')
+    .toInt(),
+
+  body('especialidadId')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('La especialidadId debe ser un entero positivo')
+    .toInt(),
+
+  body().custom((value, { req }) => {
+    if (req.body.departamentoId === undefined && req.body.especialidadId === undefined) {
+      req.body.departamentoId = 1;
+    }
+    return true;
+  }),
 
   body('usuarioId')
     .optional({ nullable: true })
@@ -64,12 +84,15 @@ export const validarCreacionPaciente = [
     }),
 ];
 
-export const validarPacienteParcial = [
+export const validarDocenteParcial = [
   body('nombre').optional().isString().trim(),
-  body('documento').optional().isString().trim(),
+  body('registroAcademico').optional().isString().trim(),
+  body('registroMedico').optional().isString().trim(),
   body('email').optional().isEmail().normalizeEmail(),
   body('telefono').optional().isString().trim(),
-  body('fechaNacimiento').optional().isString(),
+  body('departamentoId').optional().isInt({ min: 1 }).toInt(),
+  body('especialidadId').optional().isInt({ min: 1 }).toInt(),
+  body('activo').optional().isBoolean(),
   body('usuarioId')
     .optional({ nullable: true })
     .custom((val) => {
@@ -96,21 +119,30 @@ export const validarPacienteParcial = [
     }),
 ];
 
-export const validarIdPaciente = [
+export const validarIdDocente = [
   param('id')
     .optional()
     .isInt({ min: 1 })
-    .withMessage('El ID de paciente debe ser un entero positivo')
+    .withMessage('El ID de docente debe ser un entero positivo')
     .toInt(),
-  param('pacienteId')
+  param('docenteId')
     .optional()
     .isInt({ min: 1 })
-    .withMessage('El ID de paciente debe ser un entero positivo')
+    .withMessage('El ID de docente debe ser un entero positivo')
+    .toInt(),
+  param('medicoId')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('El ID de docente debe ser un entero positivo')
     .toInt(),
 ];
 
 export default {
-  validarCreacionPaciente,
-  validarPacienteParcial,
-  validarIdPaciente,
+  validarCreacionDocente,
+  validarDocenteParcial,
+  validarIdDocente,
+  // Alias de compatibilidad
+  validarCreacionMedico: validarCreacionDocente,
+  validarMedicoParcial: validarDocenteParcial,
+  validarIdMedico: validarIdDocente,
 };

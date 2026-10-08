@@ -1,102 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
-import pacientesService from '../services/pacientes.service';
-import medicosService from '../services/medicos.service';
-import citasService from '../services/citas.service';
+import estudiantesService from '../services/estudiantes.service';
+import docentesService from '../services/docentes.service';
+import revisionesService from '../services/revisiones.service';
 
 /**
  * Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/BOLA
- * BLOQUE 6C — PARTE 17, 21 y Cierre Arquitectónico
- * Middleware de comprobación de propiedad a nivel de objeto (BOLA/IDOR)
+ * Middleware de comprobación de propiedad a nivel de objeto (BOLA/IDOR) en Veritas AI
  */
 
 // ========================================
-// Autorizar acceso al paciente solicitado (/citas/paciente/:pacienteId)
+// Autorizar acceso al estudiante solicitado (/revisiones/estudiante/:estudianteId)
 // ========================================
-export const autorizarPacientePropio = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
-  const usuario = req.usuario || (req as any).user;
-
-  // --------------------------------------
-  // Requiere autenticación previa
-  // --------------------------------------
-  if (!usuario) {
-    res.status(401).json({
-      success: false,
-      mensaje: 'Usuario no autenticado',
-      message: 'Usuario no autenticado',
-    });
-    return;
-  }
-
-  const rawRol = String(usuario.rol || usuario.role || '').toLowerCase().trim();
-
-  // --------------------------------------
-  // Administrador puede continuar (Acceso global)
-  // --------------------------------------
-  if (rawRol === 'administrador' || rawRol === 'admin') {
-    next();
-    return;
-  }
-
-  // --------------------------------------
-  // Esta regla aplica a pacientes / estudiantes
-  // --------------------------------------
-  if (rawRol !== 'paciente' && rawRol !== 'user' && rawRol !== 'usuario' && rawRol !== 'estudiante') {
-    res.status(403).json({
-      success: false,
-      mensaje: 'No tiene permisos para acceder a este recurso',
-      message: 'No tiene permisos para acceder a este recurso',
-    });
-    return;
-  }
-
-  // --------------------------------------
-  // Buscar perfil del usuario autenticado
-  // --------------------------------------
-  const pacienteAutenticado = pacientesService.obtenerPacientePorUsuarioId(
-    usuario.id,
-    usuario.email
-  );
-
-  if (!pacienteAutenticado) {
-    res.status(403).json({
-      success: false,
-      mensaje: 'El usuario no tiene un paciente asociado',
-      message: 'El usuario no tiene un paciente asociado',
-    });
-    return;
-  }
-
-  // --------------------------------------
-  // Paciente solicitado en URL
-  // --------------------------------------
-  const pacienteIdSolicitado = Number(req.params.pacienteId || req.params.id);
-
-  // --------------------------------------
-  // Comprobar propiedad (BOLA / IDOR)
-  // --------------------------------------
-  if (pacienteAutenticado.id !== pacienteIdSolicitado) {
-    res.status(403).json({
-      success: false,
-      mensaje: 'No tiene permisos para acceder a este recurso',
-      message: 'No tiene permisos para acceder a este recurso',
-    });
-    return;
-  }
-
-  // --------------------------------------
-  // Es su propio recurso
-  // --------------------------------------
-  next();
-};
-
-// ========================================
-// Autorizar acceso al médico solicitado (/citas/medico/:medicoId)
-// ========================================
-export const autorizarMedicoPropio = (
+export const autorizarEstudiantePropio = (
   req: Request,
   res: Response,
   next: NextFunction
@@ -106,71 +21,8 @@ export const autorizarMedicoPropio = (
   if (!usuario) {
     res.status(401).json({
       success: false,
-      mensaje: 'Usuario no autenticado',
-      message: 'Usuario no autenticado',
-    });
-    return;
-  }
-
-  const rawRol = String(usuario.rol || usuario.role || '').toLowerCase().trim();
-
-  if (rawRol === 'administrador' || rawRol === 'admin') {
-    next();
-    return;
-  }
-
-  if (rawRol !== 'medico' && rawRol !== 'doctor' && rawRol !== 'auditor' && rawRol !== 'docente' && rawRol !== 'profesor') {
-    res.status(403).json({
-      success: false,
-      mensaje: 'No tiene permisos para acceder a este recurso',
-      message: 'No tiene permisos para acceder a este recurso',
-    });
-    return;
-  }
-
-  const medicoAutenticado = medicosService.obtenerMedicoPorUsuarioId(
-    usuario.id,
-    usuario.email
-  );
-
-  if (!medicoAutenticado) {
-    res.status(403).json({
-      success: false,
-      mensaje: 'El usuario no tiene un médico asociado',
-      message: 'El usuario no tiene un médico asociado',
-    });
-    return;
-  }
-
-  const medicoIdSolicitado = Number(req.params.medicoId || req.params.id);
-
-  if (medicoAutenticado.id !== medicoIdSolicitado) {
-    res.status(403).json({
-      success: false,
-      mensaje: 'No tiene permisos para acceder a este recurso',
-      message: 'No tiene permisos para acceder a este recurso',
-    });
-    return;
-  }
-
-  next();
-};
-
-// ========================================
-// Autorizar acceso a cita individual (/citas/:id)
-// ========================================
-export const autorizarAccesoCita = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
-  const usuario = req.usuario || (req as any).user;
-
-  if (!usuario) {
-    res.status(401).json({
-      success: false,
-      mensaje: 'Usuario no autenticado',
-      message: 'Usuario no autenticado',
+      mensaje: 'Token de autenticación requerido',
+      message: 'Token de autenticación requerido',
     });
     return;
   }
@@ -183,25 +35,158 @@ export const autorizarAccesoCita = (
     return;
   }
 
-  const citaId = Number(req.params.id);
-  const cita = citasService.obtenerCitaPorId(citaId);
-
-  if (!cita) {
-    res.status(404).json({
+  // Estudiantes / usuarios
+  if (rawRol !== 'paciente' && rawRol !== 'user' && rawRol !== 'usuario' && rawRol !== 'estudiante') {
+    res.status(403).json({
       success: false,
-      mensaje: 'Cita no encontrada',
-      message: 'Cita no encontrada',
+      mensaje: 'No tiene permisos para acceder a este recurso',
+      message: 'No tiene permisos para acceder a este recurso',
     });
     return;
   }
 
-  // Validación para Pacientes / Estudiantes
+  const estudianteAutenticado = estudiantesService.obtenerEstudiantePorUsuarioId(
+    usuario.id,
+    usuario.email
+  );
+
+  if (!estudianteAutenticado) {
+    res.status(403).json({
+      success: false,
+      mensaje: 'El usuario no tiene un perfil asociado',
+      message: 'El usuario no tiene un estudiante asociado',
+    });
+    return;
+  }
+
+  const idSolicitado = Number(req.params.estudianteId || req.params.pacienteId || req.params.id);
+
+  if (estudianteAutenticado.id !== idSolicitado) {
+    res.status(403).json({
+      success: false,
+      mensaje: 'No tiene permisos para acceder a este recurso',
+      message: 'No tiene permisos para acceder a este recurso',
+    });
+    return;
+  }
+
+  next();
+};
+
+// ========================================
+// Autorizar acceso al docente solicitado (/revisiones/docente/:docenteId)
+// ========================================
+export const autorizarDocentePropio = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const usuario = req.usuario || (req as any).user;
+
+  if (!usuario) {
+    res.status(401).json({
+      success: false,
+      mensaje: 'Token de autenticación requerido',
+      message: 'Token de autenticación requerido',
+    });
+    return;
+  }
+
+  const rawRol = String(usuario.rol || usuario.role || '').toLowerCase().trim();
+
+  if (rawRol === 'administrador' || rawRol === 'admin') {
+    next();
+    return;
+  }
+
+  if (
+    rawRol !== 'medico' &&
+    rawRol !== 'doctor' &&
+    rawRol !== 'auditor' &&
+    rawRol !== 'docente' &&
+    rawRol !== 'profesor'
+  ) {
+    res.status(403).json({
+      success: false,
+      mensaje: 'No tiene permisos para acceder a este recurso',
+      message: 'No tiene permisos para acceder a este recurso',
+    });
+    return;
+  }
+
+  const docenteAutenticado = docentesService.obtenerDocentePorUsuarioId(
+    usuario.id,
+    usuario.email
+  );
+
+  if (!docenteAutenticado) {
+    res.status(403).json({
+      success: false,
+      mensaje: 'El usuario no tiene un perfil docente asociado',
+      message: 'El usuario no tiene un docente asociado',
+    });
+    return;
+  }
+
+  const idSolicitado = Number(req.params.docenteId || req.params.medicoId || req.params.id);
+
+  if (docenteAutenticado.id !== idSolicitado) {
+    res.status(403).json({
+      success: false,
+      mensaje: 'No tiene permisos para acceder a este recurso',
+      message: 'No tiene permisos para acceder a este recurso',
+    });
+    return;
+  }
+
+  next();
+};
+
+// ========================================
+// Autorizar acceso a revisión individual (/revisiones/:id)
+// ========================================
+export const autorizarAccesoRevision = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const usuario = req.usuario || (req as any).user;
+
+  if (!usuario) {
+    res.status(401).json({
+      success: false,
+      mensaje: 'Token de autenticación requerido',
+      message: 'Token de autenticación requerido',
+    });
+    return;
+  }
+
+  const rawRol = String(usuario.rol || usuario.role || '').toLowerCase().trim();
+
+  if (rawRol === 'administrador' || rawRol === 'admin') {
+    next();
+    return;
+  }
+
+  const revId = Number(req.params.id);
+  const rev = revisionesService.obtenerRevisionPorId(revId);
+
+  if (!rev) {
+    res.status(404).json({
+      success: false,
+      mensaje: 'Revisión no encontrada',
+      message: 'Revisión no encontrada',
+    });
+    return;
+  }
+
+  // Validación para Estudiantes
   if (rawRol === 'paciente' || rawRol === 'user' || rawRol === 'usuario' || rawRol === 'estudiante') {
-    const paciente = pacientesService.obtenerPacientePorUsuarioId(
+    const estudiante = estudiantesService.obtenerEstudiantePorUsuarioId(
       usuario.id,
       usuario.email
     );
-    if (!paciente || cita.pacienteId !== paciente.id) {
+    if (!estudiante || rev.estudianteId !== estudiante.id) {
       res.status(403).json({
         success: false,
         mensaje: 'No tiene permisos para acceder a este recurso',
@@ -213,13 +198,19 @@ export const autorizarAccesoCita = (
     return;
   }
 
-  // Validación para Médicos / Docentes
-  if (rawRol === 'medico' || rawRol === 'doctor' || rawRol === 'auditor' || rawRol === 'docente' || rawRol === 'profesor') {
-    const medico = medicosService.obtenerMedicoPorUsuarioId(
+  // Validación para Docentes
+  if (
+    rawRol === 'medico' ||
+    rawRol === 'doctor' ||
+    rawRol === 'auditor' ||
+    rawRol === 'docente' ||
+    rawRol === 'profesor'
+  ) {
+    const docente = docentesService.obtenerDocentePorUsuarioId(
       usuario.id,
       usuario.email
     );
-    if (!medico || cita.medicoId !== medico.id) {
+    if (!docente || rev.docenteId !== docente.id) {
       res.status(403).json({
         success: false,
         mensaje: 'No tiene permisos para acceder a este recurso',
@@ -238,7 +229,15 @@ export const autorizarAccesoCita = (
   });
 };
 
+// Alias retrocompatibles
+export const autorizarPacientePropio = autorizarEstudiantePropio;
+export const autorizarMedicoPropio = autorizarDocentePropio;
+export const autorizarAccesoCita = autorizarAccesoRevision;
+
 export default {
+  autorizarEstudiantePropio,
+  autorizarDocentePropio,
+  autorizarAccesoRevision,
   autorizarPacientePropio,
   autorizarMedicoPropio,
   autorizarAccesoCita,
