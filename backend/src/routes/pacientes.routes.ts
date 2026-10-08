@@ -39,7 +39,7 @@ const router = Router();
 router.get(
   '/',
   autenticarJWT,
-  autorizarRoles('administrador', 'admin', 'medico', 'doctor'),
+  autorizarRoles('administrador', 'admin', 'medico', 'doctor', 'docente', 'profesor'),
   obtenerPacientes
 );
 
@@ -72,7 +72,7 @@ router.get(
 router.get(
   '/:id',
   autenticarJWT,
-  autorizarRoles('administrador', 'admin', 'medico', 'doctor'),
+  autorizarRoles('administrador', 'admin', 'medico', 'doctor', 'docente', 'profesor'),
   validarIdPaciente,
   validar,
   obtenerPacientePorId

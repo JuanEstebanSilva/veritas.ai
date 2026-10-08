@@ -42,9 +42,9 @@ export const autorizarPacientePropio = (
   }
 
   // --------------------------------------
-  // Esta regla aplica a pacientes
+  // Esta regla aplica a pacientes / estudiantes
   // --------------------------------------
-  if (rawRol !== 'paciente' && rawRol !== 'user' && rawRol !== 'usuario') {
+  if (rawRol !== 'paciente' && rawRol !== 'user' && rawRol !== 'usuario' && rawRol !== 'estudiante') {
     res.status(403).json({
       success: false,
       mensaje: 'No tiene permisos para acceder a este recurso',
@@ -56,7 +56,10 @@ export const autorizarPacientePropio = (
   // --------------------------------------
   // Buscar perfil del usuario autenticado
   // --------------------------------------
-  const pacienteAutenticado = pacientesService.obtenerPacientePorUsuarioId(usuario.id);
+  const pacienteAutenticado = pacientesService.obtenerPacientePorUsuarioId(
+    usuario.id,
+    usuario.email
+  );
 
   if (!pacienteAutenticado) {
     res.status(403).json({
@@ -116,7 +119,7 @@ export const autorizarMedicoPropio = (
     return;
   }
 
-  if (rawRol !== 'medico' && rawRol !== 'doctor' && rawRol !== 'auditor') {
+  if (rawRol !== 'medico' && rawRol !== 'doctor' && rawRol !== 'auditor' && rawRol !== 'docente' && rawRol !== 'profesor') {
     res.status(403).json({
       success: false,
       mensaje: 'No tiene permisos para acceder a este recurso',
@@ -125,7 +128,10 @@ export const autorizarMedicoPropio = (
     return;
   }
 
-  const medicoAutenticado = medicosService.obtenerMedicoPorUsuarioId(usuario.id);
+  const medicoAutenticado = medicosService.obtenerMedicoPorUsuarioId(
+    usuario.id,
+    usuario.email
+  );
 
   if (!medicoAutenticado) {
     res.status(403).json({
@@ -189,9 +195,12 @@ export const autorizarAccesoCita = (
     return;
   }
 
-  // Validación para Pacientes
-  if (rawRol === 'paciente' || rawRol === 'user' || rawRol === 'usuario') {
-    const paciente = pacientesService.obtenerPacientePorUsuarioId(usuario.id);
+  // Validación para Pacientes / Estudiantes
+  if (rawRol === 'paciente' || rawRol === 'user' || rawRol === 'usuario' || rawRol === 'estudiante') {
+    const paciente = pacientesService.obtenerPacientePorUsuarioId(
+      usuario.id,
+      usuario.email
+    );
     if (!paciente || cita.pacienteId !== paciente.id) {
       res.status(403).json({
         success: false,
@@ -204,9 +213,12 @@ export const autorizarAccesoCita = (
     return;
   }
 
-  // Validación para Médicos
-  if (rawRol === 'medico' || rawRol === 'doctor' || rawRol === 'auditor') {
-    const medico = medicosService.obtenerMedicoPorUsuarioId(usuario.id);
+  // Validación para Médicos / Docentes
+  if (rawRol === 'medico' || rawRol === 'doctor' || rawRol === 'auditor' || rawRol === 'docente' || rawRol === 'profesor') {
+    const medico = medicosService.obtenerMedicoPorUsuarioId(
+      usuario.id,
+      usuario.email
+    );
     if (!medico || cita.medicoId !== medico.id) {
       res.status(403).json({
         success: false,

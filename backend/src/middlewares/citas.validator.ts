@@ -7,14 +7,24 @@ import { body, param } from 'express-validator';
 
 export const validarCreacionCita = [
   body('pacienteId')
-    .isInt({ min: 1 })
-    .withMessage('El pacienteId debe ser un entero positivo')
-    .toInt(),
+    .custom((val, { req }) => {
+      const id = val || req.body.estudianteId;
+      if (!id || isNaN(Number(id)) || Number(id) < 1) {
+        throw new Error('El pacienteId o estudianteId debe ser un entero positivo');
+      }
+      req.body.pacienteId = Number(id);
+      return true;
+    }),
 
   body('medicoId')
-    .isInt({ min: 1 })
-    .withMessage('El medicoId debe ser un entero positivo')
-    .toInt(),
+    .custom((val, { req }) => {
+      const id = val || req.body.docenteId;
+      if (!id || isNaN(Number(id)) || Number(id) < 1) {
+        throw new Error('El medicoId o docenteId debe ser un entero positivo');
+      }
+      req.body.medicoId = Number(id);
+      return true;
+    }),
 
   body('fecha')
     .isISO8601()

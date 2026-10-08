@@ -43,18 +43,18 @@ export const autorizarRoles = (...rolesPermitidos: string[]) => {
         return true;
       }
 
-      // Equivalencias de paciente / usuario en Veritas AI
+      // Equivalencias de paciente / estudiante / usuario en Veritas AI
       if (
-        (rolPermitido === 'paciente' || rolPermitido === 'user' || rolPermitido === 'usuario') &&
-        (rawRol === 'paciente' || rawRol === 'user' || rawRol === 'usuario')
+        (rolPermitido === 'paciente' || rolPermitido === 'user' || rolPermitido === 'usuario' || rolPermitido === 'estudiante') &&
+        (rawRol === 'paciente' || rawRol === 'user' || rawRol === 'usuario' || rawRol === 'estudiante')
       ) {
         return true;
       }
 
-      // Equivalencias de médico / especialista en Veritas AI
+      // Equivalencias de médico / docente / profesor / especialista en Veritas AI
       if (
-        (rolPermitido === 'medico' || rolPermitido === 'doctor' || rolPermitido === 'auditor') &&
-        (rawRol === 'medico' || rawRol === 'doctor' || rawRol === 'auditor')
+        (rolPermitido === 'medico' || rolPermitido === 'doctor' || rolPermitido === 'auditor' || rolPermitido === 'docente' || rolPermitido === 'profesor') &&
+        (rawRol === 'medico' || rawRol === 'doctor' || rawRol === 'auditor' || rawRol === 'docente' || rawRol === 'profesor')
       ) {
         return true;
       }

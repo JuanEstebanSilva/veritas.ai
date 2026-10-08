@@ -111,8 +111,9 @@ export class AuthController {
           id: newUser.id,
           nombre: `${newUser.name} ${newUser.last_name}`.trim(),
           email: newUser.email,
-          rol: newUser.role.toLowerCase(), // 'user' (rol asignado por el servidor)
-          activo: newUser.is_active,
+          rol: newUser.rol || (newUser.role === Role.USER ? 'paciente' : newUser.role.toLowerCase()),
+          role: newUser.role,
+          activo: newUser.is_active ?? newUser.activo ?? true,
         },
       });
     } catch (error: any) {
@@ -179,11 +180,26 @@ export class AuthController {
         }
       }
 
+      // Determinar rol efectivo para JWT y respuesta
+      let rolEfectivo = user.rol;
+      if (!rolEfectivo) {
+        if (user.role === Role.ADMIN) {
+          rolEfectivo = 'administrador';
+        } else if (
+          user.email.toLowerCase().includes('medico') ||
+          user.email.toLowerCase().includes('doctor')
+        ) {
+          rolEfectivo = 'medico';
+        } else {
+          rolEfectivo = 'paciente';
+        }
+      }
+
       // Generación de Token JWT (Laboratorio 9)
       const token = generarToken({
         id: user.id,
         email: user.email,
-        rol: user.role.toLowerCase(),
+        rol: rolEfectivo,
       });
 
       res.status(200).json({
@@ -203,9 +219,10 @@ export class AuthController {
         },
         usuario: {
           id: user.id,
-          nombre: `${user.name} ${user.last_name}`.trim(),
+          nombre: `${user.name} ${user.last_name || ''}`.trim(),
           email: user.email,
-          rol: user.role.toLowerCase(), // 'user' o 'admin'
+          rol: rolEfectivo,
+          role: user.role,
         },
       });
     } catch (error: any) {

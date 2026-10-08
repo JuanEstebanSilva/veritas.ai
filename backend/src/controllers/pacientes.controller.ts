@@ -13,8 +13,9 @@ export const obtenerPacientes = (req: Request, res: Response): void => {
   const lista = pacientesService.obtenerPacientes();
   res.status(200).json({
     success: true,
-    mensaje: 'Lista de pacientes obtenida correctamente',
+    mensaje: 'Lista de estudiantes / pacientes obtenida correctamente',
     pacientes: lista,
+    estudiantes: lista,
   });
 };
 
@@ -33,6 +34,7 @@ export const obtenerPacientePorId = (req: Request, res: Response): void => {
   res.status(200).json({
     success: true,
     paciente,
+    estudiante: paciente,
   });
 };
 
@@ -60,7 +62,12 @@ export const crearPaciente = async (
       }
 
       const rolUsuario = String(usuario.rol || usuario.role || '').toLowerCase().trim();
-      if (rolUsuario !== 'paciente' && rolUsuario !== 'user' && rolUsuario !== 'usuario') {
+      if (
+        rolUsuario !== 'paciente' &&
+        rolUsuario !== 'user' &&
+        rolUsuario !== 'usuario' &&
+        rolUsuario !== 'estudiante'
+      ) {
         res.status(409).json({
           success: false,
           mensaje: 'El usuario asociado no tiene rol paciente',
@@ -69,12 +76,17 @@ export const crearPaciente = async (
         return;
       }
 
-      const pacienteExistente = pacientesService.obtenerPacientePorUsuarioId(datos.usuarioId);
+      const pacienteExistente = pacientesService.obtenerPacientePorUsuarioId(
+        datos.usuarioId,
+        datos.email
+      );
       if (pacienteExistente) {
         res.status(409).json({
           success: false,
           mensaje: 'El usuario ya está asociado a un paciente',
           message: 'El usuario ya está asociado a un paciente',
+          paciente: pacienteExistente,
+          estudiante: pacienteExistente,
         });
         return;
       }
@@ -86,6 +98,7 @@ export const crearPaciente = async (
       success: true,
       mensaje: 'Paciente creado correctamente',
       paciente,
+      estudiante: paciente,
     });
   } catch (error) {
     next(error);
@@ -112,7 +125,12 @@ export const actualizarPaciente = async (
       }
 
       const rolUsuario = String(usuario.rol || usuario.role || '').toLowerCase().trim();
-      if (rolUsuario !== 'paciente' && rolUsuario !== 'user' && rolUsuario !== 'usuario') {
+      if (
+        rolUsuario !== 'paciente' &&
+        rolUsuario !== 'user' &&
+        rolUsuario !== 'usuario' &&
+        rolUsuario !== 'estudiante'
+      ) {
         res.status(409).json({
           success: false,
           mensaje: 'El usuario asociado no tiene rol paciente',
@@ -140,6 +158,7 @@ export const actualizarPaciente = async (
       success: true,
       mensaje: 'Paciente actualizado correctamente',
       paciente,
+      estudiante: paciente,
     });
   } catch (error) {
     next(error);
@@ -166,10 +185,15 @@ export const actualizarPacienteParcial = async (
       }
 
       const rolUsuario = String(usuario.rol || usuario.role || '').toLowerCase().trim();
-      if (rolUsuario !== 'paciente' && rolUsuario !== 'user' && rolUsuario !== 'usuario') {
+      if (
+        rolUsuario !== 'paciente' &&
+        rolUsuario !== 'user' &&
+        rolUsuario !== 'usuario' &&
+        rolUsuario !== 'estudiante'
+      ) {
         res.status(409).json({
           success: false,
-          mensaje: 'El usuario asociado no tiene rol paciente',
+          mensaje: 'El usuario asociado no tiene rol estudiante / paciente',
         });
         return;
       }
@@ -192,8 +216,9 @@ export const actualizarPacienteParcial = async (
 
     res.status(200).json({
       success: true,
-      mensaje: 'Paciente actualizado correctamente',
+      mensaje: 'Perfil actualizado correctamente',
       paciente,
+      estudiante: paciente,
     });
   } catch (error) {
     next(error);

@@ -1,5 +1,5 @@
 import { medicos, Medico } from '../data/medicos.data';
-import { usuariosMemoria } from './usuarios.service';
+import { usuariosMemoria, obtenerAliasesEmail } from './usuarios.service';
 
 export interface DatosMedico {
   nombre: string;
@@ -36,11 +36,14 @@ export const obtenerMedicoPorId = (id: number | string): Medico | undefined => {
 // ========================================
 // Obtener médico por usuarioId (Bloque 6C, Parte 5)
 // ========================================
-export const obtenerMedicoPorUsuarioId = (usuarioId: number | string): Medico | undefined => {
+export const obtenerMedicoPorUsuarioId = (
+  usuarioId: number | string,
+  email?: string
+): Medico | undefined => {
   const numId = Number(usuarioId);
   const strId = String(usuarioId);
 
-  // 1. Coincidencia directa
+  // 1. Coincidencia directa por usuarioId
   const directo = medicos.find((m) => {
     if (m.usuarioId === null || m.usuarioId === undefined) return false;
     return (
@@ -50,22 +53,41 @@ export const obtenerMedicoPorUsuarioId = (usuarioId: number | string): Medico | 
   });
   if (directo) return directo;
 
-  // 2. Coincidencia cruzada si el usuario tiene UUID y numId
+  // 2. Coincidencia por correo electrónico con soporte de alias
+  if (email) {
+    const aliases = obtenerAliasesEmail(email);
+    const porEmail = medicos.find(
+      (m) => m.email && aliases.includes(m.email.toLowerCase().trim())
+    );
+    if (porEmail) return porEmail;
+  }
+
+  // 3. Coincidencia cruzada si el usuario tiene UUID y numId en memoria
   const u = usuariosMemoria.find(
     (user) =>
       String(user.id) === strId ||
       (!isNaN(numId) && (Number(user.id) === numId || (user as any).numId === numId)) ||
-      String((user as any).numId) === strId
+      String((user as any).numId) === strId ||
+      (user as any).uuid === strId
   );
   if (u) {
     const aliasNum = (u as any).numId;
     const aliasStr = String(u.id);
+    const userEmail = u.email?.toLowerCase().trim();
+
     return medicos.find((m) => {
-      if (m.usuarioId === null || m.usuarioId === undefined) return false;
-      return (
-        String(m.usuarioId) === aliasStr ||
-        (aliasNum !== undefined && Number(m.usuarioId) === aliasNum)
-      );
+      if (m.usuarioId !== null && m.usuarioId !== undefined) {
+        if (
+          String(m.usuarioId) === aliasStr ||
+          (aliasNum !== undefined && Number(m.usuarioId) === aliasNum)
+        ) {
+          return true;
+        }
+      }
+      if (userEmail && m.email && m.email.toLowerCase().trim() === userEmail) {
+        return true;
+      }
+      return false;
     });
   }
 

@@ -86,13 +86,13 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/security', securityRoutes);
 app.use('/api/seguridad', securityRoutes);
 
-// Rutas de Autorización Segura, RBAC y BOLA (Lab 10 - Veritas AI)
-app.use('/api/usuarios', usuariosRoutes);
-app.use('/api/pacientes', pacientesRoutes);
-app.use('/api/medicos', medicosRoutes);
-app.use('/api/especialidades', especialidadesRoutes);
-app.use('/api/consultorios', consultoriosRoutes);
-app.use('/api/citas', citasRoutes);
+// Rutas de Autorización Segura, RBAC y BOLA (Lab 10 - Veritas AI con soporte nativo Académico y Hospitalario)
+app.use(['/api/usuarios', '/api/users'], usuariosRoutes);
+app.use(['/api/pacientes', '/api/estudiantes'], pacientesRoutes);
+app.use(['/api/medicos', '/api/docentes', '/api/profesores'], medicosRoutes);
+app.use(['/api/especialidades', '/api/materias', '/api/departamentos'], especialidadesRoutes);
+app.use(['/api/consultorios', '/api/aulas', '/api/oficinas'], consultoriosRoutes);
+app.use(['/api/citas', '/api/revisiones', '/api/asesorias'], citasRoutes);
 
 // Manejo de rutas 404
 app.use((_req: Request, res: Response) => {

@@ -16,8 +16,9 @@ export const obtenerTodasLasCitas = (_req: Request, res: Response): void => {
   const lista = citasService.obtenerTodasLasCitas();
   res.status(200).json({
     success: true,
-    mensaje: 'Lista de todas las citas',
+    mensaje: 'Lista de todas las revisiones / citas',
     citas: lista,
+    revisiones: lista,
   });
 };
 
@@ -40,6 +41,7 @@ export const obtenerCitaPorId = (req: Request, res: Response): void => {
   res.status(200).json({
     success: true,
     cita,
+    revision: cita,
   });
 };
 
@@ -52,8 +54,9 @@ export const obtenerCitasPorPaciente = (req: Request, res: Response): void => {
 
   res.status(200).json({
     success: true,
-    mensaje: 'Citas del paciente obtenidas correctamente',
+    mensaje: 'Revisiones del estudiante / paciente obtenidas correctamente',
     citas: lista,
+    revisiones: lista,
   });
 };
 
@@ -66,8 +69,9 @@ export const obtenerCitasPorMedico = (req: Request, res: Response): void => {
 
   res.status(200).json({
     success: true,
-    mensaje: 'Citas del médico obtenidas correctamente',
+    mensaje: 'Revisiones del docente / médico obtenidas correctamente',
     citas: lista,
+    revisiones: lista,
   });
 };
 
@@ -98,31 +102,44 @@ export const obtenerMisCitas = (req: Request, res: Response): void => {
     return;
   }
 
-  if (rawRol === 'paciente' || rawRol === 'user' || rawRol === 'usuario') {
-    const paciente = pacientesService.obtenerPacientePorUsuarioId(usuario.id);
+  if (rawRol === 'paciente' || rawRol === 'user' || rawRol === 'usuario' || rawRol === 'estudiante') {
+    const paciente = pacientesService.obtenerPacientePorUsuarioId(
+      usuario.id,
+      usuario.email
+    );
     if (!paciente) {
       res.status(403).json({
         success: false,
-        mensaje: 'El usuario no tiene un paciente asociado',
-        message: 'El usuario no tiene un paciente asociado',
+        mensaje: 'El usuario no tiene un paciente asociado (perfil de estudiante)',
+        message: 'El usuario no tiene un estudiante o paciente asociado',
       });
       return;
     }
     const misCitas = citasService.obtenerCitasPorPaciente(paciente.id);
     res.status(200).json({
       success: true,
-      mensaje: 'Mis citas como paciente',
+      mensaje: 'Mis revisiones como estudiante / citas como paciente',
       citas: misCitas,
+      revisiones: misCitas,
     });
     return;
   }
 
-  if (rawRol === 'medico' || rawRol === 'doctor' || rawRol === 'auditor') {
-    const medico = medicosService.obtenerMedicoPorUsuarioId(usuario.id);
+  if (
+    rawRol === 'medico' ||
+    rawRol === 'doctor' ||
+    rawRol === 'auditor' ||
+    rawRol === 'docente' ||
+    rawRol === 'profesor'
+  ) {
+    const medico = medicosService.obtenerMedicoPorUsuarioId(
+      usuario.id,
+      usuario.email
+    );
     if (!medico) {
       res.status(403).json({
         success: false,
-        mensaje: 'El usuario no tiene un médico asociado',
+        mensaje: 'El usuario no tiene un docente / médico asociado',
         message: 'El usuario no tiene un médico asociado',
       });
       return;
@@ -130,8 +147,9 @@ export const obtenerMisCitas = (req: Request, res: Response): void => {
     const misCitas = citasService.obtenerCitasPorMedico(medico.id);
     res.status(200).json({
       success: true,
-      mensaje: 'Mis citas como médico',
+      mensaje: 'Mis revisiones como docente / citas como médico',
       citas: misCitas,
+      revisiones: misCitas,
     });
     return;
   }
@@ -152,8 +170,9 @@ export const crearCita = (req: Request, res: Response, next: NextFunction): void
 
     res.status(201).json({
       success: true,
-      mensaje: 'Cita creada correctamente',
+      mensaje: 'Revisión / Cita creada correctamente',
       cita,
+      revision: cita,
     });
   } catch (error) {
     next(error);

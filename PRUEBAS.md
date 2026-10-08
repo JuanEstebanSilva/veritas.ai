@@ -408,10 +408,10 @@ Se incorporó la suite `tests/lab8.test.ts` para evaluar dinámicamente la mitig
 
 1. **Defensa en Profundidad (Dos Barreras)**:
    - **Capa 1 (Allowlisting en Validador)**: Uso de `express-validator` y `matchedData(req, { locations: ['body'] })` para extirpar cualquier atributo sensible o privilegiado (`rol`, `activo`, `esSuperAdmin`, `passwordHash`, `permisos`) antes de que el controlador proceda.
-   - **Capa 2 (Control Estricto en Capa de Servicio)**: `usuarios.service.ts` fuerza directamente en el registro `role: Role.USER` (en respuesta `rol: "paciente"`) y `is_active: true`, impidiendo que peticiones manipuladas puedan jamás alterar el modelo en PostgreSQL.
+   - **Capa 2 (Control Estricto en Capa de Servicio)**: `usuarios.service.ts` fuerza directamente en el registro `role: Role.USER` (en respuesta `rol: "usuario"` / `estudiante`) y `is_active: true`, impidiendo que peticiones manipuladas puedan jamás alterar el modelo en PostgreSQL.
 2. **Resultados del Checkpoint Oficial**:
-   - Registro sin rol: **201 Created** con `rol: "paciente"` y `activo: true` (OK ✅).
-   - Intento de enviar `rol: "administrador"`: **201 Created** con `rol: "paciente"` persistido (OK ✅).
+   - Registro sin rol: **201 Created** con `rol: "usuario"` / `estudiante` y `activo: true` (OK ✅).
+   - Intento de enviar `rol: "administrador"`: **201 Created** con rol base `usuario` persistido (OK ✅).
    - Intento de enviar `activo: false`: **201 Created** con `activo: true` persistido (OK ✅).
    - Intento de inyectar `passwordHash` falso: Ignorado; bcrypt calcula hash seguro (OK ✅).
    - Intento de inyectar `esSuperAdmin: true`, `permisos` o `id`: Descartados por allowlisting (OK ✅).
@@ -459,9 +459,9 @@ Para elevar la postura de seguridad de Plagelio al nivel más riguroso de la ind
 
 ### 7.1. Alcance y Objetivos
 El Laboratorio No. 10 audita e implementa la defensa en profundidad de autorización en **Veritas AI**:
-- **Bloque 6A — RBAC (Role-Based Access Control)**: Separación clara entre Autenticación (`401 Unauthorized`) y Autorización (`403 Forbidden`), control de acceso multinivel por roles (`administrador`, `medico`, `paciente`) y bootstrap inicial seguro del primer administrador desde variables de entorno.
-- **Bloque 6B — Gestión Administrativa de Usuarios**: Separación de rutas de creación (Registro público -> siempre paciente vs Gestión administrativa `POST /api/usuarios` -> médico/administrador) y neutralización total de ataques de Mass Assignment y escalamiento de privilegios.
-- **Bloque 6C — Autorización a Nivel de Objeto (IDOR/BOLA)**: Mitigación de la vulnerabilidad No. 1 de OWASP API Security Top 10 (*Broken Object Level Authorization*), garantizando que un usuario autenticado con rol válido únicamente pueda consultar o manipular sus propios recursos mediante el middleware de propiedad (`propiedad.middleware.ts`), además del endpoint inmune `/api/citas/mis-citas`.
+- **Bloque 6A — RBAC (Role-Based Access Control)**: Separación clara entre Autenticación (`401 Unauthorized`) y Autorización (`403 Forbidden`), control de acceso multinivel por roles (`administrador`, `docente` / `auditor`, `estudiante` / `usuario`) y bootstrap inicial seguro del primer administrador desde variables de entorno.
+- **Bloque 6B — Gestión Administrativa de Usuarios**: Separación de rutas de creación (Registro público -> siempre estudiante/usuario vs Gestión administrativa `POST /api/usuarios` -> docente/administrador) y neutralización total de ataques de Mass Assignment y escalamiento de privilegios.
+- **Bloque 6C — Autorización a Nivel de Objeto (IDOR/BOLA)**: Mitigación de la vulnerabilidad No. 1 de OWASP API Security Top 10 (*Broken Object Level Authorization*), garantizando que un usuario autenticado con rol válido únicamente pueda consultar o manipular sus propios recursos mediante el middleware de propiedad (`propiedad.middleware.ts`), además del endpoint inmune `/api/revisiones/mis-revisiones` (o `/api/citas/mis-citas`).
 
 ### 7.2. Matriz Consolidada de Pruebas Automatizadas de Laboratorio 10 (`tests/lab10.test.ts`)
 

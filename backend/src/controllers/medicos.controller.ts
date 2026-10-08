@@ -13,8 +13,10 @@ export const obtenerMedicos = (req: Request, res: Response): void => {
   const lista = medicosService.obtenerMedicos();
   res.status(200).json({
     success: true,
-    mensaje: 'Lista de médicos obtenida correctamente',
+    mensaje: 'Lista de docentes / médicos obtenida correctamente',
     medicos: lista,
+    docentes: lista,
+    profesores: lista,
   });
 };
 
@@ -33,6 +35,8 @@ export const obtenerMedicoPorId = (req: Request, res: Response): void => {
   res.status(200).json({
     success: true,
     medico,
+    docente: medico,
+    profesor: medico,
   });
 };
 
@@ -60,21 +64,33 @@ export const crearMedico = async (
       }
 
       const rolUsuario = String(usuario.rol || usuario.role || '').toLowerCase().trim();
-      if (rolUsuario !== 'medico' && rolUsuario !== 'doctor' && rolUsuario !== 'auditor') {
+      if (
+        rolUsuario !== 'medico' &&
+        rolUsuario !== 'doctor' &&
+        rolUsuario !== 'auditor' &&
+        rolUsuario !== 'docente' &&
+        rolUsuario !== 'profesor'
+      ) {
         res.status(409).json({
           success: false,
           mensaje: 'El usuario asociado no tiene rol medico',
-          message: 'El usuario asociado no tiene rol medico',
+          message: 'El usuario asociado no tiene rol docente o auditor',
         });
         return;
       }
 
-      const medicoExistente = medicosService.obtenerMedicoPorUsuarioId(datos.usuarioId);
+      const medicoExistente = medicosService.obtenerMedicoPorUsuarioId(
+        datos.usuarioId,
+        datos.email
+      );
       if (medicoExistente) {
         res.status(409).json({
           success: false,
           mensaje: 'El usuario ya está asociado a un médico',
-          message: 'El usuario ya está asociado a un médico',
+          message: 'El usuario ya está asociado a un docente o auditor',
+          medico: medicoExistente,
+          docente: medicoExistente,
+          profesor: medicoExistente,
         });
         return;
       }
@@ -86,6 +102,8 @@ export const crearMedico = async (
       success: true,
       mensaje: 'Médico creado correctamente',
       medico,
+      docente: medico,
+      profesor: medico,
     });
   } catch (error) {
     next(error);

@@ -27,8 +27,8 @@ export const validarCreacionUsuario = [
     .withMessage('La contraseña debe tener entre 10 y 72 caracteres'),
 
   body('rol')
-    .isIn(['medico', 'administrador', 'admin', 'auditor'])
-    .withMessage('El rol debe ser medico o administrador'),
+    .isIn(['medico', 'administrador', 'admin', 'auditor', 'docente', 'profesor'])
+    .withMessage('El rol debe ser docente, medico o administrador'),
 ];
 
 export default {

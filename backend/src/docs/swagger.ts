@@ -30,16 +30,16 @@ const options: swaggerJsdoc.Options = {
         description: 'Gestión administrativa de usuarios del sistema (Bloque 6B)',
       },
       {
-        name: 'Pacientes',
-        description: 'Control de acceso a recursos de pacientes y perfiles (Bloque 6A)',
+        name: 'Estudiantes',
+        description: 'Control de acceso a perfiles de estudiantes y autores académicos (Bloque 6A)',
       },
       {
-        name: 'Médicos',
-        description: 'Gestión de médicos y perfiles autorizados (Bloque 6A)',
+        name: 'Auditores',
+        description: 'Gestión de auditores, analistas de plagio y docentes revisores (Bloque 6A)',
       },
       {
-        name: 'Citas',
-        description: 'Gestión segura de citas médicas, defensa contra IDOR/BOLA y /mis-citas (Bloque 6C)',
+        name: 'Escaneos',
+        description: 'Gestión segura de escaneos de integridad académica, defensa contra IDOR/BOLA y /mis-escaneos (Bloque 6C)',
       },
       {
         name: 'Análisis IA',

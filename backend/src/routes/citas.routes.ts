@@ -48,7 +48,7 @@ const router = Router();
  *         description: No autorizado o perfil no asociado
  */
 router.get(
-  '/mis-citas',
+  ['/mis-citas', '/mis-revisiones'],
   autenticarJWT,
   obtenerMisCitas
 );
@@ -103,9 +103,9 @@ router.get(
  *         description: BOLA/IDOR - No tiene permisos para ver citas de otro paciente
  */
 router.get(
-  '/paciente/:pacienteId',
+  ['/paciente/:pacienteId', '/estudiante/:pacienteId'],
   autenticarJWT,
-  autorizarRoles('administrador', 'admin', 'paciente', 'user'),
+  autorizarRoles('administrador', 'admin', 'paciente', 'user', 'estudiante'),
   validarIdPaciente,
   validar,
   autorizarPacientePropio,
@@ -137,9 +137,9 @@ router.get(
  *         description: BOLA/IDOR - No tiene permisos para ver citas de otro médico
  */
 router.get(
-  '/medico/:medicoId',
+  ['/medico/:medicoId', '/docente/:medicoId', '/profesor/:medicoId'],
   autenticarJWT,
-  autorizarRoles('administrador', 'admin', 'medico', 'doctor'),
+  autorizarRoles('administrador', 'admin', 'medico', 'doctor', 'docente', 'profesor'),
   validarIdMedico,
   validar,
   autorizarMedicoPropio,

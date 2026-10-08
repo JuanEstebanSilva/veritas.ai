@@ -1,5 +1,5 @@
 import { pacientes, Paciente } from '../data/pacientes.data';
-import { usuariosMemoria } from './usuarios.service';
+import { usuariosMemoria, obtenerAliasesEmail } from './usuarios.service';
 
 export interface DatosPaciente {
   nombre: string;
@@ -35,11 +35,14 @@ export const obtenerPacientePorId = (id: number | string): Paciente | undefined 
 // ========================================
 // Obtener paciente por usuarioId (Bloque 6C, Parte 4)
 // ========================================
-export const obtenerPacientePorUsuarioId = (usuarioId: number | string): Paciente | undefined => {
+export const obtenerPacientePorUsuarioId = (
+  usuarioId: number | string,
+  email?: string
+): Paciente | undefined => {
   const numId = Number(usuarioId);
   const strId = String(usuarioId);
 
-  // 1. Coincidencia directa
+  // 1. Coincidencia directa por usuarioId
   const directo = pacientes.find((p) => {
     if (p.usuarioId === null || p.usuarioId === undefined) return false;
     return (
@@ -49,22 +52,41 @@ export const obtenerPacientePorUsuarioId = (usuarioId: number | string): Pacient
   });
   if (directo) return directo;
 
-  // 2. Coincidencia cruzada si el usuario tiene UUID y numId
+  // 2. Coincidencia por correo electrónico con soporte de alias
+  if (email) {
+    const aliases = obtenerAliasesEmail(email);
+    const porEmail = pacientes.find(
+      (p) => p.email && aliases.includes(p.email.toLowerCase().trim())
+    );
+    if (porEmail) return porEmail;
+  }
+
+  // 3. Coincidencia cruzada si el usuario tiene UUID y numId en memoria
   const u = usuariosMemoria.find(
     (user) =>
       String(user.id) === strId ||
       (!isNaN(numId) && (Number(user.id) === numId || (user as any).numId === numId)) ||
-      String((user as any).numId) === strId
+      String((user as any).numId) === strId ||
+      (user as any).uuid === strId
   );
   if (u) {
     const aliasNum = (u as any).numId;
     const aliasStr = String(u.id);
+    const userEmail = u.email?.toLowerCase().trim();
+
     return pacientes.find((p) => {
-      if (p.usuarioId === null || p.usuarioId === undefined) return false;
-      return (
-        String(p.usuarioId) === aliasStr ||
-        (aliasNum !== undefined && Number(p.usuarioId) === aliasNum)
-      );
+      if (p.usuarioId !== null && p.usuarioId !== undefined) {
+        if (
+          String(p.usuarioId) === aliasStr ||
+          (aliasNum !== undefined && Number(p.usuarioId) === aliasNum)
+        ) {
+          return true;
+        }
+      }
+      if (userEmail && p.email && p.email.toLowerCase().trim() === userEmail) {
+        return true;
+      }
+      return false;
     });
   }
 

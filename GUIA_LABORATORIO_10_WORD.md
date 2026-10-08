@@ -1,6 +1,6 @@
 # GUÍA DE EJECUCIÓN Y RECOPILACIÓN DE EVIDENCIAS
 ## LABORATORIO No. 10: AUTORIZACIÓN SEGURA EN APIS REST — RBAC, IDOR/BOLA Y CONTROL DE ACCESO A RECURSOS
-### PROYECTO: VERITAS AI (@veritas.com)
+### PROYECTO: VERITAS AI — PLATAFORMA DE INTEGRIDAD ACADÉMICA Y DETECCIÓN ANTIPLAGIO (@veritas.com)
 
 ---
 
@@ -8,9 +8,9 @@
 
 El presente documento constituye la guía paso a paso para la reproducción, validación y recopilación de evidencias fotográficas (capturas de pantalla) requeridas para el informe final en formato Word del **Laboratorio No. 10 — Bloques 6A, 6B y 6C**.
 
-En la plataforma **Veritas AI**, la arquitectura de seguridad evoluciona de un esquema puramente autenticado (¿Quién eres?) a un control de acceso de defensa en profundidad multicapa que responde a dos preguntas críticas:
-1. **RBAC (Role-Based Access Control)**: ¿Tiene el rol del usuario permisos para realizar esta operación general?
-2. **BOLA / IDOR (Broken Object Level Authorization / Insecure Direct Object Reference)**: ¿Tiene este usuario específico autorización para consultar o modificar **este recurso concreto** (esta cita, este paciente, este expediente)?
+En la plataforma **Veritas AI** (sistema de análisis de similitud, detección de IA generativa y auditoría de integridad académica), la arquitectura de seguridad evoluciona de un esquema puramente autenticado (¿Quién eres?) a un control de acceso de defensa en profundidad multicapa que responde a dos preguntas críticas:
+1. **RBAC (Role-Based Access Control)**: ¿Tiene el rol del usuario permisos para realizar esta operación general (ej. Administrador, Docente/Auditor, Estudiante)?
+2. **BOLA / IDOR (Broken Object Level Authorization / Insecure Direct Object Reference)**: ¿Tiene este usuario específico autorización para consultar o modificar **este recurso concreto** (esta revisión o escaneo, este perfil de estudiante, este reporte de similitud)?
 
 ### 1.1. Arquitectura de Defensa en Capas de Veritas AI
 
@@ -27,7 +27,7 @@ En la plataforma **Veritas AI**, la arquitectura de seguridad evoluciona de un e
                     [3] JWT (Autenticación y Firma HS256)
                                       │
                                       ▼
-                  [4] RBAC: autorizarRoles (administrador, medico, paciente)
+            [4] RBAC: autorizarRoles (administrador, docente/auditor, estudiante/usuario)
                                       │
                                       ▼
                [5] BOLA / IDOR: propiedad.middleware (Control por Objeto)
@@ -53,7 +53,7 @@ En la plataforma **Veritas AI**, la arquitectura de seguridad evoluciona de un e
 Asegúrate de que el archivo `.env` del backend contenga las credenciales del Administrador Bootstrap y la configuración de API Key adaptada a **Veritas AI**:
 
 ```ini
-PORT=3000
+PORT=5000
 ALLOWED_ORIGIN=http://localhost:5173
 
 # API Key de desarrollo para Postman / Swagger UI (Hash SHA-256 en BD)
@@ -63,10 +63,10 @@ API_KEY_POSTMAN=61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0
 JWT_SECRET=super_secret_jwt_key_veritas_ai_2026_academics_secure_signature_production
 JWT_EXPIRES_IN=1h
 
-# Administrador Bootstrap Veritas AI (Bloque 6A - Parte 14)
+# Administrador Bootstrap Veritas AI (Bloque 6A - Inicialización Segura)
 ADMIN_NOMBRE="Administrador Veritas"
 ADMIN_EMAIL="admin@veritas.com"
-ADMIN_PASSWORD="SANTOTO_2026—2"
+ADMIN_PASSWORD="ClaveAdmin2026!"
 ```
 
 ### 2.2. Arranque del Servidor
@@ -78,102 +78,91 @@ npm run dev
 
 #### Salida esperada en consola (Captura de Inicio):
 ```
-Administrador inicial creado
-Servidor ejecutándose en http://localhost:3000
-Swagger UI: http://localhost:3000/api-docs
-OpenAPI JSON: http://localhost:3000/openapi.json
+✓ Administrador inicial sincronizado
+Servidor ejecutándose en http://localhost:5000
+Swagger UI: http://localhost:5000/api-docs
+OpenAPI JSON: http://localhost:5000/openapi.json
 ```
 
-> **EVIDENCIA DE INICIO**: Toma una captura de la consola de Node.js donde se aprecie claramente el mensaje `Administrador inicial creado` y el servidor levantado en el puerto 3000.
+> **EVIDENCIA DE INICIO**: Toma una captura de la consola de Node.js donde se aprecie claramente el mensaje `Administrador inicial sincronizado` y el servidor levantado en el puerto 5000.
 
 ---
 
 ## 3. PROCEDIMIENTO DE AUTENTICACIÓN EN SWAGGER UI Y POSTMAN
 
 La API de Veritas AI está documentada de forma interactiva en OpenAPI / Swagger en:
-👉 **`http://localhost:3000/api-docs`**
+👉 **`http://localhost:5000/api-docs`**
 
 ### 3.1. Configuración del Botón "Authorize" en Swagger UI
 Haz clic en el botón verde **Authorize** (arriba a la derecha) y llena las dos ventanas modales:
 1. **ApiKeyAuth (apiKey)**:
    - Valor: `61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0`
    - Clic en *Authorize*.
-2. **BearerAuth (http, Bearer)**:
-   - Aquí pegarás el token JWT obtenido tras iniciar sesión con cada rol correspondiente.
-   - Cada vez que cambies de usuario para probar permisos (Admin -> Paciente -> Médico), solo debes cambiar el token en este campo.
+2. **BearerAuth (HTTP Bearer)**:
+   - Valor: `<Pega aquí el Token JWT obtenido al hacer login>` (sin la palabra Bearer).
+   - Clic en *Authorize*.
+   - Clic en *Close*.
 
 ---
 
-## 4. CUENTAS DE USUARIO Y PROCEDIMIENTO DE GENERACIÓN DE TOKENS
+## 4. SECUENCIA PREVIA DE INICIALIZACIÓN DE IDENTIDADES Y PERFILES
 
-Para ejecutar todas las pruebas del laboratorio, se utilizan tres tipos de identidades en **Veritas AI**:
+Antes de ejecutar las 30 pruebas, se requiere inicializar las identidades de prueba en Veritas AI. La colección de Postman incluye la carpeta **`00 - Setup Automático`** que realiza este proceso de forma desatendida.
 
-### 4.1. Administrador (Bootstrap del Sistema)
-- **Email**: `admin@veritas.com`
-- **Contraseña**: `SANTOTO_2026—2`
-- **Rol**: `administrador`
-- **Obtención de Token**:
-  - `POST /api/auth/login`
-  - Body:
-    ```json
-    {
-      "email": "admin@veritas.com",
-      "password": "SANTOTO_2026—2"
-    }
-    ```
-  - Copia el campo `token` y guárdalo como `TOKEN_ADMIN`.
-
-### 4.2. Creación del Médico (Gestión Administrativa Privilegiada - Bloque 6B)
-Con el `TOKEN_ADMIN` activo en Swagger/Postman:
-- **Petición**: `POST /api/usuarios`
+### 4.1. Login del Administrador
+- **Endpoint**: `POST /api/auth/login`
 - **Body**:
   ```json
   {
-    "nombre": "Médico Veritas",
-    "email": "medico@veritas.com",
-    "password": "ClaveMedico2026!",
-    "rol": "medico"
+    "email": "admin@veritas.com",
+    "password": "ClaveAdmin2026!"
   }
   ```
-- **Respuesta esperada**: `201 Created`
-- **Login del Médico**:
-  - `POST /api/auth/login`
-  - Body:
-    ```json
-    {
-      "email": "medico@veritas.com",
-      "password": "ClaveMedico2026!"
-    }
-    ```
-  - Copia el campo `token` y guárdalo como `TOKEN_MEDICO_A`.
+- **Respuesta**: `200 OK` con `token`. Guardar como `TOKEN_ADMIN`.
 
-### 4.3. Registro Público de Pacientes (Bloque 6A / 6C)
-Cualquier persona puede registrarse públicamente; el servidor siempre fuerza el rol `paciente`:
-- **Paciente A**:
+### 4.2. Registro y Alta de Docente/Auditor de Integridad Académica (Bloque 6B)
+1. **Crear usuario docente** (`POST /api/usuarios` con token admin):
+   ```json
+   {
+     "nombre": "Dr. Fernando Veritas",
+     "email": "docente.a@veritas.com",
+     "password": "ClaveDocente2026!",
+     "rol": "docente"
+   }
+   ```
+2. **Login del docente** (`POST /api/auth/login`): Guardar `TOKEN_DOCENTE_A`.
+3. **Crear perfil de docente/auditor** (`POST /api/docentes` con token admin):
+   ```json
+   {
+     "nombre": "Dr. Fernando Veritas",
+     "registroAcademico": "DOC-VERITAS-01",
+     "email": "docente.a@veritas.com",
+     "telefono": "3105559988",
+     "departamentoId": 1,
+     "usuarioId": <USUARIO_DOCENTE_ID>
+   }
+   ```
+
+### 4.3. Registro Público de Estudiantes (Bloque 6A / 6C)
+Cualquier estudiante o investigador puede registrarse públicamente; el servidor siempre fuerza el rol `estudiante` / `user`:
+- **Estudiante A**:
   - `POST /api/auth/registro`
   - Body:
     ```json
     {
-      "nombre": "Paciente A Veritas",
-      "email": "paciente.a@veritas.com",
-      "password": "ClavePaciente2026!"
+      "nombre": "Estudiante A Veritas",
+      "email": "estudiante.a@veritas.com",
+      "password": "ClaveEstudiante2026!"
     }
     ```
-  - Respuesta: `201 Created` (rol `user` / `paciente`).
-  - Login en `POST /api/auth/login` con sus credenciales y guardar `TOKEN_PACIENTE_A`.
+  - Respuesta: `201 Created` (rol `user` / `estudiante`).
+  - Login en `POST /api/auth/login` y guardar `TOKEN_ESTUDIANTE_A`.
+  - Crear perfil de estudiante en `POST /api/estudiantes` (vía admin): Guardar `ESTUDIANTE_A_ID`.
 
-- **Paciente B**:
-  - `POST /api/auth/registro`
-  - Body:
-    ```json
-    {
-      "nombre": "Paciente B Veritas",
-      "email": "paciente.b@veritas.com",
-      "password": "ClavePaciente2026!"
-    }
-    ```
-  - Respuesta: `201 Created`.
-  - Login en `POST /api/auth/login` con sus credenciales y guardar `TOKEN_PACIENTE_B`.
+- **Estudiante B**:
+  - `POST /api/auth/registro` (`email: "estudiante.b@veritas.com"`, `password: "ClaveEstudiante2026!"`).
+  - Login en `POST /api/auth/login` y guardar `TOKEN_ESTUDIANTE_B`.
+  - Crear perfil de estudiante en `POST /api/estudiantes`: Guardar `ESTUDIANTE_B_ID`.
 
 ---
 
@@ -185,7 +174,7 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
 
 ### PRUEBA 1: Acceso sin JWT a Recurso Protegido
 - **Objetivo**: Demostrar que un recurso protegido rechaza solicitudes anónimas sin cabecera `Authorization`.
-- **Método y URL**: `GET /api/pacientes`
+- **Método y URL**: `GET /api/estudiantes` (o `/api/pacientes`)
 - **Cabeceras**:
   - `X-API-Key: 61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0`
   - *(Sin cabecera Authorization)*
@@ -196,14 +185,14 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
     "mensaje": "Token de autenticación requerido"
   }
   ```
-- **Qué capturar para Word**: El código HTTP 401 y el mensaje de error indicando la ausencia de token.
-- **Justificación**: Primera línea de defensa: no se permite acceder a recursos internos sin autenticar la identidad del llamador.
+- **Qué capturar para Word**: El código HTTP 401 y el mensaje indicando ausencia de token.
+- **Justificación**: Primera línea de defensa: no se permite acceder a recursos internos de integridad académica sin autenticar la identidad del llamador.
 
 ---
 
 ### PRUEBA 2: JWT Inválido o Alterado
 - **Objetivo**: Verificar que la firma criptográfica HS256 previene la manipulación de tokens.
-- **Método y URL**: `GET /api/pacientes`
+- **Método y URL**: `GET /api/estudiantes`
 - **Cabeceras**:
   - `X-API-Key: 61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0`
   - `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.FIRMA_MANIPULADA_XYZ`
@@ -214,17 +203,17 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
     "mensaje": "Token inválido o expirado"
   }
   ```
-- **Qué capturar para Word**: Petición con token truncado o modificado recibiendo `401 Unauthorized`.
+- **Qué capturar para Word**: Petición con token manipulado recibiendo `401 Unauthorized`.
 - **Justificación**: Integridad de sesión: si un atacante altera un solo bit del payload o firma, `jwt.verify` rechaza la petición.
 
 ---
 
-### PRUEBA 3: Paciente Intenta Operación Exclusiva de Admin/Médico (GET /api/pacientes)
-- **Objetivo**: Validar el control RBAC bloqueando la exposición de la lista global de pacientes a un paciente.
-- **Método y URL**: `GET /api/pacientes`
+### PRUEBA 3: Estudiante Intenta Operación Exclusiva de Admin/Docente (GET /api/estudiantes)
+- **Objetivo**: Validar el control RBAC bloqueando la exposición de la lista global de estudiantes a un estudiante individual.
+- **Método y URL**: `GET /api/estudiantes`
 - **Cabeceras**:
   - `X-API-Key: 61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0`
-  - `Authorization: Bearer <TOKEN_PACIENTE_A>`
+  - `Authorization: Bearer <TOKEN_ESTUDIANTE_A>`
 - **Resultado Esperado**: `403 Forbidden`
 - **Cuerpo de Respuesta**:
   ```json
@@ -232,23 +221,23 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
     "mensaje": "No tiene permisos para realizar esta operación"
   }
   ```
-- **Qué capturar para Word**: Código 403 Forbidden demostrando que el token es válido pero el rol `paciente` carece de privilegios.
-- **Justificación**: Principio de Menor Privilegio (PoLP): un paciente individual no debe tener visibilidad del padrón de todos los pacientes.
+- **Qué capturar para Word**: Código 403 Forbidden demostrando que el token es válido pero el rol `estudiante` carece de privilegios.
+- **Justificación**: Principio de Menor Privilegio (PoLP): un estudiante individual no debe tener visibilidad del padrón de todos los estudiantes de la institución.
 
 ---
 
-### PRUEBA 4: Médico Consulta Lista de Pacientes
-- **Objetivo**: Validar que el rol `medico` sí está autorizado por la política RBAC para consultar pacientes.
-- **Método y URL**: `GET /api/pacientes`
+### PRUEBA 4: Docente / Auditor Consulta Lista de Estudiantes
+- **Objetivo**: Validar que el rol `docente` sí está autorizado por la política RBAC para consultar estudiantes y evaluar sus trabajos.
+- **Método y URL**: `GET /api/estudiantes`
 - **Cabeceras**:
-  - `X-API-Key: 61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0`
-  - `Authorization: Bearer <TOKEN_MEDICO_A>`
+  - `X-API-Key: ...`
+  - `Authorization: Bearer <TOKEN_DOCENTE_A>`
 - **Resultado Esperado**: `200 OK`
 - **Cuerpo de Respuesta**:
   ```json
   {
     "total": 3,
-    "pacientes": [
+    "estudiantes": [
       {
         "id": 1,
         "nombre": "Laura Gómez",
@@ -257,112 +246,106 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
     ]
   }
   ```
-- **Qué capturar para Word**: Código 200 OK y la lista de pacientes obtenida con token de médico.
-- **Justificación**: Política RBAC permite a personal médico ver registros clínicos para asignación y consulta asistencial.
+- **Qué capturar para Word**: Código 200 OK y la lista de estudiantes obtenida con token de docente/auditor.
+- **Justificación**: Política RBAC permite a docentes y auditores consultar registros académicos para asignación y evaluación de revisiones.
 
 ---
 
-### PRUEBA 5: Administrador Consulta Lista de Pacientes
+### PRUEBA 5: Administrador Consulta Lista de Estudiantes
 - **Objetivo**: Validar que el rol `administrador` tiene acceso global de consulta.
-- **Método y URL**: `GET /api/pacientes`
+- **Método y URL**: `GET /api/estudiantes`
 - **Cabeceras**:
-  - `X-API-Key: 61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0`
+  - `X-API-Key: ...`
   - `Authorization: Bearer <TOKEN_ADMIN>`
 - **Resultado Esperado**: `200 OK`
 - **Qué capturar para Word**: Código 200 OK con usuario admin.
-- **Justificación**: El administrador ostenta permisos de auditoría y gestión de recursos en toda la organización.
+- **Justificación**: El administrador ostenta permisos de auditoría y gestión de recursos en toda la plataforma Veritas AI.
 
 ---
 
-### PRUEBA 6: Paciente Intenta Crear un Paciente
-- **Objetivo**: Demostrar restricción de escritura RBAC para rol paciente.
-- **Método y URL**: `POST /api/pacientes`
+### PRUEBA 6: Estudiante Intenta Crear un Estudiante
+- **Objetivo**: Demostrar restricción de escritura RBAC para rol estudiante.
+- **Método y URL**: `POST /api/estudiantes`
 - **Cabeceras**:
-  - `X-API-Key: 61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0`
-  - `Authorization: Bearer <TOKEN_PACIENTE_A>`
+  - `X-API-Key: ...`
+  - `Authorization: Bearer <TOKEN_ESTUDIANTE_A>`
 - **Body**:
   ```json
   {
-    "nombre": "Paciente Intruso",
+    "nombre": "Estudiante Intruso",
     "documento": "1009998881",
     "email": "intruso@veritas.com",
     "telefono": "3000000000",
-    "fechaNacimiento": "1990-01-01"
+    "fechaNacimiento": "2002-01-01"
   }
   ```
 - **Resultado Esperado**: `403 Forbidden`
-- **Cuerpo de Respuesta**:
-  ```json
-  {
-    "mensaje": "No tiene permisos para realizar esta operación"
-  }
-  ```
-- **Qué capturar para Word**: Código 403 Forbidden. Nótese que la petición ni siquiera alcanza la capa de validación ni el servicio.
-- **Justificación**: La creación de expedientes de pacientes es una operación reservada para administración.
+- **Qué capturar para Word**: Código 403 Forbidden. La petición es bloqueada por el middleware RBAC antes de alcanzar la lógica de negocio.
+- **Justificación**: La creación de expedientes y registros de estudiantes es una operación reservada para administración académica.
 
 ---
 
-### PRUEBA 7: Médico Intenta Crear un Paciente
-- **Objetivo**: Demostrar que los médicos tienen permiso de lectura pero no de creación administrativa de expedientes.
-- **Método y URL**: `POST /api/pacientes`
+### PRUEBA 7: Docente Intenta Crear un Estudiante
+- **Objetivo**: Demostrar que los docentes tienen permiso de lectura pero no de creación administrativa de expedientes.
+- **Método y URL**: `POST /api/estudiantes`
 - **Cabeceras**:
-  - `X-API-Key: 61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0`
-  - `Authorization: Bearer <TOKEN_MEDICO_A>`
-- **Body**: Mismo JSON de paciente.
+  - `X-API-Key: ...`
+  - `Authorization: Bearer <TOKEN_DOCENTE_A>`
+- **Body**: Mismo JSON de estudiante.
 - **Resultado Esperado**: `403 Forbidden`
-- **Qué capturar para Word**: Código 403 Forbidden al médico.
-- **Justificación**: Separación de responsabilidades: los médicos no realizan altas administrativas de expedientes.
+- **Qué capturar para Word**: Código 403 Forbidden al docente.
+- **Justificación**: Separación de responsabilidades: los docentes revisan trabajos pero no dan de alta registros académicos oficiales.
 
 ---
 
-### PRUEBA 8: Administrador Crea un Paciente
-- **Objetivo**: Demostrar que el administrador puede dar de alta pacientes legítimamente.
-- **Método y URL**: `POST /api/pacientes`
+### PRUEBA 8: Administrador Crea un Estudiante
+- **Objetivo**: Demostrar que el administrador puede dar de alta perfiles de estudiantes legítimamente.
+- **Método y URL**: `POST /api/estudiantes`
 - **Cabeceras**:
-  - `X-API-Key: 61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0`
+  - `X-API-Key: ...`
   - `Authorization: Bearer <TOKEN_ADMIN>`
 - **Body**:
   ```json
   {
-    "nombre": "Paciente Nuevo Veritas",
+    "nombre": "Estudiante Nuevo Veritas",
     "documento": "1002003004",
-    "email": "nuevo.paciente@veritas.com",
+    "email": "nuevo.estudiante@veritas.com",
     "telefono": "3015556677",
-    "fechaNacimiento": "1997-03-15"
+    "fechaNacimiento": "2003-03-15"
   }
   ```
 - **Resultado Esperado**: `201 Created`
 - **Cuerpo de Respuesta**:
   ```json
   {
-    "mensaje": "Paciente creado correctamente",
-    "paciente": {
+    "mensaje": "Estudiante creado correctamente",
+    "estudiante": {
       "id": 4,
-      "nombre": "Paciente Nuevo Veritas",
-      "email": "nuevo.paciente@veritas.com"
+      "nombre": "Estudiante Nuevo Veritas",
+      "email": "nuevo.estudiante@veritas.com"
     }
   }
   ```
-- **Qué capturar para Word**: Código 201 Created con el paciente nuevo y su ID generado por el servidor.
+- **Qué capturar para Word**: Código 201 Created con el estudiante nuevo y su ID generado por el servidor.
 - **Justificación**: Operación autorizada por la política RBAC para el rol `administrador`.
 
 ---
 
-### PRUEBA 9: Paciente Intenta Eliminar Paciente
+### PRUEBA 9: Estudiante Intenta Eliminar Estudiante
 - **Objetivo**: Demostrar bloqueo de operaciones destructivas por rol.
-- **Método y URL**: `DELETE /api/pacientes/1`
+- **Método y URL**: `DELETE /api/estudiantes/1`
 - **Cabeceras**:
   - `X-API-Key: ...`
-  - `Authorization: Bearer <TOKEN_PACIENTE_A>`
+  - `Authorization: Bearer <TOKEN_ESTUDIANTE_A>`
 - **Resultado Esperado**: `403 Forbidden`
-- **Qué capturar para Word**: Código 403 Forbidden al paciente al intentar DELETE.
+- **Qué capturar para Word**: Código 403 Forbidden al estudiante al intentar DELETE.
 - **Justificación**: Prevención de sabotaje o destrucción de expedientes por usuarios no autorizados.
 
 ---
 
-### PRUEBA 10: Administrador Intenta Eliminar Paciente con Citas Asociadas (Integridad Referencial)
+### PRUEBA 10: Administrador Intenta Eliminar Estudiante con Revisiones Asociadas (Integridad Referencial)
 - **Objetivo**: Demostrar que la autorización no sustituye las reglas de negocio e integridad referencial.
-- **Método y URL**: `DELETE /api/pacientes/1`
+- **Método y URL**: `DELETE /api/estudiantes/1`
 - **Cabeceras**:
   - `X-API-Key: ...`
   - `Authorization: Bearer <TOKEN_ADMIN>`
@@ -370,19 +353,17 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
 - **Cuerpo de Respuesta**:
   ```json
   {
-    "mensaje": "No se puede eliminar el paciente porque tiene citas asociadas"
+    "mensaje": "No se puede eliminar el estudiante porque tiene revisiones asociadas"
   }
   ```
 - **Qué capturar para Word**: Código 409 Conflict a pesar de que la petición proviene de un administrador.
-- **Justificación**: Principio de Defensa en Profundidad: Ser administrador permite superar el control de acceso, pero jamás violar la integridad referencial del sistema.
+- **Justificación**: Principio de Defensa en Profundidad: Ser administrador permite superar el control de acceso, pero jamás violar la integridad referencial del sistema antiplagio.
 
 ---
 
-### PRUEBA 11: Registro Público Normal Asigna Rol Paciente por Servidor
+### PRUEBA 11: Registro Público Normal Asigna Rol Estudiante por Servidor
 - **Objetivo**: Demostrar que el registro público asigna rol controlado estrictamente por el servidor.
 - **Método y URL**: `POST /api/auth/registro`
-- **Cabeceras**:
-  - `X-API-Key: ...`
 - **Body**:
   ```json
   {
@@ -403,7 +384,7 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
     }
   }
   ```
-- **Qué capturar para Word**: Código 201 Created con `rol: "user"` (mapeado a `paciente`).
+- **Qué capturar para Word**: Código 201 Created con `rol: "user"` (mapeado a estudiante).
 - **Justificación**: El servidor es la única autoridad con potestad para asignar roles en registros públicos.
 
 ---
@@ -421,7 +402,7 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
     "role": "ADMIN"
   }
   ```
-- **Resultado Esperado**: `201 Created`, pero el usuario queda registrado con `rol: "user"` / `paciente`.
+- **Resultado Esperado**: `201 Created`, pero el usuario queda registrado con `rol: "user"` / estudiante.
 - **Qué capturar para Word**: Respuesta donde el campo `rol: "administrador"` enviado en el body fue completamente descartado.
 - **Justificación**: Primera y Segunda defensa en profundidad: `matchedData()` ignora el campo y el servicio asigna `Role.USER`.
 
@@ -481,7 +462,7 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
 
 ---
 
-### PRUEBA 16: Administrador Crea un Médico desde Gestión Privilegiada
+### PRUEBA 16: Administrador Crea un Docente/Auditor desde Gestión Privilegiada
 - **Objetivo**: Validar el endpoint administrativo seguro para roles privilegiados (Bloque 6B).
 - **Método y URL**: `POST /api/usuarios`
 - **Cabeceras**:
@@ -491,9 +472,9 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
   ```json
   {
     "nombre": "Dr. Fernando Veritas",
-    "email": "fernando.medico@veritas.com",
+    "email": "fernando.docente@veritas.com",
     "password": "ClaveSegura2026!",
-    "rol": "medico"
+    "rol": "docente"
   }
   ```
 - **Resultado Esperado**: `201 Created`
@@ -503,13 +484,13 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
     "mensaje": "Usuario creado correctamente",
     "usuario": {
       "nombre": "Dr. Fernando Veritas",
-      "email": "fernando.medico@veritas.com",
-      "rol": "medico",
+      "email": "fernando.docente@veritas.com",
+      "rol": "docente",
       "activo": true
     }
   }
   ```
-- **Qué capturar para Word**: Código 201 Created con el usuario creado con rol `medico`.
+- **Qué capturar para Word**: Código 201 Created con el usuario creado con rol `docente`.
 - **Justificación**: Operación administrativa legítima donde la asignación de rol está protegida por RBAC.
 
 ---
@@ -535,13 +516,13 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
 
 ---
 
-### PRUEBA 18: Médico Intenta Crear Otro Médico en `POST /api/usuarios`
+### PRUEBA 18: Docente Intenta Crear Otro Docente en `POST /api/usuarios`
 - **Objetivo**: Verificar que un rol no administrativo no puede crear usuarios privilegiados.
 - **Método y URL**: `POST /api/usuarios`
 - **Cabeceras**:
   - `X-API-Key: ...`
-  - `Authorization: Bearer <TOKEN_MEDICO_A>`
-- **Body**: Datos de usuario médico.
+  - `Authorization: Bearer <TOKEN_DOCENTE_A>`
+- **Body**: Datos de usuario docente.
 - **Resultado Esperado**: `403 Forbidden`
 - **Cuerpo de Respuesta**:
   ```json
@@ -549,17 +530,17 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
     "mensaje": "No tiene permisos para realizar esta operación"
   }
   ```
-- **Qué capturar para Word**: Código 403 Forbidden al médico.
-- **Justificación**: Aunque el médico es un usuario de confianza interna, no posee autoridad de administración de identidades.
+- **Qué capturar para Word**: Código 403 Forbidden al docente.
+- **Justificación**: Aunque el docente es un usuario de confianza académica, no posee autoridad de administración de identidades.
 
 ---
 
-### PRUEBA 19: Paciente Intenta Crear Administrador en `POST /api/usuarios`
+### PRUEBA 19: Estudiante Intenta Crear Administrador en `POST /api/usuarios`
 - **Objetivo**: Demostrar bloqueo de escalada directa de privilegios en endpoints administrativos.
 - **Método y URL**: `POST /api/usuarios`
 - **Cabeceras**:
   - `X-API-Key: ...`
-  - `Authorization: Bearer <TOKEN_PACIENTE_A>`
+  - `Authorization: Bearer <TOKEN_ESTUDIANTE_A>`
 - **Body**:
   ```json
   {
@@ -591,54 +572,43 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
   }
   ```
 - **Resultado Esperado**: `400 Bad Request`
-- **Cuerpo de Respuesta**:
-  ```json
-  {
-    "errores": [
-      {
-        "msg": "El rol debe ser medico o administrador",
-        "path": "rol"
-      }
-    ]
-  }
-  ```
 - **Qué capturar para Word**: Código 400 Bad Request con el error de validación en el campo `rol`.
 - **Justificación**: Validación de tipos y dominios permitidos: ser administrador no exime del cumplimiento del esquema de datos.
 
 ---
 
-### PRUEBA 21: Paciente A Consulta sus Propias Citas (`/api/citas/paciente/{A}`)
+### PRUEBA 21: Estudiante A Consulta sus Propias Revisiones (`/api/revisiones/estudiante/{A}`)
 - **Objetivo**: Demostrar acceso legítimo a recursos propios mediante verificación BOLA / Propiedad (Bloque 6C).
-- **Método y URL**: `GET /api/citas/paciente/4` *(donde 4 es el ID de recurso de Paciente A)*
+- **Método y URL**: `GET /api/revisiones/estudiante/4` *(donde 4 es el ID de recurso de Estudiante A)*
 - **Cabeceras**:
   - `X-API-Key: ...`
-  - `Authorization: Bearer <TOKEN_PACIENTE_A>`
+  - `Authorization: Bearer <TOKEN_ESTUDIANTE_A>`
 - **Resultado Esperado**: `200 OK`
 - **Cuerpo de Respuesta**:
   ```json
   {
     "total": 1,
-    "citas": [
+    "revisiones": [
       {
         "id": 1,
-        "pacienteId": 4,
-        "motivo": "Control Paciente A Veritas",
+        "estudianteId": 4,
+        "motivo": "Revisión Antiplagio Tesis A Veritas",
         "estado": "programada"
       }
     ]
   }
   ```
-- **Qué capturar para Word**: Código 200 OK con la cita perteneciente al Paciente A.
-- **Justificación**: El middleware de propiedad valida que `req.usuario.id` coincide con el perfil asociado a `pacienteId: 4`.
+- **Qué capturar para Word**: Código 200 OK con la revisión perteneciente al Estudiante A.
+- **Justificación**: El middleware de propiedad valida que `req.usuario.id` coincide con el perfil asociado a `estudianteId: 4`.
 
 ---
 
-### PRUEBA 22: Paciente A Intenta Consultar Citas de Paciente B (Ataque BOLA / IDOR Neutralizado)
+### PRUEBA 22: Estudiante A Intenta Consultar Revisiones de Estudiante B (Ataque BOLA / IDOR Neutralizado)
 - **Objetivo**: Demostrar la neutralización del ataque BOLA por manipulación de identificador directo en URL.
-- **Método y URL**: `GET /api/citas/paciente/5` *(donde 5 es el ID de recurso de Paciente B)*
+- **Método y URL**: `GET /api/revisiones/estudiante/5` *(donde 5 es el ID de recurso de Estudiante B)*
 - **Cabeceras**:
   - `X-API-Key: ...`
-  - `Authorization: Bearer <TOKEN_PACIENTE_A>`
+  - `Authorization: Bearer <TOKEN_ESTUDIANTE_A>`
 - **Resultado Esperado**: `403 Forbidden`
 - **Cuerpo de Respuesta**:
   ```json
@@ -646,69 +616,39 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
     "mensaje": "No tiene permisos para acceder a este recurso"
   }
   ```
-- **Qué capturar para Word**: Código 403 Forbidden al intentar acceder a las citas del paciente 5 con token del paciente 4.
-- **Justificación**: **Defensa contra OWASP API1:2023 - BOLA**: El token es válido y el usuario tiene rol paciente, pero el objeto solicitado pertenece a un tercero.
+- **Qué capturar para Word**: Código 403 Forbidden al intentar acceder a las revisiones del estudiante B con token del estudiante A.
+- **Justificación**: **Defensa contra OWASP API1:2023 - BOLA**: El token es válido y el usuario tiene rol estudiante, pero el objeto solicitado pertenece a un tercero.
 
 ---
 
-### PRUEBA 23: Paciente A Consulta Cita Individual Propia (`GET /api/citas/:id`)
-- **Objetivo**: Validar autorización a nivel de objeto sobre una cita específica.
-- **Método y URL**: `GET /api/citas/1` *(Cita 1 pertenece al Paciente A)*
+### PRUEBA 23: Estudiante A Consulta Revisión Individual Propia (`GET /api/revisiones/:id`)
+- **Objetivo**: Validar autorización a nivel de objeto sobre un escaneo/revisión específica.
+- **Método y URL**: `GET /api/revisiones/1` *(Revisión 1 pertenece al Estudiante A)*
 - **Cabeceras**:
   - `X-API-Key: ...`
-  - `Authorization: Bearer <TOKEN_PACIENTE_A>`
+  - `Authorization: Bearer <TOKEN_ESTUDIANTE_A>`
 - **Resultado Esperado**: `200 OK`
 - **Cuerpo de Respuesta**:
   ```json
   {
-    "cita": {
+    "revision": {
       "id": 1,
-      "pacienteId": 4,
-      "motivo": "Control Paciente A Veritas"
+      "estudianteId": 4,
+      "motivo": "Revisión Antiplagio Tesis A Veritas"
     }
   }
   ```
-- **Qué capturar para Word**: Código 200 OK mostrando la cita individual autorizada.
-- **Justificación**: `autorizarAccesoCita` verifica que el usuario autenticado es el titular de la cita consultada.
+- **Qué capturar para Word**: Código 200 OK mostrando la revisión individual autorizada.
+- **Justificación**: `autorizarAccesoCita` verifica que el usuario autenticado es el autor de la revisión consultada.
 
 ---
 
-### PRUEBA 24: Paciente A Intenta Consultar Cita Individual de Paciente B
+### PRUEBA 24: Estudiante A Intenta Consultar Revisión Individual de Estudiante B
 - **Objetivo**: Evitar bypass de control BOLA mediante acceso por ID individual de recurso.
-- **Método y URL**: `GET /api/citas/2` *(Cita 2 pertenece al Paciente B)*
+- **Método y URL**: `GET /api/revisiones/2` *(Revisión 2 pertenece al Estudiante B)*
 - **Cabeceras**:
   - `X-API-Key: ...`
-  - `Authorization: Bearer <TOKEN_PACIENTE_A>`
-- **Resultado Esperado**: `403 Forbidden`
-- **Cuerpo de Respuesta**:
-  ```json
-  {
-    "mensaje": "No tiene permisos para acceder a esta cita"
-  }
-  ```
-- **Qué capturar para Word**: Código 403 Forbidden al intentar leer la cita 2.
-- **Justificación**: Prevención de acceso cruzado horizontal a datos sensibles de salud.
-
----
-
-### PRUEBA 25: Médico A Consulta sus Propias Citas (`GET /api/citas/medico/{A}`)
-- **Objetivo**: Validar acceso legítimo de un profesional médico a su agenda asistencial.
-- **Método y URL**: `GET /api/citas/medico/1` *(donde 1 es el ID del Médico A)*
-- **Cabeceras**:
-  - `X-API-Key: ...`
-  - `Authorization: Bearer <TOKEN_MEDICO_A>`
-- **Resultado Esperado**: `200 OK`
-- **Qué capturar para Word**: Código 200 OK con las citas asignadas al Médico A.
-- **Justificación**: `autorizarMedicoPropio` valida la correspondencia entre la identidad del JWT y el ID de médico solicitado.
-
----
-
-### PRUEBA 26: Médico A Intenta Consultar Citas de Médico B
-- **Objetivo**: Verificar que los médicos no pueden espiar la agenda de otros profesionales de la institución.
-- **Método y URL**: `GET /api/citas/medico/2` *(donde 2 es el ID del Médico B)*
-- **Cabeceras**:
-  - `X-API-Key: ...`
-  - `Authorization: Bearer <TOKEN_MEDICO_A>`
+  - `Authorization: Bearer <TOKEN_ESTUDIANTE_A>`
 - **Resultado Esperado**: `403 Forbidden`
 - **Cuerpo de Respuesta**:
   ```json
@@ -716,42 +656,79 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
     "mensaje": "No tiene permisos para acceder a este recurso"
   }
   ```
-- **Qué capturar para Word**: Código 403 Forbidden.
-- **Justificación**: Aislamiento estricto de expedientes y agendas médicas entre profesionales.
+- **Qué capturar para Word**: Código 403 Forbidden al intentar leer la revisión 2.
+- **Justificación**: Prevención de acceso cruzado horizontal a documentos y análisis de autoría ajenos.
 
 ---
 
-### PRUEBA 27: Médico A Consulta Cita Individual Asignada a Él
-- **Objetivo**: Validar consulta individual autorizada por parte del médico tratante.
-- **Método y URL**: `GET /api/citas/1` *(Cita asignada al Médico A)*
+### PRUEBA 25: Docente A Consulta sus Propias Revisiones (`GET /api/revisiones/docente/{A}`)
+- **Objetivo**: Validar acceso legítimo de un docente a las revisiones asignadas para su auditoría.
+- **Método y URL**: `GET /api/revisiones/docente/2` *(donde 2 es el ID del Docente A)*
 - **Cabeceras**:
   - `X-API-Key: ...`
-  - `Authorization: Bearer <TOKEN_MEDICO_A>`
+  - `Authorization: Bearer <TOKEN_DOCENTE_A>`
 - **Resultado Esperado**: `200 OK`
-- **Qué capturar para Word**: Código 200 OK con la cita individual.
-- **Justificación**: La cita tiene `medicoId: 1`, coincidente con el médico autenticado.
+- **Cuerpo de Respuesta**:
+  ```json
+  {
+    "total": 1,
+    "revisiones": [
+      {
+        "id": 1,
+        "docenteId": 2,
+        "motivo": "Revisión Antiplagio Tesis A Veritas"
+      }
+    ]
+  }
+  ```
+- **Qué capturar para Word**: Código 200 OK con las revisiones asignadas al Docente A.
+- **Justificación**: `autorizarMedicoPropio` valida la correspondencia entre la identidad del JWT y el ID de docente solicitado.
 
 ---
 
-### PRUEBA 28: Médico A Intenta Consultar Cita Individual Asignada a Otro Médico
-- **Objetivo**: Bloqueo de acceso por ID directo a citas ajenas al médico.
-- **Método y URL**: `GET /api/citas/2` *(Cita asignada al Médico B)*
+### PRUEBA 26: Docente A Intenta Consultar Revisiones de Docente B
+- **Objetivo**: Verificar que los docentes no pueden auditar ni espiar las revisiones asignadas a otros docentes sin autorización.
+- **Método y URL**: `GET /api/revisiones/docente/1` *(donde 1 es el ID del Docente B)*
 - **Cabeceras**:
   - `X-API-Key: ...`
-  - `Authorization: Bearer <TOKEN_MEDICO_A>`
+  - `Authorization: Bearer <TOKEN_DOCENTE_A>`
 - **Resultado Esperado**: `403 Forbidden`
 - **Qué capturar para Word**: Código 403 Forbidden.
-- **Justificación**: El médico A no es ni el paciente ni el médico tratante de la cita 2.
+- **Justificación**: Aislamiento estricto de expedientes y revisiones académicas entre docentes.
 
 ---
 
-### PRUEBA 29: Paciente y Médico Utilizan `/api/citas/mis-citas`
+### PRUEBA 27: Docente A Consulta Revisión Individual Asignada a Él
+- **Objetivo**: Validar consulta individual autorizada por parte del docente asignado.
+- **Método y URL**: `GET /api/revisiones/1` *(Revisión asignada al Docente A)*
+- **Cabeceras**:
+  - `X-API-Key: ...`
+  - `Authorization: Bearer <TOKEN_DOCENTE_A>`
+- **Resultado Esperado**: `200 OK`
+- **Qué capturar para Word**: Código 200 OK con la revisión individual.
+- **Justificación**: La revisión tiene `docenteId: 2`, coincidente con el docente autenticado.
+
+---
+
+### PRUEBA 28: Docente A Intenta Consultar Revisión Individual Asignada a Otro Docente
+- **Objetivo**: Bloqueo de acceso por ID directo a revisiones no asignadas al docente.
+- **Método y URL**: `GET /api/revisiones/2` *(Revisión asignada a otro docente)*
+- **Cabeceras**:
+  - `X-API-Key: ...`
+  - `Authorization: Bearer <TOKEN_DOCENTE_A>`
+- **Resultado Esperado**: `403 Forbidden`
+- **Qué capturar para Word**: Código 403 Forbidden.
+- **Justificación**: El docente A no es ni el autor (estudiante) ni el auditor asignado de la revisión 2.
+
+---
+
+### PRUEBA 29: Estudiante y Docente Utilizan `/api/revisiones/mis-revisiones`
 - **Objetivo**: Demostrar el patrón de diseño seguro donde el identificador se deriva exclusivamente del token JWT.
-- **Método y URL**: `GET /api/citas/mis-citas`
-- **Cabeceras (Paso 1)**: `Authorization: Bearer <TOKEN_PACIENTE_A>`
-  - Resultado: `200 OK` (Devuelve únicamente las citas de Paciente A sin requerir IDs en la URL).
-- **Cabeceras (Paso 2)**: `Authorization: Bearer <TOKEN_MEDICO_A>`
-  - Resultado: `200 OK` (Devuelve únicamente las citas asignadas a Médico A).
+- **Método y URL**: `GET /api/revisiones/mis-revisiones`
+- **Cabeceras (Paso 1)**: `Authorization: Bearer <TOKEN_ESTUDIANTE_A>`
+  - Resultado: `200 OK` (Devuelve únicamente las revisiones del Estudiante A sin requerir IDs en la URL).
+- **Cabeceras (Paso 2)**: `Authorization: Bearer <TOKEN_DOCENTE_A>`
+  - Resultado: `200 OK` (Devuelve únicamente las revisiones asignadas al Docente A).
 - **Qué capturar para Word**: Ambas respuestas 200 OK demostrando la auto-resolución de identidad.
 - **Justificación**: **Arquitectura Inmune a IDOR**: Al eliminar el parámetro de la URL, el cliente es incapaz de manipular el objeto consultado.
 
@@ -759,7 +736,7 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
 
 ### PRUEBA 30: Petición sin `X-API-Key` a Endpoint Protegido
 - **Objetivo**: Comprobar la primera barrera de acceso de la arquitectura en capas.
-- **Método y URL**: `GET /api/pacientes`
+- **Método y URL**: `GET /api/estudiantes`
 - **Cabeceras**: *(Ninguna o sin X-API-Key)*
 - **Resultado Esperado**: `401 Unauthorized`
 - **Cuerpo de Respuesta**:
@@ -777,35 +754,35 @@ A continuación se detalla la ejecución de cada una de las 30 pruebas obligator
 
 | No. | Prueba / Acción | Rol Emisor | Endpoint | Código Esperado | Propiedad de Seguridad Validada |
 |---|---|---|---|---|---|
-| **1** | Acceso sin JWT | Anónimo | `GET /api/pacientes` | **401** | Autenticación Requerida |
-| **2** | JWT con firma manipulada | Atacante | `GET /api/pacientes` | **401** | Integridad Criptográfica JWT |
-| **3** | Listar pacientes con paciente | Paciente | `GET /api/pacientes` | **403** | RBAC (Restricción por Rol) |
-| **4** | Listar pacientes con médico | Médico | `GET /api/pacientes` | **200** | Rol Médico Autorizado |
-| **5** | Listar pacientes con admin | Admin | `GET /api/pacientes` | **200** | Rol Administrador Autorizado |
-| **6** | Crear paciente con paciente | Paciente | `POST /api/pacientes` | **403** | Restricción RBAC de Escritura |
-| **7** | Crear paciente con médico | Médico | `POST /api/pacientes` | **403** | Restricción RBAC de Escritura |
-| **8** | Crear paciente con admin | Admin | `POST /api/pacientes` | **201** | Operación Administrativa Legítima |
-| **9** | Eliminar paciente con paciente | Paciente | `DELETE /api/pacientes/:id` | **403** | Protección contra Destrucción |
-| **10** | Eliminar paciente referenciado | Admin | `DELETE /api/pacientes/1` | **409** | Integridad Referencial |
+| **1** | Acceso sin JWT | Anónimo | `GET /api/estudiantes` | **401** | Autenticación Requerida |
+| **2** | JWT con firma manipulada | Atacante | `GET /api/estudiantes` | **401** | Integridad Criptográfica JWT |
+| **3** | Listar estudiantes con estudiante | Estudiante | `GET /api/estudiantes` | **403** | RBAC (Restricción por Rol) |
+| **4** | Listar estudiantes con docente | Docente | `GET /api/estudiantes` | **200** | Rol Docente Autorizado |
+| **5** | Listar estudiantes con admin | Admin | `GET /api/estudiantes` | **200** | Rol Administrador Autorizado |
+| **6** | Crear estudiante con estudiante | Estudiante | `POST /api/estudiantes` | **403** | Restricción RBAC de Escritura |
+| **7** | Crear estudiante con docente | Docente | `POST /api/estudiantes` | **403** | Restricción RBAC de Escritura |
+| **8** | Crear estudiante con admin | Admin | `POST /api/estudiantes` | **201** | Operación Administrativa Legítima |
+| **9** | Eliminar estudiante con estudiante | Estudiante | `DELETE /api/estudiantes/:id` | **403** | Protección contra Destrucción |
+| **10** | Eliminar estudiante referenciado | Admin | `DELETE /api/estudiantes/1` | **409** | Integridad Referencial |
 | **11** | Registro público estándar | Público | `POST /api/auth/registro` | **201** (rol user) | Rol Controlado por Servidor |
 | **12** | Registro con `rol:"administrador"` | Público | `POST /api/auth/registro` | **201** (queda user) | Prevención Escalada Privilegios |
 | **13** | Registro con `activo:false` | Público | `POST /api/auth/registro` | **201** (queda true) | Mitigación Mass Assignment |
 | **14** | Registro enviando `passwordHash` | Público | `POST /api/auth/registro` | **201** (ignorado) | Allowlisting de Campos |
 | **15** | Registro con `esSuperAdmin:true` | Público | `POST /api/auth/registro` | **201** (ignorado) | Blindaje de Atributos Internos |
-| **16** | Admin crea médico | Admin | `POST /api/usuarios` | **201** | Gestión Privilegiada |
+| **16** | Admin crea docente | Admin | `POST /api/usuarios` | **201** | Gestión Privilegiada |
 | **17** | Admin crea administrador | Admin | `POST /api/usuarios` | **201** | Gestión Privilegiada |
-| **18** | Médico intenta crear médico | Médico | `POST /api/usuarios` | **403** | RBAC Administrativo |
-| **19** | Paciente intenta crear admin | Paciente | `POST /api/usuarios` | **403** | Prevención de Escalamiento |
+| **18** | Docente intenta crear docente | Docente | `POST /api/usuarios` | **403** | RBAC Administrativo |
+| **19** | Estudiante intenta crear admin | Estudiante | `POST /api/usuarios` | **403** | Prevención de Escalamiento |
 | **20** | Admin asigna rol inválido | Admin | `POST /api/usuarios` | **400** | Validación de Esquema / Enums |
-| **21** | Paciente A consulta sus citas | Paciente A | `GET /api/citas/paciente/A` | **200** | Propiedad del Recurso |
-| **22** | Paciente A consulta citas de B | Paciente A | `GET /api/citas/paciente/B` | **403** | Protección BOLA / IDOR |
-| **23** | Paciente A consulta cita 1 | Paciente A | `GET /api/citas/1` | **200** | BOLA a Nivel de Objeto |
-| **24** | Paciente A consulta cita 2 (de B) | Paciente A | `GET /api/citas/2` | **403** | Bloqueo Bypass por ID |
-| **25** | Médico A consulta sus citas | Médico A | `GET /api/citas/medico/A` | **200** | Propiedad de Agenda Médica |
-| **26** | Médico A consulta citas de B | Médico A | `GET /api/citas/medico/B` | **403** | Aislamiento Entre Médicos |
-| **27** | Médico A consulta cita propia | Médico A | `GET /api/citas/1` | **200** | BOLA Objeto Médico |
-| **28** | Médico A consulta cita ajena | Médico A | `GET /api/citas/2` | **403** | Bloqueo Bypass por ID |
-| **29** | Paciente/Médico `/mis-citas` | Paciente/Médico | `GET /api/citas/mis-citas` | **200** (propias) | Identidad Derivada de JWT |
+| **21** | Estudiante A consulta sus revisiones | Estudiante A | `GET /api/revisiones/estudiante/A` | **200** | Propiedad del Recurso |
+| **22** | Estudiante A consulta revisiones de B | Estudiante A | `GET /api/revisiones/estudiante/B` | **403** | Protección BOLA / IDOR |
+| **23** | Estudiante A consulta revisión 1 | Estudiante A | `GET /api/revisiones/1` | **200** | BOLA a Nivel de Objeto |
+| **24** | Estudiante A consulta revisión 2 (de B) | Estudiante A | `GET /api/revisiones/2` | **403** | Bloqueo Bypass por ID |
+| **25** | Docente A consulta sus revisiones | Docente A | `GET /api/revisiones/docente/A` | **200** | Propiedad de Auditoría Docente |
+| **26** | Docente A consulta revisiones de B | Docente A | `GET /api/revisiones/docente/B` | **403** | Aislamiento Entre Docentes |
+| **27** | Docente A consulta revisión propia | Docente A | `GET /api/revisiones/1` | **200** | BOLA Objeto Docente |
+| **28** | Docente A consulta revisión ajena | Docente A | `GET /api/revisiones/2` | **403** | Bloqueo Bypass por ID |
+| **29** | Estudiante/Docente `/mis-revisiones` | Estudiante/Docente | `GET /api/revisiones/mis-revisiones` | **200** (propias) | Identidad Derivada de JWT |
 | **30** | Solicitud sin `X-API-Key` | Cualquiera | `GET /api/...` | **401** | Primera Barrera de Acceso |
 
 ---
