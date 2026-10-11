@@ -348,7 +348,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.usuario.rol).toMatch(/paciente|user/i);
+      expect(res.body.usuario.rol).toMatch(/paciente|user|estudiante/i);
     });
 
     it('Caso 12 a 15: Ataque de Mass Assignment en Registro Público es neutralizado', async () => {
@@ -369,7 +369,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.usuario.rol).toMatch(/paciente|user/i);
+      expect(res.body.usuario.rol).toMatch(/paciente|user|estudiante/i);
       expect(res.body.usuario.activo).toBe(true);
       expect((res.body.usuario as any).esSuperAdmin).toBeUndefined();
       expect((res.body.usuario as any).passwordHash).toBeUndefined();

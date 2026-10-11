@@ -111,7 +111,7 @@ export class AuthController {
           id: newUser.id,
           nombre: `${newUser.name} ${newUser.last_name}`.trim(),
           email: newUser.email,
-          rol: newUser.rol || (newUser.role === Role.USER ? 'paciente' : newUser.role.toLowerCase()),
+          rol: newUser.rol || (newUser.role === Role.USER ? 'user' : newUser.role.toLowerCase()),
           role: newUser.role,
           activo: newUser.is_active ?? newUser.activo ?? true,
         },
@@ -183,15 +183,19 @@ export class AuthController {
       // Determinar rol efectivo para JWT y respuesta
       let rolEfectivo = user.rol;
       if (!rolEfectivo) {
+        const emailLower = (user.email || '').toLowerCase();
         if (user.role === Role.ADMIN) {
           rolEfectivo = 'administrador';
         } else if (
-          user.email.toLowerCase().includes('medico') ||
-          user.email.toLowerCase().includes('doctor')
+          emailLower.includes('medico') ||
+          emailLower.includes('doctor') ||
+          emailLower.includes('docente') ||
+          emailLower.includes('profesor') ||
+          emailLower.includes('auditor')
         ) {
-          rolEfectivo = 'medico';
+          rolEfectivo = 'docente';
         } else {
-          rolEfectivo = 'paciente';
+          rolEfectivo = 'user';
         }
       }
 
