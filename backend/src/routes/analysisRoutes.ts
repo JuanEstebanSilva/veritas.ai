@@ -4,6 +4,9 @@ import { authenticateJWT } from '../middleware/authMiddleware';
 import { checkDailyAnalysisLimit } from '../middleware/dailyLimitGuard';
 import { uploadDocument } from '../middleware/uploadMiddleware';
 import { validateUuidParam } from '../middleware/validateUuidParam';
+import { authorizeRoles } from '../middleware/roleGuard';
+import { authorizeAnalysisAccess, authorizeStudentAccess, authorizeTeacherAccess } from '../middleware/ownershipMiddleware';
+import { Role } from '@prisma/client';
 
 const router = Router();
 
@@ -16,10 +19,45 @@ router.post('/document', checkDailyAnalysisLimit, uploadDocument.single('file'),
 router.post('/docx', checkDailyAnalysisLimit, uploadDocument.single('file'), AnalysisController.analyzeDocument);
 router.post('/pdf', checkDailyAnalysisLimit, uploadDocument.single('file'), AnalysisController.analyzeDocument);
 
-// Historial y detalle
+// Historial propio (cualquier rol autenticado; la web lo usa así desde el Lab 5)
 router.get('/history', AnalysisController.getHistory);
-router.get('/:id', validateUuidParam('id'), AnalysisController.getAnalysisById);
-router.delete('/:id', validateUuidParam('id'), AnalysisController.deleteAnalysis);
-router.post('/:id/reanalyze-improved', validateUuidParam('id'), AnalysisController.reanalyzeImproved);
+
+// ── Lab 10 · autenticar → autorizar rol (RBAC) → validar id → autorizar objeto (BOLA) → controlador ──
+const TODOS = [Role.ADMIN, Role.DOCENTE, Role.USER];
+
+// Vista global: solo el administrador
+router.get('/', authorizeRoles(Role.ADMIN), AnalysisController.listAll);
+
+// «Mis análisis»: la identidad sale del JWT, sin ids en la URL
+router.get('/mine', authorizeRoles(Role.USER, Role.DOCENTE), AnalysisController.getMine);
+
+// Por estudiante: él mismo, su docente asignado o el administrador
+router.get(
+  '/student/:studentId',
+  authorizeRoles(...TODOS),
+  validateUuidParam('studentId'),
+  authorizeStudentAccess('studentId'),
+  AnalysisController.getByStudent
+);
+
+// Por docente: el propio docente o el administrador
+router.get(
+  '/teacher/:teacherId',
+  authorizeRoles(Role.ADMIN, Role.DOCENTE),
+  validateUuidParam('teacherId'),
+  authorizeTeacherAccess('teacherId'),
+  AnalysisController.getByTeacher
+);
+
+// Un análisis concreto: leerlo (autor, docente asignado, admin) ≠ modificarlo (autor, admin)
+router.get('/:id', authorizeRoles(...TODOS), validateUuidParam('id'), authorizeAnalysisAccess({ docentePuedeLeer: true }), AnalysisController.getAnalysisById);
+router.delete('/:id', authorizeRoles(...TODOS), validateUuidParam('id'), authorizeAnalysisAccess({ docentePuedeLeer: false }), AnalysisController.deleteAnalysis);
+router.post(
+  '/:id/reanalyze-improved',
+  authorizeRoles(...TODOS),
+  validateUuidParam('id'),
+  authorizeAnalysisAccess({ docentePuedeLeer: false }),
+  AnalysisController.reanalyzeImproved
+);
 
 export default router;

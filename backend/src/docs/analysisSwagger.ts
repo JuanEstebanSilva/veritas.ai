@@ -93,64 +93,174 @@
 
 /**
  * @swagger
+ * components:
+ *   responses:
+ *     NoAutenticado:
+ *       description: 401 — falta la API Key o el JWT, o el token es inválido, alterado o expirado
+ *     SinPermisoRol:
+ *       description: 403 — sabemos quién eres, pero tu rol no puede realizar esta operación (RBAC)
+ *     SinPermisoObjeto:
+ *       description: 403 — tu rol puede usar la operación, pero no sobre ESTE recurso (BOLA/IDOR)
+ *   parameters:
+ *     AnalysisId:
+ *       in: path
+ *       name: id
+ *       required: true
+ *       schema: { type: string, format: uuid }
+ *       description: UUID del análisis
+ */
+
+/**
+ * @swagger
  * /api/analyses/history:
  *   get:
- *     summary: Obtener historial de análisis del usuario autenticado
+ *     summary: Historial propio del usuario autenticado
+ *     description: Devuelve solo los análisis creados por la persona del JWT (cualquier rol).
  *     tags: [Analyses]
  *     security:
  *       - ApiKeyAuth: []
  *         BearerAuth: []
  *     responses:
  *       200:
- *         description: Lista de análisis
- *       500:
- *         description: Error interno
+ *         description: Lista de análisis propios
+ *       401:
+ *         $ref: '#/components/responses/NoAutenticado'
  */
 
 /**
  * @swagger
- * /api/analyses/{id}:
+ * /api/analyses:
  *   get:
- *     summary: Obtener detalle de un análisis por ID
+ *     summary: Todos los análisis del sistema (solo ADMIN)
+ *     description: Vista global para el administrador. Un estudiante o un docente reciben 403, así no hay exposición masiva de análisis ajenos.
+ *     tags: [Analyses]
+ *     security:
+ *       - ApiKeyAuth: []
+ *         BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de análisis con su autor
+ *       401:
+ *         $ref: '#/components/responses/NoAutenticado'
+ *       403:
+ *         $ref: '#/components/responses/SinPermisoRol'
+ */
+
+/**
+ * @swagger
+ * /api/analyses/mine:
+ *   get:
+ *     summary: Mis análisis según la identidad del JWT (USER y DOCENTE)
+ *     description: |
+ *       No recibe ningún identificador: el servidor lo deriva del JWT, así que no hay nada que manipular en la URL.
+ *       USER → sus propios análisis. DOCENTE → los análisis de los estudiantes que tiene asignados (403 si no tiene ninguno).
+ *       ADMIN → 403: para la vista global usa GET /api/analyses.
+ *     tags: [Analyses]
+ *     security:
+ *       - ApiKeyAuth: []
+ *         BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Análisis que le corresponden al usuario autenticado
+ *       401:
+ *         $ref: '#/components/responses/NoAutenticado'
+ *       403:
+ *         description: Rol ADMIN, o docente sin estudiantes asignados
+ */
+
+/**
+ * @swagger
+ * /api/analyses/student/{studentId}:
+ *   get:
+ *     summary: Análisis de un estudiante
+ *     description: El propio estudiante, un docente que lo tenga asignado o el administrador. Cambiar el studentId por el de otra persona responde 403.
  *     tags: [Analyses]
  *     security:
  *       - ApiKeyAuth: []
  *         BearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: studentId
  *         required: true
- *         schema:
- *           type: string
- *         description: ID del análisis
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Análisis del estudiante
+ *       400:
+ *         description: studentId no es un UUID válido
+ *       401:
+ *         $ref: '#/components/responses/NoAutenticado'
+ *       403:
+ *         $ref: '#/components/responses/SinPermisoObjeto'
+ *       404:
+ *         description: El estudiante no existe (solo lo ve el administrador)
+ */
+
+/**
+ * @swagger
+ * /api/analyses/teacher/{teacherId}:
+ *   get:
+ *     summary: Análisis de los estudiantes de un docente
+ *     description: El propio docente o el administrador. Un estudiante recibe 403 por su rol; un docente que pide el grupo de otro docente, 403 por propiedad.
+ *     tags: [Analyses]
+ *     security:
+ *       - ApiKeyAuth: []
+ *         BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: teacherId
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Análisis de los estudiantes asignados
+ *       401:
+ *         $ref: '#/components/responses/NoAutenticado'
+ *       403:
+ *         description: Rol no permitido o grupo de otro docente
+ *       404:
+ *         description: El docente no existe
+ */
+
+/**
+ * @swagger
+ * /api/analyses/{id}:
+ *   get:
+ *     summary: Detalle de un análisis
+ *     description: Lo pueden leer su autor, el docente que tenga asignado a ese estudiante y el administrador.
+ *     tags: [Analyses]
+ *     security:
+ *       - ApiKeyAuth: []
+ *         BearerAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/AnalysisId'
  *     responses:
  *       200:
  *         description: Detalle del análisis
+ *       400:
+ *         description: El id no es un UUID válido
+ *       401:
+ *         $ref: '#/components/responses/NoAutenticado'
+ *       403:
+ *         $ref: '#/components/responses/SinPermisoObjeto'
  *       404:
  *         description: Análisis no encontrado
- */
-
-/**
- * @swagger
- * /api/analyses/{id}:
  *   delete:
- *     summary: Eliminar un análisis del historial
+ *     summary: Eliminar un análisis
+ *     description: Solo su autor o el administrador. El docente asignado puede leerlo, pero no borrarlo (acción ≠ propiedad).
  *     tags: [Analyses]
  *     security:
  *       - ApiKeyAuth: []
  *         BearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: ID del análisis a eliminar
+ *       - $ref: '#/components/parameters/AnalysisId'
  *     responses:
  *       200:
  *         description: Análisis eliminado
+ *       401:
+ *         $ref: '#/components/responses/NoAutenticado'
  *       403:
- *         description: No autorizado
+ *         $ref: '#/components/responses/SinPermisoObjeto'
  *       404:
  *         description: No encontrado
  */
@@ -160,23 +270,22 @@
  * /api/analyses/{id}/reanalyze-improved:
  *   post:
  *     summary: Re‑analizar la versión mejorada de un documento
+ *     description: Solo su autor o el administrador.
  *     tags: [Analyses]
  *     security:
  *       - ApiKeyAuth: []
  *         BearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
+ *       - $ref: '#/components/parameters/AnalysisId'
  *     responses:
  *       200:
  *         description: Comparación de resultados
  *       400:
  *         description: Versión mejorada no disponible
+ *       401:
+ *         $ref: '#/components/responses/NoAutenticado'
  *       403:
- *         description: No autorizado
+ *         $ref: '#/components/responses/SinPermisoObjeto'
  *       404:
  *         description: Análisis no encontrado
  */

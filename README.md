@@ -107,10 +107,11 @@ El comando `npm run prisma:seed` inicializa las siguientes cuentas:
 | :--- | :--- | :--- | :--- |
 | 👑 **ADMIN** | `ADMIN_EMAIL` de tu `.env` | `ADMIN_PASSWORD` de tu `.env` (propia de cada despliegue) | Panel administrativo exclusivo (`/admin`), métricas globales en tiempo real, auditoría de transacciones y gestión completa (CRUD) de usuarios del sistema. |
 | 👤 **USER (Demo)** | `usuario@plagelio.com` | `User123!Secure*` | 5 análisis diarios gratuitos con contador en tiempo real, analizador de texto y archivos DOCX, y simulación de pase Premium Vitalicio por US$2. |
+| 🎓 **DOCENTE** | Lo crea el ADMIN con `POST /api/users` (`"role": "DOCENTE"`) | La que defina el ADMIN | Revisa (solo lectura) los análisis de los estudiantes que el ADMIN le asigna con `POST /api/teachers/{teacherId}/students`. No ve los de otros grupos ni puede borrarlos (Lab 10). |
 
 > [!TIP]
 > En la página de **Inicio de Sesión** (`/login`) el botón de acceso de demostración completa las credenciales del usuario de prueba (rol USER).
-> No existe acceso rápido de administrador: el único ADMIN lo crea el seed con la contraseña de tu `.env`, y ninguna ruta de la API asigna ese rol.
+> No existe acceso rápido de administrador: el único ADMIN lo crea el seed con la contraseña de tu `.env`, y ninguna ruta de la API asigna ese rol (pedirlo en `POST /api/users` responde 403).
 
 ---
 

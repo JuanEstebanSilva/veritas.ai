@@ -4,8 +4,27 @@ import { prisma } from '../config/prisma';
 import { AIService } from '../services/AIService';
 import { DocxService } from '../services/DocxService';
 import { recordSuccessfulAnalysis } from '../middleware/dailyLimitGuard';
-import { AnalysisType } from '@prisma/client';
+import { AnalysisType, Prisma, Role } from '@prisma/client';
 import { SimilarityEngine } from '../utils/similarityCorpus';
+import { idsEstudiantesAsignados } from '../services/teacherStudents.service';
+
+// Campos del listado: nunca el texto completo, que solo se entrega en el detalle.
+const RESUMEN = {
+  id: true,
+  title_or_filename: true,
+  type: true,
+  ai_score: true,
+  similarity_score: true,
+  improved_ai_score: true,
+  improved_similarity_score: true,
+  created_at: true,
+} satisfies Prisma.AnalysisSelect;
+
+const CON_AUTOR = {
+  ...RESUMEN,
+  user_id: true,
+  user: { select: { id: true, name: true, last_name: true, email: true } },
+} satisfies Prisma.AnalysisSelect;
 
 export class AnalysisController {
   /**
@@ -241,16 +260,7 @@ export class AnalysisController {
       const analyses = await prisma.analysis.findMany({
         where: { user_id: user.id },
         orderBy: { created_at: 'desc' },
-        select: {
-          id: true,
-          title_or_filename: true,
-          type: true,
-          ai_score: true,
-          similarity_score: true,
-          improved_ai_score: true,
-          improved_similarity_score: true,
-          created_at: true,
-        },
+        select: RESUMEN,
       });
 
       res.status(200).json({
@@ -263,11 +273,114 @@ export class AnalysisController {
   }
 
   /**
-   * Obtener un análisis específico por ID con protección estricta de propiedad
+   * Lab 10 · GET /api/analyses — vista global. Solo ADMIN (authorizeRoles en la ruta):
+   * ni el estudiante ni el docente pueden listar los análisis de todo el sistema.
+   */
+  public static async listAll(_req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const analyses = await prisma.analysis.findMany({ orderBy: { created_at: 'desc' }, select: CON_AUTOR });
+      res.status(200).json({ success: true, total: analyses.length, analyses });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: 'Error al consultar los análisis.' });
+    }
+  }
+
+  /**
+   * Lab 10 · GET /api/analyses/mine — «mis análisis» según la identidad del JWT.
+   * No recibe ningún id: no hay nada que manipular en la URL.
+   *   USER    → sus propios análisis
+   *   DOCENTE → los análisis de los estudiantes que tiene asignados
+   */
+  public static async getMine(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const user = req.user!;
+
+      if (user.role === Role.DOCENTE) {
+        const estudiantes = await idsEstudiantesAsignados(user.id);
+        if (estudiantes.length === 0) {
+          res.status(403).json({
+            success: false,
+            message: 'No tienes estudiantes asignados. El administrador debe asignarte un grupo.',
+            mensaje: 'El usuario no tiene un perfil asociado',
+          });
+          return;
+        }
+        const analyses = await prisma.analysis.findMany({
+          where: { user_id: { in: estudiantes } },
+          orderBy: { created_at: 'desc' },
+          select: CON_AUTOR,
+        });
+        res.status(200).json({ success: true, scope: 'estudiantes-asignados', total: analyses.length, analyses });
+        return;
+      }
+
+      const analyses = await prisma.analysis.findMany({
+        where: { user_id: user.id },
+        orderBy: { created_at: 'desc' },
+        select: RESUMEN,
+      });
+      res.status(200).json({ success: true, scope: 'propios', total: analyses.length, analyses });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: 'Error al consultar tus análisis.' });
+    }
+  }
+
+  /**
+   * Lab 10 · GET /api/analyses/student/:studentId
+   * La propiedad ya la comprobó authorizeStudentAccess; aquí solo se consulta.
+   */
+  public static async getByStudent(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const studentId = req.params.studentId as string;
+      const estudiante = await prisma.user.findUnique({
+        where: { id: studentId },
+        select: { id: true, name: true, last_name: true, email: true, role: true },
+      });
+      if (!estudiante || estudiante.role !== Role.USER) {
+        res.status(404).json({ success: false, message: 'Estudiante no encontrado.', mensaje: 'Recurso no encontrado' });
+        return;
+      }
+      const { role: _rol, ...datos } = estudiante;
+      const analyses = await prisma.analysis.findMany({
+        where: { user_id: studentId },
+        orderBy: { created_at: 'desc' },
+        select: RESUMEN,
+      });
+      res.status(200).json({ success: true, student: datos, total: analyses.length, analyses });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: 'Error al consultar los análisis del estudiante.' });
+    }
+  }
+
+  /**
+   * Lab 10 · GET /api/analyses/teacher/:teacherId — análisis de los estudiantes de un docente.
+   */
+  public static async getByTeacher(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const teacherId = req.params.teacherId as string;
+      const docente = await prisma.user.findUnique({ where: { id: teacherId }, select: { role: true } });
+      if (!docente || docente.role !== Role.DOCENTE) {
+        res.status(404).json({ success: false, message: 'Docente no encontrado.', mensaje: 'Recurso no encontrado' });
+        return;
+      }
+      const estudiantes = await idsEstudiantesAsignados(teacherId);
+      const analyses = await prisma.analysis.findMany({
+        where: { user_id: { in: estudiantes } },
+        orderBy: { created_at: 'desc' },
+        select: CON_AUTOR,
+      });
+      res.status(200).json({ success: true, students: estudiantes.length, total: analyses.length, analyses });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: 'Error al consultar los análisis del docente.' });
+    }
+  }
+
+  /**
+   * Obtener un análisis específico por ID. La propiedad la comprueba antes
+   * authorizeAnalysisAccess (Lab 10): dueño, administrador o docente asignado.
    */
   public static async getAnalysisById(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const user = req.user!;
       const id = req.params.id as string;
 
       const analysis: any = await prisma.analysis.findUnique({
@@ -280,15 +393,6 @@ export class AnalysisController {
 
       if (!analysis) {
         res.status(404).json({ success: false, message: 'Análisis no encontrado.' });
-        return;
-      }
-
-      // Regla de seguridad fundamental: Un usuario solo puede acceder a sus propios análisis
-      if (analysis.user_id !== user.id && user.role !== 'ADMIN') {
-        res.status(403).json({
-          success: false,
-          message: 'Acceso no autorizado: No tienes permiso para ver este análisis.',
-        });
         return;
       }
 
@@ -329,27 +433,12 @@ export class AnalysisController {
   }
 
   /**
-   * Eliminar un análisis del historial con verificación de pertenencia
+   * Eliminar un análisis del historial. Solo su autor o el administrador:
+   * lo comprueba authorizeAnalysisAccess({ docentePuedeLeer: false }) en la ruta.
    */
   public static async deleteAnalysis(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const user = req.user!;
       const id = req.params.id as string;
-
-      const analysis = await prisma.analysis.findUnique({ where: { id } });
-
-      if (!analysis) {
-        res.status(404).json({ success: false, message: 'Análisis no encontrado.' });
-        return;
-      }
-
-      if (analysis.user_id !== user.id && user.role !== 'ADMIN') {
-        res.status(403).json({
-          success: false,
-          message: 'Acceso no autorizado: No puedes eliminar análisis de otros usuarios.',
-        });
-        return;
-      }
 
       await prisma.analysis.delete({ where: { id } });
 
@@ -367,18 +456,13 @@ export class AnalysisController {
    */
   public static async reanalyzeImproved(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const user = req.user!;
       const id = req.params.id as string;
 
+      // Autor o administrador: lo comprobó authorizeAnalysisAccess en la ruta.
       const analysis = await prisma.analysis.findUnique({ where: { id } });
 
       if (!analysis) {
         res.status(404).json({ success: false, message: 'Análisis no encontrado.' });
-        return;
-      }
-
-      if (analysis.user_id !== user.id && user.role !== 'ADMIN') {
-        res.status(403).json({ success: false, message: 'No autorizado.' });
         return;
       }
 

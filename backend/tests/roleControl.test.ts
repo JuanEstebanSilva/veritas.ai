@@ -78,14 +78,16 @@ describe('Lab 8 · el rol lo asigna el servidor', () => {
     expect(res.status).toBe(403);
   });
 
+  // Lab 10: el ADMIN ya puede elegir USER o DOCENTE; pedir ADMIN se rechaza de forma
+  // explícita (403) en vez de degradarlo en silencio a USER como en el Lab 8.
   it('ni siquiera el ADMIN crea otro ADMIN por la API: administrador único', async () => {
+    const email = `segundo.${sufijo}@plagelio.com`;
     const res = await request(app)
       .post('/api/users')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ name: 'Segundo', last_name: 'Admin', email: `segundo.${sufijo}@plagelio.com`, password: 'ClaveSegura2026!', role: 'ADMIN' });
-    expect(res.status).toBe(201);
-    expect(res.body.user.role).toBe('USER');
-    ids.push(res.body.user.id);
+      .send({ name: 'Segundo', last_name: 'Admin', email, password: 'ClaveSegura2026!', role: 'ADMIN' });
+    expect(res.status).toBe(403);
+    expect(await prisma.user.findUnique({ where: { email } })).toBeNull();
   });
 
   it('el administrador no puede desactivarse a sí mismo por PUT /api/users/:id', async () => {

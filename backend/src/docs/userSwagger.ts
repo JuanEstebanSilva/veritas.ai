@@ -188,8 +188,11 @@
  * @swagger
  * /api/users:
  *   post:
- *     summary: Crear un nuevo usuario desde el panel administrativo
- *     description: Permite al administrador dar de alta una nueva cuenta de usuario. Siempre se asigna rol USER por diseño de seguridad.
+ *     summary: Crear un usuario (estudiante o docente) desde el panel administrativo
+ *     description: |
+ *       Solo ADMIN. Aquí sí se acepta `role` porque la operación ya está protegida por autorización (Lab 10):
+ *       USER (estudiante, por defecto) o DOCENTE. ADMIN responde 403: Plagelio tiene un administrador único creado por el seed (Lab 8).
+ *       id, is_active, password_hash y demás campos internos se ignoran: los fija el servidor.
  *     tags: [Users]
  *     security:
  *       - ApiKeyAuth: []
@@ -220,6 +223,11 @@
  *                 type: string
  *                 format: password
  *                 example: UsuarioSeguro2026!
+ *               role:
+ *                 type: string
+ *                 enum: [USER, DOCENTE]
+ *                 default: USER
+ *                 example: DOCENTE
  *               is_premium:
  *                 type: boolean
  *                 default: false
@@ -227,11 +235,11 @@
  *       201:
  *         description: Usuario creado exitosamente.
  *       400:
- *         description: Faltan campos obligatorios o formato inválido.
+ *         description: Faltan campos obligatorios, formato inválido o rol no permitido.
  *       401:
  *         description: No autenticado o API Key requerida/inválida.
  *       403:
- *         description: Permisos insuficientes (requiere ADMIN).
+ *         description: Permisos insuficientes (requiere ADMIN) o intento de crear otro ADMIN.
  *       409:
  *         description: El correo electrónico ya se encuentra registrado.
  *       500:

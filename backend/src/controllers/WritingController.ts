@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../middleware/authMiddleware';
 import { prisma } from '../config/prisma';
 import { AIService } from '../services/AIService';
 import { DocxService } from '../services/DocxService';
+import { puedeModificarAnalisis } from '../middleware/ownershipMiddleware';
 
 export class WritingController {
   /**
@@ -18,7 +19,7 @@ export class WritingController {
 
       if (analysisId) {
         analysisRecord = await prisma.analysis.findUnique({ where: { id: analysisId } });
-        if (!analysisRecord || (analysisRecord.user_id !== user.id && user.role !== 'ADMIN')) {
+        if (!analysisRecord || !puedeModificarAnalisis(user, analysisRecord)) {
           res.status(403).json({ success: false, message: 'Análisis no encontrado o no autorizado.' });
           return;
         }

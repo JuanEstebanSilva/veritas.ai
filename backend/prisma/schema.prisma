@@ -9,8 +9,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Lab 10 (RBAC): USER = estudiante, DOCENTE = revisa los análisis de los
+// estudiantes que el administrador le asigna, ADMIN = administrador único (Lab 8).
 enum Role {
   USER
+  DOCENTE
   ADMIN
 }
 
@@ -42,6 +45,9 @@ model User {
 
   analyses             Analysis[]
   payments             Payment[]
+  // Lab 10: un docente ve solo los análisis de los estudiantes que tiene asignados
+  students             TeacherStudent[] @relation("TeacherAssignments")
+  teachers             TeacherStudent[] @relation("StudentAssignments")
 
   @@map("users")
 }
@@ -111,6 +117,24 @@ model Payment {
   user           User          @relation(fields: [user_id], references: [id], onDelete: Restrict)
 
   @@map("payments")
+}
+
+/// Asignación docente ↔ estudiante — Lab 10 (autorización a nivel de objeto).
+/// Es la relación explícita que responde «¿este análisis le corresponde a este
+/// docente?». Solo la crea el administrador; no es un registro histórico, así que
+/// desaparece con cualquiera de los dos usuarios (CASCADE).
+model TeacherStudent {
+  id         Int      @id @default(autoincrement())
+  teacher_id String
+  student_id String
+  created_at DateTime @default(now())
+
+  teacher    User     @relation("TeacherAssignments", fields: [teacher_id], references: [id], onDelete: Cascade)
+  student    User     @relation("StudentAssignments", fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@unique([teacher_id, student_id])
+  @@index([student_id])
+  @@map("teacher_students")
 }
 
 /// Clientes (aplicaciones) autorizados a consumir la API — Lab 6.

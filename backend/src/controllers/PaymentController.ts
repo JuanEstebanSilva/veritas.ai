@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/authMiddleware';
-import { PaymentService } from '../services/PaymentService';
+import { PaymentService, PagoError } from '../services/PaymentService';
 import { prisma } from '../config/prisma';
 
 export class PaymentController {
@@ -124,6 +124,10 @@ export class PaymentController {
         isPremium: true,
       });
     } catch (error: any) {
+      if (error instanceof PagoError) {
+        res.status(error.status).json({ success: false, message: error.message });
+        return;
+      }
       res.status(400).json({ success: false, message: error.message });
     }
   }

@@ -216,18 +216,14 @@ Ambos entornos compilan al 100% de manera limpia, garantizando la integridad de 
 - **Implementación**:
   - `authMiddleware.ts` intercepta cada petición a rutas protegidas, extrae el token Bearer del encabezado `Authorization` y verifica firma, expiración y algoritmo con `verificarToken()` (`jwt.verify(token, secret, { algorithms: ['HS256'] })`, en `utils/jwt.util.ts`). El rol y el estado se leen de la base de datos en cada petición, no del token.
   - Si el usuario ha sido desactivado por un administrador (`!user.is_active`), se deniega el acceso con código `403 Forbidden`.
-  - **Prevención de IDOR (Insecure Direct Object Reference)** en `AnalysisController.ts`:
+  - **RBAC (Lab 10)**: `authorizeRoles(...roles)` en `roleGuard.ts` decide si el ROL puede usar la operación (401 sin identidad, 403 rol no permitido). Roles: `USER` (estudiante), `DOCENTE` y `ADMIN` (único, solo lo crea el seed).
+  - **Autorización a nivel de objeto, BOLA/IDOR (Lab 10)** en `ownershipMiddleware.ts`, después de validar el id y antes del controlador:
     ```typescript
-    // Líneas 276-282 de AnalysisController.ts
-    if (analysis.user_id !== user.id && user.role !== 'ADMIN') {
-      res.status(403).json({
-        success: false,
-        message: 'Acceso no autorizado: No tienes permiso para ver este análisis.',
-      });
-      return;
-    }
+    // GET /api/analyses/:id → autor, docente asignado (solo lectura) o administrador
+    router.get('/:id', authorizeRoles(...TODOS), validateUuidParam('id'),
+      authorizeAnalysisAccess({ docentePuedeLeer: true }), AnalysisController.getAnalysisById);
     ```
-    Ningún usuario puede consultar o eliminar análisis de terceros, incluso si conoce o adivina el UUID del análisis.
+    Un estudiante no ve los análisis de otro; un docente solo ve los de los estudiantes que el administrador le asignó (`teacher_students`) y no puede borrarlos; `/api/analyses/mine` deriva la identidad del JWT, sin ids en la URL. Confirmar la transacción de pago de otro usuario responde 403 (antes 400) y una inexistente 404.
   - **Prevención de Escalada de Privilegios**: En `roleGuard.ts`, el middleware `preventPrivilegeEscalation` bloquea cualquier intento de un usuario estándar de enviar campos sensibles (`role`, `is_premium`, `daily_analysis_count`, `premium_since`) en llamadas a `PUT /api/auth/me`.
 
 #### A02: Cryptographic Failures (Fallas Criptográficas)

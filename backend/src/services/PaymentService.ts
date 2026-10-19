@@ -4,6 +4,14 @@ import { ENV } from '../config/env';
 import { PaymentStatus } from '@prisma/client';
 import crypto from 'crypto';
 
+/** Error de negocio del pago con su código HTTP (404 no existe · 403 no es tuya). */
+export class PagoError extends Error {
+  constructor(public readonly status: number, message: string) {
+    super(message);
+    this.name = 'PagoError';
+  }
+}
+
 export class PaymentService {
   public static readonly PREMIUM_PRICE_USD = 2.0;
 
@@ -126,11 +134,13 @@ export class PaymentService {
     });
 
     if (!payment) {
-      throw new Error('Transacción no encontrada.');
+      throw new PagoError(404, 'Transacción no encontrada.');
     }
 
+    // Lab 10 (BOLA): la transacción existe pero es de otro usuario. Es un fallo de
+    // autorización, no de validación: 403, y la transacción ajena no se toca.
     if (payment.user_id !== options.userId) {
-      throw new Error('Transacción no autorizada para este usuario.');
+      throw new PagoError(403, 'Transacción no autorizada para este usuario.');
     }
 
     if (payment.status === PaymentStatus.COMPLETED) {

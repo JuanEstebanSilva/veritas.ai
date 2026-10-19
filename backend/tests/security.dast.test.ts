@@ -216,7 +216,8 @@ describe('Suite DAST — Dynamic Application Security Testing (Plagelio)', () =>
       expect(res.body.message).toContain('stripe-signature');
     });
 
-    it('DAST-PAY-02: Rechazar confirmación de pago Sandbox con ID de transacción falso (500/400)', async () => {
+    // Lab 10: una transacción inexistente es 404 (antes 400); una ajena, 403.
+    it('DAST-PAY-02: Rechazar confirmación de pago Sandbox con ID de transacción falso (404)', async () => {
       const res = await request(app)
         .post('/api/payments/sandbox-confirm')
         .set('Authorization', `Bearer ${user1Token}`)
@@ -224,7 +225,7 @@ describe('Suite DAST — Dynamic Application Security Testing (Plagelio)', () =>
           transactionId: 'sbx_non_existent_fake_id_999999',
           simulateSuccess: true,
         });
-      expect([400, 500]).toContain(res.status);
+      expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);
     });
   });

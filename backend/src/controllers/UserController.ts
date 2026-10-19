@@ -179,7 +179,24 @@ export class UserController {
    */
   public static async createUser(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { name, last_name, email, password, is_premium } = req.body;
+      const { name, last_name, email, password, is_premium, role } = req.body;
+
+      // Lab 10: aquí SÍ se acepta el rol desde el cuerpo, porque la operación ya está
+      // protegida por authorizeRoles(ADMIN). Un campo no es inseguro por existir en la
+      // petición: el problema es quién está autorizado a controlarlo.
+      const rolSolicitado = role ?? Role.USER;
+      if (rolSolicitado === Role.ADMIN) {
+        // Lab 8: Plagelio tiene un administrador único y solo lo crea el seed.
+        res.status(403).json({
+          success: false,
+          message: 'El rol ADMIN no se asigna por la API: Plagelio tiene un administrador único creado por el seed.',
+        });
+        return;
+      }
+      if (rolSolicitado !== Role.USER && rolSolicitado !== Role.DOCENTE) {
+        res.status(400).json({ success: false, message: "El rol debe ser 'USER' (estudiante) o 'DOCENTE'." });
+        return;
+      }
 
       if (!name || !last_name || !email || !password) {
         res.status(400).json({
@@ -211,7 +228,7 @@ export class UserController {
           last_name: last_name.trim(),
           email: normalizedEmail,
           password_hash: passwordHash,
-          role: Role.USER, // Siempre USER, regla de negocio: Administrador único
+          role: rolSolicitado, // USER o DOCENTE; nunca ADMIN (administrador único)
           is_active: true,
           is_premium: Boolean(is_premium),
           premium_since: is_premium ? new Date() : null,

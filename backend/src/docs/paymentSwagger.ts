@@ -86,7 +86,17 @@
  *       200:
  *         description: Pago sandbox confirmado, usuario premium activado
  *       400:
- *         description: Parámetros inválidos o error en confirmación
+ *         description: Falta el transactionId
+ *       401:
+ *         description: Falta la API Key o el JWT, o el token es inválido
+ *       402:
+ *         description: El emisor rechazó el pago de prueba
+ *       403:
+ *         description: La transacción existe pero pertenece a otro usuario (BOLA, Lab 10)
+ *       404:
+ *         description: La transacción no existe
+ *       409:
+ *         description: La transacción ya fue rechazada y no puede reutilizarse
  */
 
 /**
