@@ -8,34 +8,50 @@ import revisionesService from '../services/revisiones.service';
  * Veritas AI — Controlador de Docentes / Auditores de Integridad Académica
  */
 
-export const obtenerDocentes = (req: Request, res: Response): void => {
-  const lista = docentesService.obtenerDocentes();
-  res.status(200).json({
-    success: true,
-    total: lista.length,
-    mensaje: 'Lista de docentes / auditores obtenida correctamente',
-    docentes: lista,
-    medicos: lista,
-  });
+export const obtenerDocentes = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const lista = await docentesService.obtenerDocentes();
+    res.status(200).json({
+      success: true,
+      total: lista.length,
+      mensaje: 'Lista de docentes / auditores obtenida correctamente',
+      docentes: lista,
+      medicos: lista,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const obtenerDocentePorId = (req: Request, res: Response): void => {
-  const id = req.params.id as string;
-  const docente = docentesService.obtenerDocentePorId(id);
+export const obtenerDocentePorId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const docente = await docentesService.obtenerDocentePorId(id);
 
-  if (!docente) {
-    res.status(404).json({
-      success: false,
-      mensaje: 'Docente no encontrado',
+    if (!docente) {
+      res.status(404).json({
+        success: false,
+        mensaje: 'Docente no encontrado',
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      docente,
+      medico: docente,
     });
-    return;
+  } catch (error) {
+    next(error);
   }
-
-  res.status(200).json({
-    success: true,
-    docente,
-    medico: docente,
-  });
 };
 
 export const crearDocente = async (
@@ -74,7 +90,7 @@ export const crearDocente = async (
         return;
       }
 
-      const docenteExistente = docentesService.obtenerDocentePorUsuarioId(
+      const docenteExistente = await docentesService.obtenerDocentePorUsuarioId(
         datos.usuarioId,
         datos.email
       );
@@ -90,7 +106,7 @@ export const crearDocente = async (
       }
     }
 
-    const docente = docentesService.crearDocente(datos);
+    const docente = await docentesService.crearDocente(datos);
 
     res.status(201).json({
       success: true,
@@ -98,7 +114,23 @@ export const crearDocente = async (
       docente,
       medico: docente,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code === '23505') {
+      res.status(409).json({
+        success: false,
+        mensaje: 'El registro académico o email ya se encuentra registrado para otro docente',
+        message: 'Conflicto: registro duplicado en la base de datos',
+      });
+      return;
+    }
+    if (error.code === '23503') {
+      res.status(400).json({
+        success: false,
+        mensaje: 'El departamento académico especificado no existe',
+        message: 'Referencia inválida: clave foránea no encontrada',
+      });
+      return;
+    }
     next(error);
   }
 };
@@ -137,8 +169,8 @@ export const actualizarDocente = async (
         return;
       }
 
-      const existente = docentesService.obtenerDocentePorUsuarioId(datos.usuarioId);
-      if (existente && existente.id !== Number(id)) {
+      const existente = await docentesService.obtenerDocentePorUsuarioId(datos.usuarioId);
+      if (existente && String(existente.id) !== String(id)) {
         res.status(409).json({
           success: false,
           mensaje: 'El usuario ya está asociado a un docente',
@@ -147,7 +179,7 @@ export const actualizarDocente = async (
       }
     }
 
-    const docente = docentesService.actualizarDocente(id, datos);
+    const docente = await docentesService.actualizarDocente(id, datos);
     if (!docente) {
       res.status(404).json({ success: false, mensaje: 'Docente no encontrado' });
       return;
@@ -159,7 +191,21 @@ export const actualizarDocente = async (
       docente,
       medico: docente,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code === '23505') {
+      res.status(409).json({
+        success: false,
+        mensaje: 'El registro académico o email ya se encuentra registrado para otro docente',
+      });
+      return;
+    }
+    if (error.code === '23503') {
+      res.status(400).json({
+        success: false,
+        mensaje: 'El departamento académico especificado no existe',
+      });
+      return;
+    }
     next(error);
   }
 };
@@ -198,8 +244,8 @@ export const actualizarDocenteParcial = async (
         return;
       }
 
-      const existente = docentesService.obtenerDocentePorUsuarioId(datos.usuarioId);
-      if (existente && existente.id !== Number(id)) {
+      const existente = await docentesService.obtenerDocentePorUsuarioId(datos.usuarioId);
+      if (existente && String(existente.id) !== String(id)) {
         res.status(409).json({
           success: false,
           mensaje: 'El usuario ya está asociado a un docente',
@@ -208,7 +254,7 @@ export const actualizarDocenteParcial = async (
       }
     }
 
-    const docente = docentesService.actualizarDocenteParcial(id, datos);
+    const docente = await docentesService.actualizarDocenteParcial(id, datos);
     if (!docente) {
       res.status(404).json({ success: false, mensaje: 'Docente no encontrado' });
       return;
@@ -220,36 +266,67 @@ export const actualizarDocenteParcial = async (
       docente,
       medico: docente,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code === '23505') {
+      res.status(409).json({
+        success: false,
+        mensaje: 'El registro académico o email ya se encuentra registrado para otro docente',
+      });
+      return;
+    }
+    if (error.code === '23503') {
+      res.status(400).json({
+        success: false,
+        mensaje: 'El departamento académico especificado no existe',
+      });
+      return;
+    }
     next(error);
   }
 };
 
-export const eliminarDocente = (req: Request, res: Response): void => {
-  const id = req.params.id as string;
-  const docente = docentesService.obtenerDocentePorId(id);
+export const eliminarDocente = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const docente = await docentesService.obtenerDocentePorId(id);
 
-  if (!docente) {
-    res.status(404).json({ success: false, mensaje: 'Docente no encontrado' });
-    return;
-  }
+    if (!docente) {
+      res.status(404).json({ success: false, mensaje: 'Docente no encontrado' });
+      return;
+    }
 
-  const revisionesAsociadas = revisionesService.obtenerRevisionesPorDocente(id);
-  if (revisionesAsociadas.length > 0) {
-    res.status(409).json({
-      success: false,
-      mensaje: 'No se puede eliminar el docente porque tiene revisiones asignadas',
-      message: 'No se puede eliminar el docente porque tiene revisiones asignadas',
+    // Integridad Referencial: Un docente con revisiones activas no puede eliminarse
+    const revisionesAsociadas = await revisionesService.obtenerRevisionesPorDocente(id);
+    if (revisionesAsociadas.length > 0) {
+      res.status(409).json({
+        success: false,
+        mensaje: 'No se puede eliminar el docente porque tiene revisiones asignadas',
+        message: 'No se puede eliminar el docente porque tiene revisiones asignadas',
+      });
+      return;
+    }
+
+    await docentesService.eliminarDocente(id);
+
+    res.status(200).json({
+      success: true,
+      mensaje: 'Docente eliminado correctamente',
     });
-    return;
+  } catch (error: any) {
+    if (error.code === '23503') {
+      res.status(409).json({
+        success: false,
+        mensaje: 'No se puede eliminar el docente porque tiene revisiones asociadas',
+        message: 'Violación de clave foránea: existen registros dependientes',
+      });
+      return;
+    }
+    next(error);
   }
-
-  docentesService.eliminarDocente(id);
-
-  res.status(200).json({
-    success: true,
-    mensaje: 'Docente eliminado correctamente',
-  });
 };
 
 export default {
@@ -259,7 +336,7 @@ export default {
   actualizarDocente,
   actualizarDocenteParcial,
   eliminarDocente,
-  // Alias
+  // Alias de compatibilidad
   obtenerMedicos: obtenerDocentes,
   obtenerMedicoPorId: obtenerDocentePorId,
   crearMedico: crearDocente,

@@ -8,34 +8,50 @@ import revisionesService from '../services/revisiones.service';
  * Veritas AI — Controlador de Estudiantes / Autores de Trabajos
  */
 
-export const obtenerEstudiantes = (req: Request, res: Response): void => {
-  const lista = estudiantesService.obtenerEstudiantes();
-  res.status(200).json({
-    success: true,
-    total: lista.length,
-    mensaje: 'Lista de estudiantes obtenida correctamente',
-    estudiantes: lista,
-    pacientes: lista,
-  });
+export const obtenerEstudiantes = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const lista = await estudiantesService.obtenerEstudiantes();
+    res.status(200).json({
+      success: true,
+      total: lista.length,
+      mensaje: 'Lista de estudiantes obtenida correctamente',
+      estudiantes: lista,
+      pacientes: lista,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const obtenerEstudiantePorId = (req: Request, res: Response): void => {
-  const id = req.params.id as string;
-  const estudiante = estudiantesService.obtenerEstudiantePorId(id);
+export const obtenerEstudiantePorId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const estudiante = await estudiantesService.obtenerEstudiantePorId(id);
 
-  if (!estudiante) {
-    res.status(404).json({
-      success: false,
-      mensaje: 'Estudiante no encontrado',
+    if (!estudiante) {
+      res.status(404).json({
+        success: false,
+        mensaje: 'Estudiante no encontrado',
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      estudiante,
+      paciente: estudiante,
     });
-    return;
+  } catch (error) {
+    next(error);
   }
-
-  res.status(200).json({
-    success: true,
-    estudiante,
-    paciente: estudiante,
-  });
 };
 
 export const crearEstudiante = async (
@@ -73,7 +89,7 @@ export const crearEstudiante = async (
         return;
       }
 
-      const estudianteExistente = estudiantesService.obtenerEstudiantePorUsuarioId(
+      const estudianteExistente = await estudiantesService.obtenerEstudiantePorUsuarioId(
         datos.usuarioId,
         datos.email
       );
@@ -89,7 +105,7 @@ export const crearEstudiante = async (
       }
     }
 
-    const estudiante = estudiantesService.crearEstudiante(datos);
+    const estudiante = await estudiantesService.crearEstudiante(datos);
 
     res.status(201).json({
       success: true,
@@ -97,7 +113,23 @@ export const crearEstudiante = async (
       estudiante,
       paciente: estudiante,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code === '23505') {
+      res.status(409).json({
+        success: false,
+        mensaje: 'El documento o email ya se encuentra registrado para otro estudiante',
+        message: 'Conflicto: registro duplicado en la base de datos',
+      });
+      return;
+    }
+    if (error.code === '23503') {
+      res.status(400).json({
+        success: false,
+        mensaje: 'El usuario asociado referenciado no existe',
+        message: 'Referencia inválida: clave foránea no encontrada',
+      });
+      return;
+    }
     next(error);
   }
 };
@@ -135,8 +167,8 @@ export const actualizarEstudiante = async (
         return;
       }
 
-      const existente = estudiantesService.obtenerEstudiantePorUsuarioId(datos.usuarioId);
-      if (existente && existente.id !== Number(id)) {
+      const existente = await estudiantesService.obtenerEstudiantePorUsuarioId(datos.usuarioId);
+      if (existente && String(existente.id) !== String(id)) {
         res.status(409).json({
           success: false,
           mensaje: 'El usuario ya está asociado a un estudiante',
@@ -145,7 +177,7 @@ export const actualizarEstudiante = async (
       }
     }
 
-    const estudiante = estudiantesService.actualizarEstudiante(id, datos);
+    const estudiante = await estudiantesService.actualizarEstudiante(id, datos);
     if (!estudiante) {
       res.status(404).json({ success: false, mensaje: 'Estudiante no encontrado' });
       return;
@@ -157,7 +189,14 @@ export const actualizarEstudiante = async (
       estudiante,
       paciente: estudiante,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code === '23505') {
+      res.status(409).json({
+        success: false,
+        mensaje: 'El documento o email ya se encuentra registrado para otro estudiante',
+      });
+      return;
+    }
     next(error);
   }
 };
@@ -195,8 +234,8 @@ export const actualizarEstudianteParcial = async (
         return;
       }
 
-      const existente = estudiantesService.obtenerEstudiantePorUsuarioId(datos.usuarioId);
-      if (existente && existente.id !== Number(id)) {
+      const existente = await estudiantesService.obtenerEstudiantePorUsuarioId(datos.usuarioId);
+      if (existente && String(existente.id) !== String(id)) {
         res.status(409).json({
           success: false,
           mensaje: 'El usuario ya está asociado a un estudiante',
@@ -205,7 +244,7 @@ export const actualizarEstudianteParcial = async (
       }
     }
 
-    const estudiante = estudiantesService.actualizarEstudianteParcial(id, datos);
+    const estudiante = await estudiantesService.actualizarEstudianteParcial(id, datos);
     if (!estudiante) {
       res.status(404).json({ success: false, mensaje: 'Estudiante no encontrado' });
       return;
@@ -217,37 +256,60 @@ export const actualizarEstudianteParcial = async (
       estudiante,
       paciente: estudiante,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code === '23505') {
+      res.status(409).json({
+        success: false,
+        mensaje: 'El documento o email ya se encuentra registrado para otro estudiante',
+      });
+      return;
+    }
     next(error);
   }
 };
 
-export const eliminarEstudiante = (req: Request, res: Response): void => {
-  const id = req.params.id as string;
-  const estudiante = estudiantesService.obtenerEstudiantePorId(id);
+export const eliminarEstudiante = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const estudiante = await estudiantesService.obtenerEstudiantePorId(id);
 
-  if (!estudiante) {
-    res.status(404).json({ success: false, mensaje: 'Estudiante no encontrado' });
-    return;
-  }
+    if (!estudiante) {
+      res.status(404).json({ success: false, mensaje: 'Estudiante no encontrado' });
+      return;
+    }
 
-  // Integridad Referencial: Un estudiante con revisiones no puede eliminarse
-  const revisionesAsociadas = revisionesService.obtenerRevisionesPorEstudiante(id);
-  if (revisionesAsociadas.length > 0) {
-    res.status(409).json({
-      success: false,
-      mensaje: 'No se puede eliminar el estudiante porque tiene revisiones asociadas',
-      message: 'No se puede eliminar el estudiante porque tiene revisiones asociadas',
+    // Integridad Referencial: Un estudiante con revisiones no puede eliminarse
+    const revisionesAsociadas = await revisionesService.obtenerRevisionesPorEstudiante(id);
+    if (revisionesAsociadas.length > 0) {
+      res.status(409).json({
+        success: false,
+        mensaje: 'No se puede eliminar el estudiante porque tiene revisiones asociadas',
+        message: 'No se puede eliminar el estudiante porque tiene revisiones asociadas',
+      });
+      return;
+    }
+
+    await estudiantesService.eliminarEstudiante(id);
+
+    res.status(200).json({
+      success: true,
+      mensaje: 'Estudiante eliminado correctamente',
     });
-    return;
+  } catch (error: any) {
+    if (error.code === '23503') {
+      res.status(409).json({
+        success: false,
+        mensaje: 'No se puede eliminar el estudiante porque tiene revisiones asociadas',
+        message: 'Violación de clave foránea: existen registros dependientes',
+      });
+      return;
+    }
+    next(error);
   }
-
-  estudiantesService.eliminarEstudiante(id);
-
-  res.status(200).json({
-    success: true,
-    mensaje: 'Estudiante eliminado correctamente',
-  });
 };
 
 export default {
@@ -257,7 +319,7 @@ export default {
   actualizarEstudiante,
   actualizarEstudianteParcial,
   eliminarEstudiante,
-  // Alias
+  // Alias de compatibilidad
   obtenerPacientes: obtenerEstudiantes,
   obtenerPacientePorId: obtenerEstudiantePorId,
   crearPaciente: crearEstudiante,

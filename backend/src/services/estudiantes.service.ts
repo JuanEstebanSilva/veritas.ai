@@ -1,5 +1,15 @@
-import { estudiantes, Estudiante } from '../data/estudiantes.data';
-import { usuariosMemoria, obtenerAliasesEmail } from './usuarios.service';
+import { consultar } from '../config/database';
+import { obtenerAliasesEmail, obtenerUsuarioPorId } from './usuarios.service';
+
+export interface Estudiante {
+  id: number;
+  usuarioId: number | string | null;
+  nombre: string;
+  documento: string;
+  email: string;
+  telefono: string;
+  fechaNacimiento: string;
+}
 
 export interface DatosEstudiante {
   nombre: string;
@@ -10,144 +20,259 @@ export interface DatosEstudiante {
   usuarioId?: number | string | null;
 }
 
-const sanitizarUsuarioId = (uId: any): number | string | null => {
+const sanitizarUsuarioId = (uId: any): string | null => {
   if (uId === undefined || uId === null) return null;
-  const num = Number(uId);
-  if (!isNaN(num) && typeof uId !== 'string') return num;
-  if (!isNaN(num) && typeof uId === 'string' && /^\d+$/.test(uId.trim())) return num;
-  return String(uId);
+  const str = String(uId).trim();
+  return str.length > 0 ? str : null;
 };
 
-export const obtenerEstudiantes = (): Estudiante[] => {
-  return estudiantes;
+const mapearEstudiante = (row: any): Estudiante => {
+  return {
+    id: Number(row.id),
+    usuarioId: row.usuarioId !== null ? String(row.usuarioId) : null,
+    nombre: row.nombre,
+    documento: row.documento,
+    email: row.email,
+    telefono: row.telefono,
+    fechaNacimiento: row.fechaNacimiento,
+  };
 };
 
-export const obtenerEstudiantePorId = (id: number | string): Estudiante | undefined => {
-  return estudiantes.find((e) => e.id === Number(id));
+/**
+ * Veritas AI — Servicio de Estudiantes / Autores Académicos
+ * Migrado a persistencia PostgreSQL / Supabase
+ */
+export const obtenerEstudiantes = async (): Promise<Estudiante[]> => {
+  const query = `
+    SELECT
+      id,
+      usuario_id AS "usuarioId",
+      nombre,
+      documento,
+      email,
+      telefono,
+      TO_CHAR(fecha_nacimiento, 'YYYY-MM-DD') AS "fechaNacimiento"
+    FROM estudiantes
+    ORDER BY id ASC
+  `;
+  const res = await consultar(query);
+  return res.rows.map(mapearEstudiante);
 };
 
-export const obtenerEstudiantePorUsuarioId = (
+export const obtenerEstudiantePorId = async (
+  id: number | string
+): Promise<Estudiante | undefined> => {
+  const query = `
+    SELECT
+      id,
+      usuario_id AS "usuarioId",
+      nombre,
+      documento,
+      email,
+      telefono,
+      TO_CHAR(fecha_nacimiento, 'YYYY-MM-DD') AS "fechaNacimiento"
+    FROM estudiantes
+    WHERE id = $1
+    LIMIT 1
+  `;
+  const res = await consultar(query, [Number(id)]);
+  if (res.rows.length === 0) return undefined;
+  return mapearEstudiante(res.rows[0]);
+};
+
+export const obtenerEstudiantePorUsuarioId = async (
   usuarioId: number | string,
   email?: string
-): Estudiante | undefined => {
-  const numId = Number(usuarioId);
-  const strId = String(usuarioId);
+): Promise<Estudiante | undefined> => {
+  const strId = String(usuarioId).trim();
 
-  // 1. Coincidencia directa por usuarioId
-  const directo = estudiantes.find((e) => {
-    if (e.usuarioId === null || e.usuarioId === undefined) return false;
-    return (
-      String(e.usuarioId) === strId ||
-      (!isNaN(numId) && Number(e.usuarioId) === numId)
-    );
-  });
-  if (directo) return directo;
-
-  // 2. Coincidencia por correo con soporte de alias
-  if (email) {
-    const aliases = obtenerAliasesEmail(email);
-    const porEmail = estudiantes.find(
-      (e) => e.email && aliases.includes(e.email.toLowerCase().trim())
-    );
-    if (porEmail) return porEmail;
+  // 1. Coincidencia directa por usuario_id
+  const queryDirecta = `
+    SELECT
+      id,
+      usuario_id AS "usuarioId",
+      nombre,
+      documento,
+      email,
+      telefono,
+      TO_CHAR(fecha_nacimiento, 'YYYY-MM-DD') AS "fechaNacimiento"
+    FROM estudiantes
+    WHERE usuario_id = $1
+    LIMIT 1
+  `;
+  const resDirecta = await consultar(queryDirecta, [strId]);
+  if (resDirecta.rows.length > 0) {
+    return mapearEstudiante(resDirecta.rows[0]);
   }
 
-  // 3. Coincidencia cruzada si el usuario está en memoria
-  const u = usuariosMemoria.find(
-    (user) =>
-      String(user.id) === strId ||
-      (!isNaN(numId) && (Number(user.id) === numId || (user as any).numId === numId)) ||
-      String((user as any).numId) === strId ||
-      (user as any).uuid === strId
-  );
-  if (u) {
-    const aliasNum = (u as any).numId;
-    const aliasStr = String(u.id);
-    const userEmail = u.email?.toLowerCase().trim();
+  // 2. Coincidencia por correo y aliases
+  let aliases: string[] = [];
+  if (email) {
+    aliases = obtenerAliasesEmail(email);
+  } else {
+    try {
+      const u = await obtenerUsuarioPorId(strId);
+      if (u && u.email) {
+        aliases = obtenerAliasesEmail(u.email);
+      }
+    } catch {}
+  }
 
-    return estudiantes.find((e) => {
-      if (e.usuarioId !== null && e.usuarioId !== undefined) {
-        if (
-          String(e.usuarioId) === aliasStr ||
-          (aliasNum !== undefined && Number(e.usuarioId) === aliasNum)
-        ) {
-          return true;
-        }
+  if (aliases.length > 0) {
+    const queryEmail = `
+      SELECT
+        id,
+        usuario_id AS "usuarioId",
+        nombre,
+        documento,
+        email,
+        telefono,
+        TO_CHAR(fecha_nacimiento, 'YYYY-MM-DD') AS "fechaNacimiento"
+      FROM estudiantes
+      WHERE LOWER(TRIM(email)) = ANY($1::text[])
+      LIMIT 1
+    `;
+    const resEmail = await consultar(queryEmail, [aliases]);
+    if (resEmail.rows.length > 0) {
+      const est = resEmail.rows[0];
+      if (!est.usuarioId && strId) {
+        try {
+          await consultar('UPDATE estudiantes SET usuario_id = $1 WHERE id = $2', [strId, est.id]);
+          est.usuarioId = strId;
+        } catch {}
       }
-      if (userEmail && e.email && e.email.toLowerCase().trim() === userEmail) {
-        return true;
-      }
-      return false;
-    });
+      return mapearEstudiante(est);
+    }
   }
 
   return undefined;
 };
 
-export const crearEstudiante = (datos: DatosEstudiante): Estudiante => {
-  const nuevoId =
-    estudiantes.length > 0
-      ? Math.max(...estudiantes.map((e) => e.id)) + 1
-      : 1;
+export const crearEstudiante = async (datos: DatosEstudiante): Promise<Estudiante> => {
+  const uId = sanitizarUsuarioId(datos.usuarioId);
 
-  const nuevoEstudiante: Estudiante = {
-    id: nuevoId,
-    usuarioId: sanitizarUsuarioId(datos.usuarioId),
-    nombre: datos.nombre,
-    documento: datos.documento,
-    email: datos.email,
-    telefono: datos.telefono,
-    fechaNacimiento: datos.fechaNacimiento,
-  };
+  const query = `
+    INSERT INTO estudiantes (
+      usuario_id,
+      nombre,
+      documento,
+      email,
+      telefono,
+      fecha_nacimiento
+    )
+    VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING
+      id,
+      usuario_id AS "usuarioId",
+      nombre,
+      documento,
+      email,
+      telefono,
+      TO_CHAR(fecha_nacimiento, 'YYYY-MM-DD') AS "fechaNacimiento"
+  `;
+  const res = await consultar(query, [
+    uId,
+    datos.nombre.trim(),
+    datos.documento.trim(),
+    datos.email.toLowerCase().trim(),
+    datos.telefono.trim(),
+    datos.fechaNacimiento,
+  ]);
 
-  estudiantes.push(nuevoEstudiante);
-  return nuevoEstudiante;
+  return mapearEstudiante(res.rows[0]);
 };
 
-export const actualizarEstudiante = (
+export const actualizarEstudiante = async (
   id: number | string,
   datos: DatosEstudiante
-): Estudiante | null => {
-  const index = estudiantes.findIndex((e) => e.id === Number(id));
-  if (index === -1) return null;
+): Promise<Estudiante | null> => {
+  const actual = await obtenerEstudiantePorId(id);
+  if (!actual) return null;
 
-  estudiantes[index] = {
-    ...estudiantes[index],
-    nombre: datos.nombre,
-    documento: datos.documento,
-    email: datos.email,
-    telefono: datos.telefono,
-    fechaNacimiento: datos.fechaNacimiento,
-    usuarioId: datos.usuarioId !== undefined ? sanitizarUsuarioId(datos.usuarioId) : estudiantes[index].usuarioId,
-  };
+  const uId = datos.usuarioId !== undefined ? sanitizarUsuarioId(datos.usuarioId) : actual.usuarioId;
 
-  return estudiantes[index];
+  const query = `
+    UPDATE estudiantes
+    SET
+      nombre = $2,
+      documento = $3,
+      email = $4,
+      telefono = $5,
+      fecha_nacimiento = $6,
+      usuario_id = $7
+    WHERE id = $1
+    RETURNING
+      id,
+      usuario_id AS "usuarioId",
+      nombre,
+      documento,
+      email,
+      telefono,
+      TO_CHAR(fecha_nacimiento, 'YYYY-MM-DD') AS "fechaNacimiento"
+  `;
+  const res = await consultar(query, [
+    Number(id),
+    datos.nombre.trim(),
+    datos.documento.trim(),
+    datos.email.toLowerCase().trim(),
+    datos.telefono.trim(),
+    datos.fechaNacimiento,
+    uId,
+  ]);
+
+  return mapearEstudiante(res.rows[0]);
 };
 
-export const actualizarEstudianteParcial = (
+export const actualizarEstudianteParcial = async (
   id: number | string,
   datos: Partial<DatosEstudiante>
-): Estudiante | null => {
-  const index = estudiantes.findIndex((e) => e.id === Number(id));
-  if (index === -1) return null;
+): Promise<Estudiante | null> => {
+  const actual = await obtenerEstudiantePorId(id);
+  if (!actual) return null;
 
-  if (datos.nombre !== undefined) estudiantes[index].nombre = datos.nombre;
-  if (datos.documento !== undefined) estudiantes[index].documento = datos.documento;
-  if (datos.email !== undefined) estudiantes[index].email = datos.email;
-  if (datos.telefono !== undefined) estudiantes[index].telefono = datos.telefono;
-  if (datos.fechaNacimiento !== undefined) estudiantes[index].fechaNacimiento = datos.fechaNacimiento;
-  if (datos.usuarioId !== undefined) {
-    estudiantes[index].usuarioId = sanitizarUsuarioId(datos.usuarioId);
-  }
+  const nombre = datos.nombre !== undefined ? datos.nombre.trim() : actual.nombre;
+  const documento = datos.documento !== undefined ? datos.documento.trim() : actual.documento;
+  const email = datos.email !== undefined ? datos.email.toLowerCase().trim() : actual.email;
+  const telefono = datos.telefono !== undefined ? datos.telefono.trim() : actual.telefono;
+  const fechaNacimiento = datos.fechaNacimiento !== undefined ? datos.fechaNacimiento : actual.fechaNacimiento;
+  const uId = datos.usuarioId !== undefined ? sanitizarUsuarioId(datos.usuarioId) : actual.usuarioId;
 
-  return estudiantes[index];
+  const query = `
+    UPDATE estudiantes
+    SET
+      nombre = $2,
+      documento = $3,
+      email = $4,
+      telefono = $5,
+      fecha_nacimiento = $6,
+      usuario_id = $7
+    WHERE id = $1
+    RETURNING
+      id,
+      usuario_id AS "usuarioId",
+      nombre,
+      documento,
+      email,
+      telefono,
+      TO_CHAR(fecha_nacimiento, 'YYYY-MM-DD') AS "fechaNacimiento"
+  `;
+  const res = await consultar(query, [
+    Number(id),
+    nombre,
+    documento,
+    email,
+    telefono,
+    fechaNacimiento,
+    uId,
+  ]);
+
+  return mapearEstudiante(res.rows[0]);
 };
 
-export const eliminarEstudiante = (id: number | string): boolean => {
-  const index = estudiantes.findIndex((e) => e.id === Number(id));
-  if (index === -1) return false;
-  estudiantes.splice(index, 1);
-  return true;
+export const eliminarEstudiante = async (id: number | string): Promise<boolean> => {
+  const query = `DELETE FROM estudiantes WHERE id = $1 RETURNING id`;
+  const res = await consultar(query, [Number(id)]);
+  return (res.rowCount ?? 0) > 0;
 };
 
 export default {

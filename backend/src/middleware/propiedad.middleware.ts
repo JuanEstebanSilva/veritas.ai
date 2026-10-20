@@ -1,4 +1,7 @@
 export {
+  autorizarEstudiantePropio,
+  autorizarDocentePropio,
+  autorizarAccesoRevision,
   autorizarPacientePropio,
   autorizarMedicoPropio,
   autorizarAccesoCita,

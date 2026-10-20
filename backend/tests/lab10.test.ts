@@ -127,7 +127,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
     });
 
     // 3. Crear perfiles en datos con asociación explícita a usuarioId
-    const medA = medicosService.crearMedico({
+    const medA = await medicosService.crearMedico({
       nombre: 'Médico Veritas A',
       registroMedico: `RM-A-${timestamp}`,
       email: `medico.a_${timestamp}@veritas.com`,
@@ -137,7 +137,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
     });
     medicoAId = medA.id;
 
-    const medB = medicosService.crearMedico({
+    const medB = await medicosService.crearMedico({
       nombre: 'Médico Veritas B',
       registroMedico: `RM-B-${timestamp}`,
       email: `medico.b_${timestamp}@veritas.com`,
@@ -147,7 +147,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
     });
     medicoBId = medB.id;
 
-    const pacA = pacientesService.crearPaciente({
+    const pacA = await pacientesService.crearPaciente({
       nombre: 'Paciente Veritas A',
       documento: `DOC-A-${timestamp}`,
       email: `paciente.a_${timestamp}@veritas.com`,
@@ -157,7 +157,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
     });
     pacienteAId = pacA.id;
 
-    const pacB = pacientesService.crearPaciente({
+    const pacB = await pacientesService.crearPaciente({
       nombre: 'Paciente Veritas B',
       documento: `DOC-B-${timestamp}`,
       email: `paciente.b_${timestamp}@veritas.com`,
@@ -168,7 +168,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
     pacienteBId = pacB.id;
 
     // 4. Crear citas para Paciente A y Paciente B
-    const cA = citasService.crearCita({
+    const cA = await citasService.crearCita({
       pacienteId: pacienteAId,
       medicoId: medicoAId,
       fecha: '2026-12-10T10:00:00Z',
@@ -177,7 +177,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
     });
     citaAId = cA.id;
 
-    const cB = citasService.crearCita({
+    const cB = await citasService.crearCita({
       pacienteId: pacienteBId,
       medicoId: medicoBId,
       fecha: '2026-12-11T11:00:00Z',

@@ -1,40 +1,60 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import departamentosService from '../services/departamentos.service';
 
-export const obtenerDepartamentos = (_req: Request, res: Response): void => {
-  const lista = departamentosService.obtenerDepartamentos();
-  res.status(200).json({
-    success: true,
-    total: lista.length,
-    mensaje: 'Lista de departamentos académicos obtenida correctamente',
-    departamentos: lista,
-    especialidades: lista,
-  });
+/**
+ * Veritas AI — Controlador de Departamentos y Facultades Académicas
+ */
+
+export const obtenerDepartamentos = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const lista = await departamentosService.obtenerDepartamentos();
+    res.status(200).json({
+      success: true,
+      total: lista.length,
+      mensaje: 'Lista de departamentos académicos obtenida correctamente',
+      departamentos: lista,
+      especialidades: lista,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const obtenerDepartamentoPorId = (req: Request, res: Response): void => {
-  const id = req.params.id as string;
-  const dep = departamentosService.obtenerDepartamentoPorId(id);
+export const obtenerDepartamentoPorId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const dep = await departamentosService.obtenerDepartamentoPorId(id);
 
-  if (!dep) {
-    res.status(404).json({
-      success: false,
-      mensaje: 'Departamento no encontrado',
+    if (!dep) {
+      res.status(404).json({
+        success: false,
+        mensaje: 'Departamento no encontrado',
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      departamento: dep,
+      especialidad: dep,
     });
-    return;
+  } catch (error) {
+    next(error);
   }
-
-  res.status(200).json({
-    success: true,
-    departamento: dep,
-    especialidad: dep,
-  });
 };
 
 export default {
   obtenerDepartamentos,
   obtenerDepartamentoPorId,
-  // Alias
+  // Alias de compatibilidad
   obtenerEspecialidades: obtenerDepartamentos,
   obtenerEspecialidadPorId: obtenerDepartamentoPorId,
 };

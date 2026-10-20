@@ -2,14 +2,18 @@ import app from './app';
 import { ENV } from './config/env';
 import { prisma } from './config/prisma';
 import { ConfiguracionApiKeysError } from './config/apiClients';
+import { consultar } from './config/database';
 import { sincronizarClientesApi } from './services/apiClients.service';
 import usuariosService from './services/usuarios.service';
 
 const startServer = async () => {
   try {
-    // Verificar conexión a la base de datos
+    // Verificar conexión a la base de datos (Prisma y pg Pool)
     await prisma.$connect();
-    console.log('✓ Conexión establecida exitosamente con la base de datos PostgreSQL.');
+    const pgCheck = await consultar('SELECT current_database(), current_user, NOW()');
+    console.log(
+      `✓ Conexión establecida exitosamente con PostgreSQL/Supabase (BD: ${pgCheck.rows[0].current_database}, Usuario: ${pgCheck.rows[0].current_user}).`
+    );
 
     // Lab 6: se registran los hashes de las API Keys antes de aceptar peticiones.
     // Si falta alguna clave, el servidor no arranca en lugar de funcionar a medias.
