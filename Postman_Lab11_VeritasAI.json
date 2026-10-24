@@ -1,0 +1,1146 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Lab 11 - HospitalSoft & Veritas AI (Persistencia PostgreSQL / Supabase)",
+    "description": "Colección automatizada para el Laboratorio 11 (Bloques 7.1 a 7.5): Persistencia en PostgreSQL/Supabase, Autenticación JWT, RBAC, Control BOLA/IDOR, e Integridad Referencial.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@hospital.com",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "SANTOTO_2026--2",
+      "type": "string"
+    },
+    {
+      "key": "tokenAdmin",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tokenPaciente",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "timestamp",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "especialidadId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "medicoId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "pacienteId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "citaId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Bloque A: Autenticación y Perfil",
+      "item": [
+        {
+          "name": "1. Login Admin (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "if (res.token) {",
+                  "    pm.environment.set('tokenAdmin', res.token);",
+                  "    pm.collectionVariables.set('tokenAdmin', res.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. Login Contraseña Errónea (401 Unauthorized)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"MAL\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. Registro de Paciente (201 Created)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var ts = Date.now();",
+                  "pm.environment.set('timestamp', ts);",
+                  "pm.collectionVariables.set('timestamp', ts);",
+                  "var day = String((ts % 25) + 1).padStart(2, '0');",
+                  "var hour = String((Math.floor(ts / 1000) % 10) + 8).padStart(2, '0');",
+                  "var min = String(Math.floor(ts / 100) % 60).padStart(2, '0');",
+                  "pm.environment.set('fechaCita', '2027-11-' + day);",
+                  "pm.collectionVariables.set('fechaCita', '2027-11-' + day);",
+                  "pm.environment.set('horaCita', hour + ':' + min + ':00');",
+                  "pm.collectionVariables.set('horaCita', hour + ':' + min + ':00');"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "if (res.token) {",
+                  "    pm.environment.set('tokenPaciente', res.token);",
+                  "    pm.collectionVariables.set('tokenPaciente', res.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Paciente Demo\",\n  \"email\": \"paciente.demo.{{timestamp}}@test.com\",\n  \"password\": \"Password123*\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/registro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "registro"
+              ]
+            }
+          }
+        },
+        {
+          "name": "4. Login Paciente Registrado (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "if (res.token) {",
+                  "    pm.environment.set('tokenPaciente', res.token);",
+                  "    pm.collectionVariables.set('tokenPaciente', res.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"paciente.demo.{{timestamp}}@test.com\",\n  \"password\": \"Password123*\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. Consultar Perfil con Bearer Token (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/perfil",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "perfil"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bloque B: Especialidades / Departamentos",
+      "item": [
+        {
+          "name": "6. Listar Especialidades (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/especialidades",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "especialidades"
+              ]
+            }
+          }
+        },
+        {
+          "name": "7. Crear Especialidad (201 Created)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "var dep = res.departamento || res.especialidad;",
+                  "if (dep && dep.id) {",
+                  "    pm.environment.set('especialidadId', dep.id);",
+                  "    pm.collectionVariables.set('especialidadId', dep.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Dermatología Especial {{timestamp}}\",\n  \"descripcion\": \"Cuidado e investigación de la piel\",\n  \"activa\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/especialidades",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "especialidades"
+              ]
+            }
+          }
+        },
+        {
+          "name": "8. Especialidad Duplicada (409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"dermatología especial {{timestamp}}\",\n  \"descripcion\": \"Duplicado\",\n  \"activa\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/especialidades",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "especialidades"
+              ]
+            }
+          }
+        },
+        {
+          "name": "9. Crear Especialidad con Token de Paciente - RBAC (403 Forbidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenPaciente}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Especialidad No Autorizada {{timestamp}}\",\n  \"descripcion\": \"Intento sin permisos\",\n  \"activa\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/especialidades",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "especialidades"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bloque C: Médicos / Docentes",
+      "item": [
+        {
+          "name": "10. Crear Médico (201 Created)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "var med = res.docente || res.medico;",
+                  "if (med && med.id) {",
+                  "    pm.environment.set('medicoId', med.id);",
+                  "    pm.collectionVariables.set('medicoId', med.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Dr. Carlos Ruiz {{timestamp}}\",\n  \"registroMedico\": \"RM-{{timestamp}}\",\n  \"email\": \"carlos.ruiz.{{timestamp}}@hospital.com\",\n  \"telefono\": \"3101112233\",\n  \"especialidadId\": 1,\n  \"activo\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/medicos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medicos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "11. Registro Médico Duplicado (409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Dr. Carlos Ruiz Duplicado\",\n  \"registroMedico\": \"RM-{{timestamp}}\",\n  \"email\": \"carlos.otro.{{timestamp}}@hospital.com\",\n  \"telefono\": \"3101112233\",\n  \"especialidadId\": 1,\n  \"activo\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/medicos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medicos"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bloque D: Pacientes y Consultorios / Laboratorios",
+      "item": [
+        {
+          "name": "12. Crear Paciente (201 Created)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "var pac = res.estudiante || res.paciente;",
+                  "if (pac && pac.id) {",
+                  "    pm.environment.set('pacienteId', pac.id);",
+                  "    pm.collectionVariables.set('pacienteId', pac.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Laura Méndez {{timestamp}}\",\n  \"documento\": \"DOC-{{timestamp}}\",\n  \"email\": \"laura.{{timestamp}}@test.com\",\n  \"telefono\": \"3123456789\",\n  \"fechaNacimiento\": \"1998-05-12\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pacientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pacientes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "13. Documento Duplicado (409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Laura Méndez Copia\",\n  \"documento\": \"DOC-{{timestamp}}\",\n  \"email\": \"laura.copia.{{timestamp}}@test.com\",\n  \"telefono\": \"3123456789\",\n  \"fechaNacimiento\": \"1998-05-12\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pacientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pacientes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "14. Crear Consultorio (201 Created)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"CONS-{{timestamp}}\",\n  \"nombre\": \"Consultorio {{timestamp}}\",\n  \"piso\": 3,\n  \"ubicacion\": \"Ala Norte\",\n  \"activo\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/consultorios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "consultorios"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bloque E: Citas Médicas / Revisiones y Agenda",
+      "item": [
+        {
+          "name": "15. Crear Cita Válida (201 Created)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "var c = res.revision || res.cita;",
+                  "if (c && c.id) {",
+                  "    pm.environment.set('citaId', c.id);",
+                  "    pm.collectionVariables.set('citaId', c.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": 1,\n  \"medicoId\": 1,\n  \"consultorioId\": 1,\n  \"fecha\": \"{{fechaCita}}\",\n  \"hora\": \"{{horaCita}}\",\n  \"motivo\": \"Control general de salud\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/citas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "16. Conflicto de Horario / Doble Reserva (409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": 2,\n  \"medicoId\": 1,\n  \"consultorioId\": 1,\n  \"fecha\": \"{{fechaCita}}\",\n  \"hora\": \"{{horaCita}}\",\n  \"motivo\": \"Control general de salud solapado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/citas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "17. Cambio de Estado Válido: confirmada (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"confirmada\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/citas/{{citaId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "{{citaId}}",
+                "estado"
+              ]
+            }
+          }
+        },
+        {
+          "name": "18. Cambio de Estado Válido: atendida (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"atendida\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/citas/{{citaId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "{{citaId}}",
+                "estado"
+              ]
+            }
+          }
+        },
+        {
+          "name": "19. Cambio de Estado Inválido: atendida a programada (409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"programada\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/citas/{{citaId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "{{citaId}}",
+                "estado"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bloque F: Seguridad BOLA / IDOR e Integridad",
+      "item": [
+        {
+          "name": "20. Consultar Citas Propias con Token de Paciente (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenPaciente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas/mis-citas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "mis-citas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "21. Consultar Cita Ajena con Token de Paciente (403 Forbidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenPaciente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "22. Eliminar Paciente con Citas Activas (409 Conflict - Integridad Referencial)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pacientes/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pacientes",
+                "1"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -12,6 +12,7 @@
     "prisma:push": "prisma db push",
     "prisma:seed": "ts-node prisma/seed.ts",
     "db:test": "node scripts/probar-conexion.js",
+    "test:db": "node scripts/probar-conexion.js",
     "db:migrate": "node scripts/ejecutar-ddl.js",
     "test:e2e": "ts-node scripts/probar-integracion-e2e.ts",
     "test": "jest --detectOpenHandles --runInBand",

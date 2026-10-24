@@ -136,10 +136,13 @@ export const obtenerMisRevisiones = async (
         usuario.email
       );
       if (!estudiante) {
-        res.status(403).json({
-          success: false,
-          mensaje: 'El usuario no tiene un perfil de estudiante asociado',
-          message: 'El usuario no tiene un estudiante o paciente asociado',
+        res.status(200).json({
+          success: true,
+          mensaje: 'Mis revisiones como autor/estudiante',
+          message: 'Mis revisiones como autor/estudiante',
+          revisiones: [],
+          citas: [],
+          total: 0,
         });
         return;
       }

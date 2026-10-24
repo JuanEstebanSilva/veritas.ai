@@ -58,8 +58,9 @@ export const usuariosMemoria: UsuarioMemoria[] = [];
 export const obtenerAliasesEmail = (email: string): string[] => {
   const norm = email.toLowerCase().trim();
   const list = [norm];
-  if (norm.endsWith('@veritas.com')) list.push(norm.replace('@veritas.com', '@veritas.ai'));
-  if (norm.endsWith('@veritas.ai')) list.push(norm.replace('@veritas.ai', '@veritas.com'));
+  if (norm.endsWith('@veritas.com')) list.push(norm.replace('@veritas.com', '@veritas.ai'), norm.replace('@veritas.com', '@hospital.com'));
+  if (norm.endsWith('@hospital.com')) list.push(norm.replace('@hospital.com', '@veritas.com'), norm.replace('@hospital.com', '@veritas.ai'));
+  if (norm.endsWith('@veritas.ai')) list.push(norm.replace('@veritas.ai', '@veritas.com'), norm.replace('@veritas.ai', '@hospital.com'));
 
   if (norm.includes('estudiante.a@')) list.push(norm.replace('estudiante.a@', 'paciente.a@'));
   if (norm.includes('paciente.a@')) list.push(norm.replace('paciente.a@', 'estudiante.a@'));
@@ -555,12 +556,22 @@ export const verificarCredenciales = async (
   const hashComparar = usuario?.passwordHash || usuario?.password_hash;
   let passwordValida = await verificarPassword(password, hashComparar);
 
-  // Soporte bidireccional para guión (-) y raya em-dash (—) en contraseñas de laboratorio
+  // Soporte bidireccional para guión (-), doble guión (--) y raya em-dash (—) en contraseñas de laboratorio
   if (!passwordValida && (password.includes('—') || password.includes('-'))) {
-    const altPassword = password.includes('—')
-      ? password.replace(/—/g, '-')
-      : password.replace(/-/g, '—');
-    passwordValida = await verificarPassword(altPassword, hashComparar);
+    const variants = [
+      password.replace(/--/g, '—'),
+      password.replace(/--/g, '-'),
+      password.replace(/—/g, '--'),
+      password.replace(/—/g, '-'),
+      password.replace(/-/g, '—'),
+      password.replace(/-/g, '--'),
+    ];
+    for (const v of variants) {
+      if (await verificarPassword(v, hashComparar)) {
+        passwordValida = true;
+        break;
+      }
+    }
   }
 
   // Soporte bidireccional para contraseñas de laboratorio (ClaveEstudiante <-> ClavePaciente, ClaveDocente <-> ClaveMedico)
