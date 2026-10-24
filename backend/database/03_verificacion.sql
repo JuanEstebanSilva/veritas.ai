@@ -110,11 +110,14 @@ SELECT
   e.email AS estudiante_email,
   d.nombre AS docente_nombre,
   d.registro_academico,
-  dep.nombre AS departamento_academico
+  dep.nombre AS departamento_academico,
+  l.numero AS laboratorio_numero,
+  l.piso AS laboratorio_piso
 FROM revisiones r
 JOIN estudiantes e ON r.estudiante_id = e.id
 JOIN docentes d ON r.docente_id = d.id
 JOIN departamentos dep ON d.departamento_id = dep.id
+LEFT JOIN laboratorios l ON r.laboratorio_id = l.id
 ORDER BY r.id ASC;
 
 -- ----------------------------------------------------------------------------

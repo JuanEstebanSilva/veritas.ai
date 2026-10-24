@@ -4,6 +4,7 @@ export interface Revision {
   id: number;
   estudianteId: number;
   docenteId: number;
+  laboratorioId?: number;
   fecha: string;
   hora?: string;
   motivo: string;
@@ -11,6 +12,7 @@ export interface Revision {
   // Aliases de compatibilidad para contratos legacy
   pacienteId?: number;
   medicoId?: number;
+  consultorioId?: number;
 }
 
 export interface DatosRevision {
@@ -18,6 +20,8 @@ export interface DatosRevision {
   pacienteId?: number;
   docenteId?: number;
   medicoId?: number;
+  laboratorioId?: number;
+  consultorioId?: number;
   fecha: string;
   hora?: string;
   motivo: string;
@@ -54,6 +58,8 @@ const mapearRevision = (row: any): Revision => {
     pacienteId: Number(row.estudianteId),
     docenteId: Number(row.docenteId),
     medicoId: Number(row.docenteId),
+    laboratorioId: row.laboratorioId ? Number(row.laboratorioId) : 1,
+    consultorioId: row.laboratorioId ? Number(row.laboratorioId) : 1,
     fecha: row.fecha,
     hora: row.hora,
     motivo: row.motivo,
@@ -146,6 +152,7 @@ export const obtenerRevisionesPorDocente = async (
 export const crearRevision = async (datos: DatosRevision): Promise<Revision> => {
   const estId = Number(datos.estudianteId || datos.pacienteId || 1);
   const docId = Number(datos.docenteId || datos.medicoId || 1);
+  const labId = Number(datos.laboratorioId || datos.consultorioId || 1);
   const { fecha, hora } = extraerFechaYHora(datos.fecha, datos.hora);
   const estado = datos.estado || 'programada';
 
@@ -153,22 +160,24 @@ export const crearRevision = async (datos: DatosRevision): Promise<Revision> => 
     INSERT INTO revisiones (
       estudiante_id,
       docente_id,
+      laboratorio_id,
       fecha,
       hora,
       motivo,
       estado
     )
-    VALUES ($1, $2, $3, $4, $5, $6)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING
       id,
       estudiante_id AS "estudianteId",
       docente_id AS "docenteId",
+      laboratorio_id AS "laboratorioId",
       TO_CHAR(fecha, 'YYYY-MM-DD') AS "fecha",
       SUBSTRING(hora::text FROM 1 FOR 5) AS "hora",
       motivo,
       estado
   `;
-  const res = await consultar(query, [estId, docId, fecha, hora, datos.motivo.trim(), estado]);
+  const res = await consultar(query, [estId, docId, labId, fecha, hora, datos.motivo.trim(), estado]);
   return mapearRevision(res.rows[0]);
 };
 

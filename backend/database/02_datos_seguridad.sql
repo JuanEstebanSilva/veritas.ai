@@ -68,12 +68,13 @@ ON CONFLICT (id) DO UPDATE SET
 SELECT setval('estudiantes_id_seq', (SELECT GREATEST(MAX(id), 3) FROM estudiantes));
 
 -- Revisiones Iniciales
-INSERT INTO revisiones (id, estudiante_id, docente_id, fecha, hora, motivo, estado)
+INSERT INTO revisiones (id, estudiante_id, docente_id, laboratorio_id, fecha, hora, motivo, estado)
 VALUES
-  (1, 1, 1, '2026-11-20', '10:00:00', 'Evaluación y escaneo de integridad académica Veritas AI', 'programada')
+  (1, 1, 1, 1, '2026-11-20', '10:00:00', 'Evaluación y escaneo de integridad académica Veritas AI', 'programada')
 ON CONFLICT (id) DO UPDATE SET
   estudiante_id = EXCLUDED.estudiante_id,
   docente_id = EXCLUDED.docente_id,
+  laboratorio_id = EXCLUDED.laboratorio_id,
   fecha = EXCLUDED.fecha,
   hora = EXCLUDED.hora,
   motivo = EXCLUDED.motivo,

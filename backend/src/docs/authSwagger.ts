@@ -99,7 +99,7 @@
  *       Retorna la información del usuario autenticado a partir del JWT enviado en el header Authorization.
  *     security:
  *       - ApiKeyAuth: []
- *       - BearerAuth: []
+ *         BearerAuth: []
  *     responses:
  *       200:
  *         description: Perfil del usuario obtenido correctamente

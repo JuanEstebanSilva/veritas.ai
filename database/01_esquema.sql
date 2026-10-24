@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS revisiones (
   id SERIAL PRIMARY KEY,
   estudiante_id INT NOT NULL REFERENCES estudiantes(id) ON DELETE RESTRICT,
   docente_id INT NOT NULL REFERENCES docentes(id) ON DELETE RESTRICT,
+  laboratorio_id INT REFERENCES laboratorios(id) ON DELETE RESTRICT,
   fecha DATE NOT NULL,
   hora TIME NOT NULL DEFAULT '10:00:00',
   motivo TEXT NOT NULL,
@@ -95,5 +96,6 @@ CREATE INDEX IF NOT EXISTS idx_estudiantes_documento ON estudiantes(documento);
 
 CREATE INDEX IF NOT EXISTS idx_revisiones_estudiante ON revisiones(estudiante_id);
 CREATE INDEX IF NOT EXISTS idx_revisiones_docente ON revisiones(docente_id);
+CREATE INDEX IF NOT EXISTS idx_revisiones_laboratorio ON revisiones(laboratorio_id);
 CREATE INDEX IF NOT EXISTS idx_revisiones_fecha ON revisiones(fecha);
 CREATE INDEX IF NOT EXISTS idx_revisiones_estado ON revisiones(estado);
