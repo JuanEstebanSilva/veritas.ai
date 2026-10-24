@@ -11,44 +11,6 @@ import {
 
 const router = Router();
 
-/**
- * @swagger
- * /api/auth/registro:
- *   post:
- *     tags:
- *       - Autenticación
- *     summary: Registrar un nuevo usuario
- *     description: Registra un nuevo usuario en Veritas AI asignando el rol de forma segura en el servidor.
- *     security:
- *       - ApiKeyAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - nombre
- *               - email
- *               - password
- *             properties:
- *               nombre:
- *                 type: string
- *                 example: Estudiante Veritas
- *               email:
- *                 type: string
- *                 example: estudiante@veritas.ai
- *               password:
- *                 type: string
- *                 example: ClaveSegura2026!
- *     responses:
- *       201:
- *         description: Usuario registrado correctamente
- *       400:
- *         description: Datos inválidos
- *       409:
- *         description: Correo electrónico ya registrado
- */
 router.post(
   ['/register', '/registro'],
   validarRegistro,
@@ -57,40 +19,6 @@ router.post(
   AuthController.register
 );
 
-/**
- * @swagger
- * /api/auth/login:
- *   post:
- *     tags:
- *       - Autenticación
- *     summary: Iniciar sesión y obtener JWT
- *     description: Autentica credenciales y emite una credencial temporal (JWT) firmada con HS256.
- *     security:
- *       - ApiKeyAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *                 example: estudiante@veritas.ai
- *               password:
- *                 type: string
- *                 example: ClaveSegura2026!
- *     responses:
- *       200:
- *         description: Autenticación correcta con token JWT
- *       401:
- *         description: Credenciales inválidas
- *       403:
- *         description: Usuario deshabilitado
- */
 router.post(
   '/login',
   validarLogin,
@@ -98,23 +26,6 @@ router.post(
   AuthController.login
 );
 
-/**
- * @swagger
- * /api/auth/perfil:
- *   get:
- *     tags:
- *       - Autenticación
- *     summary: Obtener perfil del usuario autenticado
- *     description: Requiere API Key y un JWT válido.
- *     security:
- *       - ApiKeyAuth: []
- *         BearerAuth: []
- *     responses:
- *       200:
- *         description: Usuario autenticado correctamente
- *       401:
- *         description: Credenciales de autenticación ausentes o inválidas
- */
 router.get(
   ['/perfil', '/profile'],
   autenticarJWT,
