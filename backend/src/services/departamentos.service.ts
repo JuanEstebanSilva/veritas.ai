@@ -48,9 +48,29 @@ export const obtenerDepartamentoPorId = async (
   return res.rows[0] || undefined;
 };
 
+export const obtenerDepartamentoPorNombre = async (
+  nombre: string
+): Promise<Departamento | undefined> => {
+  const query = `
+    SELECT id, nombre, descripcion, activo
+    FROM departamentos
+    WHERE LOWER(TRIM(nombre)) = LOWER(TRIM($1))
+    LIMIT 1
+  `;
+  const res = await consultar(query, [nombre]);
+  return res.rows[0] || undefined;
+};
+
 export const crearDepartamento = async (
   datos: DatosDepartamento
 ): Promise<Departamento> => {
+  const existente = await obtenerDepartamentoPorNombre(datos.nombre);
+  if (existente) {
+    const error: any = new Error('Ya existe un departamento con ese nombre.');
+    error.code = '23505';
+    throw error;
+  }
+
   const activo = datos.activo !== undefined ? Boolean(datos.activo) : true;
   const query = `
     INSERT INTO departamentos (nombre, descripcion, activo)

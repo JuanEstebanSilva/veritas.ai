@@ -4,23 +4,23 @@ import usuariosService from '../src/services/usuarios.service';
 
 const apiKey = '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0';
 
-describe('Laboratorio No. 11 — Colección Automatizada (HospitalSoft & Veritas AI: 22 Tests)', () => {
+describe('Laboratorio No. 11 — Veritas AI (Auditoría de Integridad Académica: 22 Tests)', () => {
   let tokenAdmin = '';
-  let tokenPaciente = '';
+  let tokenEstudiante = '';
   let timestamp = Date.now();
-  let citaId = 1;
+  let revisionId = 1;
 
   beforeAll(async () => {
     await usuariosService.crearAdministradorInicial();
   });
 
-  describe('Bloque A: Autenticación y Perfil', () => {
-    it('1. Login Admin debe responder 200 OK y devolver token', async () => {
+  describe('Bloque A: Autenticación y Perfil Académico', () => {
+    it('1. Login Administrador Veritas AI debe responder 200 OK y devolver token', async () => {
       const res = await request(app)
         .post('/api/auth/login')
         .set('X-API-Key', apiKey)
         .send({
-          email: 'admin@hospital.com',
+          email: 'admin@veritas.ai',
           password: 'SANTOTO_2026--2',
         });
 
@@ -34,39 +34,39 @@ describe('Laboratorio No. 11 — Colección Automatizada (HospitalSoft & Veritas
         .post('/api/auth/login')
         .set('X-API-Key', apiKey)
         .send({
-          email: 'admin@hospital.com',
+          email: 'admin@veritas.ai',
           password: 'MAL',
         });
 
       expect(res.status).toBe(401);
     });
 
-    it('3. Registro de Paciente debe responder 201 Created', async () => {
+    it('3. Registro de Estudiante / Autor debe responder 201 Created', async () => {
       timestamp = Date.now();
       const res = await request(app)
         .post('/api/auth/registro')
         .set('X-API-Key', apiKey)
         .send({
-          nombre: 'Paciente Demo',
-          email: `paciente.demo.${timestamp}@test.com`,
+          nombre: `Estudiante Investigador ${timestamp}`,
+          email: `estudiante.autor.${timestamp}@veritas.ai`,
           password: 'Password123*',
         });
 
       expect(res.status).toBe(201);
     });
 
-    it('4. Login Paciente Registrado debe responder 200 OK y guardar token', async () => {
+    it('4. Login Estudiante Registrado debe responder 200 OK y guardar token', async () => {
       const res = await request(app)
         .post('/api/auth/login')
         .set('X-API-Key', apiKey)
         .send({
-          email: `paciente.demo.${timestamp}@test.com`,
+          email: `estudiante.autor.${timestamp}@veritas.ai`,
           password: 'Password123*',
         });
 
       expect(res.status).toBe(200);
       expect(res.body.token).toBeDefined();
-      tokenPaciente = res.body.token;
+      tokenEstudiante = res.body.token;
     });
 
     it('5. Consultar Perfil con Bearer Token debe responder 200 OK', async () => {
@@ -80,52 +80,52 @@ describe('Laboratorio No. 11 — Colección Automatizada (HospitalSoft & Veritas
     });
   });
 
-  describe('Bloque B: Especialidades / Departamentos', () => {
-    it('6. Listar Especialidades debe responder 200 OK', async () => {
+  describe('Bloque B: Departamentos Académicos', () => {
+    it('6. Listar Departamentos Académicos debe responder 200 OK', async () => {
       const res = await request(app)
-        .get('/api/especialidades')
+        .get('/api/departamentos')
         .set('X-API-Key', apiKey)
         .set('Authorization', `Bearer ${tokenAdmin}`);
 
       expect(res.status).toBe(200);
     });
 
-    it('7. Crear Especialidad con Admin debe responder 201 Created', async () => {
+    it('7. Crear Departamento Académico con Admin debe responder 201 Created', async () => {
       const res = await request(app)
-        .post('/api/especialidades')
+        .post('/api/departamentos')
         .set('X-API-Key', apiKey)
         .set('Authorization', `Bearer ${tokenAdmin}`)
         .send({
-          nombre: `Dermatología Especial ${timestamp}`,
-          descripcion: 'Cuidado e investigación de la piel',
+          nombre: `Inteligencia Artificial y Ética Computacional ${timestamp}`,
+          descripcion: 'Investigación en integridad académica, modelos LLM y NLP',
           activa: true,
         });
 
       expect(res.status).toBe(201);
     });
 
-    it('8. Especialidad Duplicada debe responder 409 Conflict', async () => {
+    it('8. Departamento Académico Duplicado debe responder 409 Conflict', async () => {
       const res = await request(app)
-        .post('/api/especialidades')
+        .post('/api/departamentos')
         .set('X-API-Key', apiKey)
         .set('Authorization', `Bearer ${tokenAdmin}`)
         .send({
-          nombre: `Dermatología Especial ${timestamp}`,
-          descripcion: 'Duplicado',
+          nombre: `inteligencia artificial y ética computacional ${timestamp}`,
+          descripcion: 'Duplicado en minúsculas',
           activa: true,
         });
 
       expect(res.status).toBe(409);
     });
 
-    it('9. Crear Especialidad con Token de Paciente (RBAC) debe responder 403 Forbidden', async () => {
+    it('9. Crear Departamento con Token de Estudiante (RBAC) debe responder 403 Forbidden', async () => {
       const res = await request(app)
-        .post('/api/especialidades')
+        .post('/api/departamentos')
         .set('X-API-Key', apiKey)
-        .set('Authorization', `Bearer ${tokenPaciente}`)
+        .set('Authorization', `Bearer ${tokenEstudiante}`)
         .send({
-          nombre: `Especialidad No Autorizada ${timestamp}`,
-          descripcion: 'Intento sin permisos',
+          nombre: `Departamento No Autorizado ${timestamp}`,
+          descripcion: 'Intento sin privilegios administrativos',
           activa: true,
         });
 
@@ -133,35 +133,35 @@ describe('Laboratorio No. 11 — Colección Automatizada (HospitalSoft & Veritas
     });
   });
 
-  describe('Bloque C: Médicos / Docentes', () => {
-    it('10. Crear Médico con Admin debe responder 201 Created', async () => {
+  describe('Bloque C: Docentes y Auditores de Ética', () => {
+    it('10. Crear Docente Auditor con Admin debe responder 201 Created', async () => {
       const res = await request(app)
-        .post('/api/medicos')
+        .post('/api/docentes')
         .set('X-API-Key', apiKey)
         .set('Authorization', `Bearer ${tokenAdmin}`)
         .send({
           nombre: `Dr. Carlos Ruiz ${timestamp}`,
-          registroMedico: `RM-${timestamp}`,
-          email: `carlos.ruiz.${timestamp}@hospital.com`,
+          registroAcademico: `DOC-${timestamp}`,
+          email: `carlos.ruiz.${timestamp}@veritas.ai`,
           telefono: '3101112233',
-          especialidadId: 1,
+          departamentoId: 1,
           activo: true,
         });
 
       expect(res.status).toBe(201);
     });
 
-    it('11. Registro Médico Duplicado debe responder 409 Conflict', async () => {
+    it('11. Código de Docente Duplicado debe responder 409 Conflict', async () => {
       const res = await request(app)
-        .post('/api/medicos')
+        .post('/api/docentes')
         .set('X-API-Key', apiKey)
         .set('Authorization', `Bearer ${tokenAdmin}`)
         .send({
           nombre: 'Dr. Carlos Ruiz Duplicado',
-          registroMedico: `RM-${timestamp}`,
-          email: `carlos.otro.${timestamp}@hospital.com`,
+          registroAcademico: `DOC-${timestamp}`,
+          email: `carlos.otro.${timestamp}@veritas.ai`,
           telefono: '3101112233',
-          especialidadId: 1,
+          departamentoId: 1,
           activo: true,
         });
 
@@ -169,16 +169,16 @@ describe('Laboratorio No. 11 — Colección Automatizada (HospitalSoft & Veritas
     });
   });
 
-  describe('Bloque D: Pacientes y Consultorios / Laboratorios', () => {
-    it('12. Crear Paciente con Admin debe responder 201 Created', async () => {
+  describe('Bloque D: Estudiantes Autores y Laboratorios de Cómputo', () => {
+    it('12. Crear Estudiante Autor con Admin debe responder 201 Created', async () => {
       const res = await request(app)
-        .post('/api/pacientes')
+        .post('/api/estudiantes')
         .set('X-API-Key', apiKey)
         .set('Authorization', `Bearer ${tokenAdmin}`)
         .send({
           nombre: `Laura Méndez ${timestamp}`,
           documento: `DOC-${timestamp}`,
-          email: `laura.${timestamp}@test.com`,
+          email: `laura.${timestamp}@veritas.ai`,
           telefono: '3123456789',
           fechaNacimiento: '1998-05-12',
         });
@@ -186,15 +186,15 @@ describe('Laboratorio No. 11 — Colección Automatizada (HospitalSoft & Veritas
       expect(res.status).toBe(201);
     });
 
-    it('13. Documento Duplicado debe responder 409 Conflict', async () => {
+    it('13. Documento de Estudiante Duplicado debe responder 409 Conflict', async () => {
       const res = await request(app)
-        .post('/api/pacientes')
+        .post('/api/estudiantes')
         .set('X-API-Key', apiKey)
         .set('Authorization', `Bearer ${tokenAdmin}`)
         .send({
           nombre: 'Laura Méndez Copia',
           documento: `DOC-${timestamp}`,
-          email: `laura.copia.${timestamp}@test.com`,
+          email: `laura.copia.${timestamp}@veritas.ai`,
           telefono: '3123456789',
           fechaNacimiento: '1998-05-12',
         });
@@ -202,16 +202,16 @@ describe('Laboratorio No. 11 — Colección Automatizada (HospitalSoft & Veritas
       expect(res.status).toBe(409);
     });
 
-    it('14. Crear Consultorio con Admin debe responder 201 Created', async () => {
+    it('14. Crear Laboratorio de Cómputo con Admin debe responder 201 Created', async () => {
       const res = await request(app)
-        .post('/api/consultorios')
+        .post('/api/laboratorios')
         .set('X-API-Key', apiKey)
         .set('Authorization', `Bearer ${tokenAdmin}`)
         .send({
-          codigo: `CONS-${timestamp}`,
-          nombre: `Consultorio ${timestamp}`,
+          codigo: `LAB-${timestamp}`,
+          nombre: `Laboratorio de PLN y Cómputo Ético ${timestamp}`,
           piso: 3,
-          ubicacion: 'Ala Norte',
+          ubicacion: 'Edificio de Ingeniería - Cómputo Avanzado',
           activo: true,
         });
 
@@ -219,41 +219,41 @@ describe('Laboratorio No. 11 — Colección Automatizada (HospitalSoft & Veritas
     });
   });
 
-  describe('Bloque E: Citas Médicas / Revisiones y Agenda', () => {
+  describe('Bloque E: Revisiones Éticas y Agenda de Auditoría', () => {
     const testFecha = `2027-${String((timestamp % 12) + 1).padStart(2, '0')}-${String((timestamp % 28) + 1).padStart(2, '0')}`;
     const testHora = `${String((Math.floor(timestamp / 1000) % 12) + 8).padStart(2, '0')}:${String(Math.floor(timestamp / 100) % 60).padStart(2, '0')}:00`;
 
-    it('15. Crear Cita Válida con Admin debe responder 201 Created (estado: programada)', async () => {
+    it('15. Crear Revisión Ética Válida con Admin debe responder 201 Created (estado: programada)', async () => {
       const res = await request(app)
-        .post('/api/citas')
+        .post('/api/revisiones')
         .set('X-API-Key', apiKey)
         .set('Authorization', `Bearer ${tokenAdmin}`)
         .send({
-          pacienteId: 1,
-          medicoId: 1,
-          consultorioId: 1,
+          estudianteId: 1,
+          docenteId: 1,
+          laboratorioId: 1,
           fecha: testFecha,
           hora: testHora,
-          motivo: 'Control general de salud',
+          motivo: 'Auditoría de originalidad, perplejidad y similitud semántica en tesis de IA',
         });
 
       expect(res.status).toBe(201);
-      const c = res.body.cita || res.body.revision;
-      if (c && c.id) citaId = c.id;
+      const c = res.body.revision || res.body.cita;
+      if (c && c.id) revisionId = c.id;
     });
 
-    it('16. Conflicto de Horario / Doble Reserva debe responder 409 Conflict', async () => {
+    it('16. Conflicto de Horario / Doble Asignación debe responder 409 Conflict', async () => {
       const res = await request(app)
-        .post('/api/citas')
+        .post('/api/revisiones')
         .set('X-API-Key', apiKey)
         .set('Authorization', `Bearer ${tokenAdmin}`)
         .send({
-          pacienteId: 2,
-          medicoId: 1,
-          consultorioId: 1,
+          estudianteId: 2,
+          docenteId: 1,
+          laboratorioId: 1,
           fecha: testFecha,
           hora: testHora,
-          motivo: 'Control general de salud solapado',
+          motivo: 'Auditoría solapada en mismo laboratorio y docente',
         });
 
       expect(res.status).toBe(409);
@@ -261,7 +261,7 @@ describe('Laboratorio No. 11 — Colección Automatizada (HospitalSoft & Veritas
 
     it('17. Cambio de Estado Válido a "confirmada" debe responder 200 OK', async () => {
       const res = await request(app)
-        .patch(`/api/citas/${citaId}/estado`)
+        .patch(`/api/revisiones/${revisionId}/estado`)
         .set('X-API-Key', apiKey)
         .set('Authorization', `Bearer ${tokenAdmin}`)
         .send({ estado: 'confirmada' });
@@ -271,7 +271,7 @@ describe('Laboratorio No. 11 — Colección Automatizada (HospitalSoft & Veritas
 
     it('18. Cambio de Estado Válido a "atendida" debe responder 200 OK', async () => {
       const res = await request(app)
-        .patch(`/api/citas/${citaId}/estado`)
+        .patch(`/api/revisiones/${revisionId}/estado`)
         .set('X-API-Key', apiKey)
         .set('Authorization', `Bearer ${tokenAdmin}`)
         .send({ estado: 'atendida' });
@@ -281,7 +281,7 @@ describe('Laboratorio No. 11 — Colección Automatizada (HospitalSoft & Veritas
 
     it('19. Cambio de Estado Inválido de "atendida" a "programada" debe responder 409 Conflict', async () => {
       const res = await request(app)
-        .patch(`/api/citas/${citaId}/estado`)
+        .patch(`/api/revisiones/${revisionId}/estado`)
         .set('X-API-Key', apiKey)
         .set('Authorization', `Bearer ${tokenAdmin}`)
         .send({ estado: 'programada' });
@@ -290,28 +290,28 @@ describe('Laboratorio No. 11 — Colección Automatizada (HospitalSoft & Veritas
     });
   });
 
-  describe('Bloque F: Seguridad BOLA / IDOR e Integridad', () => {
-    it('20. Consultar Citas Propias con Token de Paciente debe responder 200 OK', async () => {
+  describe('Bloque F: Seguridad BOLA / IDOR e Integridad Referencial', () => {
+    it('20. Consultar Revisiones Propias con Token de Estudiante debe responder 200 OK', async () => {
       const res = await request(app)
-        .get('/api/citas/mis-citas')
+        .get('/api/revisiones/mis-revisiones')
         .set('X-API-Key', apiKey)
-        .set('Authorization', `Bearer ${tokenPaciente}`);
+        .set('Authorization', `Bearer ${tokenEstudiante}`);
 
       expect(res.status).toBe(200);
     });
 
-    it('21. Consultar Cita Ajena con Token de Paciente debe responder 403 Forbidden (BOLA Bloqueado)', async () => {
+    it('21. Consultar Revisión Ajena con Token de Estudiante debe responder 403 Forbidden (BOLA Bloqueado)', async () => {
       const res = await request(app)
-        .get('/api/citas/1')
+        .get('/api/revisiones/1')
         .set('X-API-Key', apiKey)
-        .set('Authorization', `Bearer ${tokenPaciente}`);
+        .set('Authorization', `Bearer ${tokenEstudiante}`);
 
       expect(res.status).toBe(403);
     });
 
-    it('22. Eliminar Paciente con Citas Activas debe responder 409 Conflict (Integridad Referencial)', async () => {
+    it('22. Eliminar Estudiante con Revisiones Activas debe responder 409 Conflict (Integridad Referencial)', async () => {
       const res = await request(app)
-        .delete('/api/pacientes/1')
+        .delete('/api/estudiantes/1')
         .set('X-API-Key', apiKey)
         .set('Authorization', `Bearer ${tokenAdmin}`);
 
