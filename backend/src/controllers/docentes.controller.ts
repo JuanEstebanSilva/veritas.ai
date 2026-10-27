@@ -60,7 +60,15 @@ export const crearDocente = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const datos = matchedData(req, { locations: ['body'] }) as any;
+    const raw = req.body || {};
+    const matched = matchedData(req, { locations: ['body'] }) as any;
+    const datos = {
+      ...raw,
+      ...matched,
+    };
+    datos.registroAcademico = datos.registroAcademico || datos.registro_academico || datos.registroMedico || datos.registro_medico || datos.registroProfesional || datos.registro_profesional;
+    datos.departamentoId = datos.departamentoId !== undefined ? datos.departamentoId : (datos.departamento_id !== undefined ? datos.departamento_id : (datos.especialidadId !== undefined ? datos.especialidadId : (datos.especialidad_id !== undefined ? datos.especialidad_id : 1)));
+    datos.usuarioId = datos.usuarioId !== undefined ? datos.usuarioId : datos.usuario_id;
 
     if (datos.usuarioId !== undefined && datos.usuarioId !== null) {
       const usuario = await usuariosService.obtenerUsuarioPorId(datos.usuarioId);
@@ -142,7 +150,15 @@ export const actualizarDocente = async (
 ): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const datos = matchedData(req, { locations: ['body'] }) as any;
+    const raw = req.body || {};
+    const matched = matchedData(req, { locations: ['body'] }) as any;
+    const datos = {
+      ...raw,
+      ...matched,
+    };
+    datos.registroAcademico = datos.registroAcademico || datos.registro_academico || datos.registroMedico || datos.registro_medico || datos.registroProfesional || datos.registro_profesional;
+    datos.departamentoId = datos.departamentoId !== undefined ? datos.departamentoId : (datos.departamento_id !== undefined ? datos.departamento_id : (datos.especialidadId !== undefined ? datos.especialidadId : (datos.especialidad_id !== undefined ? datos.especialidad_id : undefined)));
+    datos.usuarioId = datos.usuarioId !== undefined ? datos.usuarioId : datos.usuario_id;
 
     if (datos.usuarioId !== undefined && datos.usuarioId !== null) {
       const usuario = await usuariosService.obtenerUsuarioPorId(datos.usuarioId);
@@ -217,7 +233,15 @@ export const actualizarDocenteParcial = async (
 ): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const datos = matchedData(req, { locations: ['body'] }) as any;
+    const raw = req.body || {};
+    const matched = matchedData(req, { locations: ['body'] }) as any;
+    const datos = {
+      ...raw,
+      ...matched,
+    };
+    datos.registroAcademico = datos.registroAcademico || datos.registro_academico || datos.registroMedico || datos.registro_medico || datos.registroProfesional || datos.registro_profesional;
+    datos.departamentoId = datos.departamentoId !== undefined ? datos.departamentoId : (datos.departamento_id !== undefined ? datos.departamento_id : (datos.especialidadId !== undefined ? datos.especialidadId : (datos.especialidad_id !== undefined ? datos.especialidad_id : undefined)));
+    datos.usuarioId = datos.usuarioId !== undefined ? datos.usuarioId : datos.usuario_id;
 
     if (datos.usuarioId !== undefined && datos.usuarioId !== null) {
       const usuario = await usuariosService.obtenerUsuarioPorId(datos.usuarioId);

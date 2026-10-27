@@ -35,7 +35,7 @@ const transicionesValidas: Record<string, string[]> = {
   cancelada: [],
 };
 
-const extraerFechaYHora = (fechaInput: string, horaInput?: string): { fecha: string; hora: string } => {
+export const extraerFechaYHora = (fechaInput: string, horaInput?: string): { fecha: string; hora: string } => {
   let fecha = fechaInput.trim();
   let hora = horaInput ? horaInput.trim() : '10:00:00';
 
@@ -49,6 +49,21 @@ const extraerFechaYHora = (fechaInput: string, horaInput?: string): { fecha: str
   }
 
   return { fecha, hora };
+};
+
+export const verificarDisponibilidadLaboratorio = async (
+  laboratorioId: number | string,
+  fecha: string,
+  hora: string
+): Promise<boolean> => {
+  const { fecha: f, hora: h } = extraerFechaYHora(fecha, hora);
+  const query = `
+    SELECT id FROM revisiones
+    WHERE laboratorio_id = $1 AND fecha = $2 AND hora = $3
+    LIMIT 1
+  `;
+  const res = await consultar(query, [Number(laboratorioId), f, h]);
+  return res.rows.length === 0;
 };
 
 const mapearRevision = (row: any): Revision => {
@@ -150,9 +165,10 @@ export const obtenerRevisionesPorDocente = async (
 };
 
 export const crearRevision = async (datos: DatosRevision): Promise<Revision> => {
-  const estId = Number(datos.estudianteId || datos.pacienteId || 1);
-  const docId = Number(datos.docenteId || datos.medicoId || 1);
-  const labId = Number(datos.laboratorioId || datos.consultorioId || 1);
+  const anyDatos = datos as any;
+  const estId = Number(datos.estudianteId || datos.pacienteId || anyDatos.estudiante_id || anyDatos.paciente_id || 1);
+  const docId = Number(datos.docenteId || datos.medicoId || anyDatos.docente_id || anyDatos.medico_id || 1);
+  const labId = Number(datos.laboratorioId || datos.consultorioId || anyDatos.laboratorio_id || anyDatos.consultorio_id || 1);
   const { fecha, hora } = extraerFechaYHora(datos.fecha, datos.hora);
   const estado = datos.estado || 'programada';
 
@@ -302,6 +318,8 @@ export default {
   actualizarRevisionParcial,
   cambiarEstadoRevision,
   eliminarRevision,
+  extraerFechaYHora,
+  verificarDisponibilidadLaboratorio,
   // Alias de compatibilidad
   obtenerTodasLasCitas: obtenerTodasLasRevisiones,
   obtenerCitaPorId: obtenerRevisionPorId,

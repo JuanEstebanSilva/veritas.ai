@@ -64,11 +64,20 @@ const consultar = async (sql, params = []) => {
   return await pool.query(sql, params);
 };
 
+/**
+ * Cierre controlado de conexiones PostgreSQL / Supabase
+ */
+const cerrarPool = async () => {
+  await pool.end();
+};
+
 module.exports = {
   pool,
   consultar,
+  cerrarPool,
 };
 module.exports.default = {
   pool,
   consultar,
+  cerrarPool,
 };

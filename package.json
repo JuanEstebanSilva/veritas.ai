@@ -5,8 +5,11 @@
   "scripts": {
     "test:db": "npm --prefix backend run test:db",
     "db:test": "npm --prefix backend run test:db",
+    "seed:admin": "npm --prefix backend run seed:admin",
     "db:migrate": "npm --prefix backend run db:migrate",
     "test": "npm --prefix backend test",
+    "test:bloque7.5.1": "npm --prefix backend run test:bloque7.5.1",
+    "test:bloque8": "npm --prefix backend run test:bloque8",
     "test:lab9": "npm --prefix backend run test:lab9",
     "test:lab10": "npm --prefix backend run test:lab10",
     "test:lab11": "npm --prefix backend run test:lab11",

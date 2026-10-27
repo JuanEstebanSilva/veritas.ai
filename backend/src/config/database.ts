@@ -68,7 +68,15 @@ export const consultar = async (sql: string, params: any[] = []): Promise<QueryR
   return await pool.query(sql, params);
 };
 
+/**
+ * Cierre controlado de conexiones PostgreSQL / Supabase
+ */
+export const cerrarPool = async (): Promise<void> => {
+  await pool.end();
+};
+
 export default {
   pool,
   consultar,
+  cerrarPool,
 };

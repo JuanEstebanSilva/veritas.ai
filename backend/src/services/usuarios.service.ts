@@ -1,6 +1,7 @@
 import { prisma } from '../config/prisma';
 import { Role, User } from '@prisma/client';
 import { generarPasswordHash, verificarPassword } from '../utils/passwordPolicy';
+import { pool } from '../config/database';
 
 /**
  * Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/BOLA y Control de Acceso a Recursos
@@ -446,27 +447,23 @@ export const crearUsuarioAdministrativo = async (datos: DatosRegistroUsuario): P
 };
 
 // ========================================
-// Crear administrador inicial (Bootstrap - Bloque 6A, Parte 15)
+// Helper de sincronización para Prisma y Memoria
 // ========================================
-export const crearAdministradorInicial = async (): Promise<any | null> => {
-  const nombre = process.env.ADMIN_NOMBRE || process.env.ADMIN_NAME || 'Administrador Veritas';
-  const email = (process.env.ADMIN_EMAIL || 'admin@veritas.com').toLowerCase().trim();
-  const password = process.env.ADMIN_PASSWORD || 'SANTOTO_2026—2';
-
-  if (!nombre || !email || !password) {
-    console.warn('Administrador inicial no configurado');
-    return null;
-  }
-
-  const passwordHash = await generarPasswordHash(password);
-
+const sincronizarAdminEnPrismaYMemoria = async (
+  numId: number,
+  nombre: string,
+  email: string,
+  passwordHash: string,
+  activo: boolean
+) => {
   let adminDb: any = null;
   try {
     adminDb = await prisma.user.upsert({
       where: { email: email.toLowerCase() },
       update: {
+        name: nombre,
         role: Role.ADMIN,
-        is_active: true,
+        is_active: activo,
         password_hash: passwordHash,
       },
       create: {
@@ -475,41 +472,24 @@ export const crearAdministradorInicial = async (): Promise<any | null> => {
         email: email.toLowerCase(),
         password_hash: passwordHash,
         role: Role.ADMIN,
-        is_active: true,
+        is_active: activo,
         is_premium: true,
       },
     });
   } catch (err) {
-    console.warn('Aviso al sincronizar admin en PostgreSQL:', err);
+    // Si prisma no está disponible, continuar con memoria
   }
 
   // Sincronizar también admin@veritas.ai si existe
   try {
     await prisma.user.updateMany({
       where: { email: 'admin@veritas.ai' },
-      data: { password_hash: passwordHash, role: Role.ADMIN, is_active: true },
+      data: { password_hash: passwordHash, role: Role.ADMIN, is_active: activo },
     });
-  } catch {
-    // Si PostgreSQL no está disponible, continuar con memoria
-  }
-
-  const siguienteId =
-    usuariosMemoria.length > 0
-      ? Math.max(
-          ...usuariosMemoria.map((u) =>
-            typeof (u as any).numId === 'number'
-              ? (u as any).numId
-              : typeof u.id === 'number'
-              ? u.id
-              : 0
-          )
-        ) + 1
-      : 1;
-
-  const finalId = adminDb ? adminDb.id : siguienteId;
+  } catch {}
 
   const administrador: UsuarioMemoria = {
-    id: finalId,
+    id: numId,
     nombre,
     name: nombre,
     last_name: 'Veritas',
@@ -518,14 +498,14 @@ export const crearAdministradorInicial = async (): Promise<any | null> => {
     password_hash: passwordHash,
     rol: 'administrador',
     role: Role.ADMIN,
-    activo: true,
-    is_active: true,
+    activo,
+    is_active: activo,
     is_premium: true,
     daily_analysis_count: 0,
     last_analysis_date: new Date(),
   };
 
-  (administrador as any).numId = siguienteId;
+  (administrador as any).numId = numId;
   if (adminDb) {
     (administrador as any).dbId = adminDb.id;
     (administrador as any).uuid = adminDb.id;
@@ -539,9 +519,159 @@ export const crearAdministradorInicial = async (): Promise<any | null> => {
   } else {
     usuariosMemoria.push(administrador);
   }
+};
 
-  console.log('✓ Administrador inicial sincronizado');
-  return administrador;
+// ========================================
+// Bootstrap administrativo (Bloque 7.5.1 / Bloque 8)
+//
+// Solo se ejecuta explícitamente mediante el script: npm run seed:admin
+// Reglas:
+// 1. Requiere ADMIN_NOMBRE, ADMIN_EMAIL y ADMIN_PASSWORD no vacíos.
+// 2. Rechaza contraseñas de menos de 12 caracteres.
+// 3. Valida formato básico de correo.
+// 4. Calcula hash bcrypt con salt seguro.
+// 5. Usa transacción PostgreSQL y bloqueo asesor pg_advisory_xact_lock(7505, 1).
+// 6. Si ya existe cualquier usuario con rol 'administrador', no modifica nada.
+// 7. Si el correo pertenece a otro usuario de otro rol, rechaza elevación de privilegios.
+// 8. Exige que el rol 'administrador' esté activo.
+// 9. Inserta en public.usuarios, sincroniza con Prisma users y memoria.
+// 10. COMMIT o ROLLBACK ante errores; libera el cliente.
+// ========================================
+export const crearAdministradorInicial = async (): Promise<any> => {
+  const nombre = process.env.ADMIN_NOMBRE?.trim() || process.env.ADMIN_NAME?.trim();
+  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD;
+
+  if (!nombre || !email || !password) {
+    throw new Error('Faltan las variables ADMIN_NOMBRE, ADMIN_EMAIL o ADMIN_PASSWORD');
+  }
+
+  if (password.length < 12) {
+    throw new Error('La contraseña inicial debe tener al menos 12 caracteres');
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error('ADMIN_EMAIL no tiene un formato válido');
+  }
+
+  const passwordHash = await generarPasswordHash(password);
+
+  const cliente = await pool.connect();
+  let transaccionIniciada = false;
+
+  try {
+    await cliente.query('BEGIN');
+    transaccionIniciada = true;
+
+    // Bloqueo exclusivo para ejecuciones simultáneas de este mismo bootstrap
+    await cliente.query('SELECT pg_advisory_xact_lock($1, $2)', [7505, 1]);
+
+    // Comprobar si existe cualquier cuenta con rol administrador, incluso inactiva
+    const administradores = await cliente.query(
+      `SELECT
+         u.id,
+         u.nombre,
+         u.email,
+         u.activo
+       FROM public.usuarios u
+       INNER JOIN public.roles r
+         ON r.id = u.rol_id
+       WHERE r.nombre = 'administrador'
+       ORDER BY u.id
+       LIMIT 1`
+    );
+
+    if (administradores.rows.length > 0) {
+      await cliente.query('COMMIT');
+      transaccionIniciada = false;
+
+      const adminExistente = administradores.rows[0];
+
+      // Sincronizar en memoria y Prisma para que login y consultas funcionen
+      await sincronizarAdminEnPrismaYMemoria(adminExistente.id, adminExistente.nombre, adminExistente.email, passwordHash, adminExistente.activo);
+
+      return {
+        creado: false,
+        motivo: 'ADMINISTRADOR_EXISTENTE',
+        id: adminExistente.id,
+        email: adminExistente.email,
+        nombre: adminExistente.nombre,
+        usuario: adminExistente,
+      };
+    }
+
+    // Evitar que una cuenta de otro rol sea convertida en administrador
+    const correoExistente = await cliente.query(
+      `SELECT id
+       FROM public.usuarios
+       WHERE LOWER(email) = LOWER($1)
+       LIMIT 1`,
+      [email]
+    );
+
+    if (correoExistente.rows.length > 0) {
+      throw new Error(
+        'El correo de bootstrap ya pertenece a otro usuario. No se elevarán privilegios.'
+      );
+    }
+
+    // Verificar rol administrativo activo
+    const rolResultado = await cliente.query(
+      `SELECT id
+       FROM public.roles
+       WHERE nombre = 'administrador'
+         AND activo = TRUE
+       LIMIT 1`
+    );
+
+    if (rolResultado.rows.length === 0) {
+      throw new Error('No existe un rol administrador activo');
+    }
+
+    const rolId = rolResultado.rows[0].id;
+
+    // Crear exclusivamente el primer admin en public.usuarios
+    const resultado = await cliente.query(
+      `INSERT INTO public.usuarios (
+         nombre,
+         email,
+         password_hash,
+         rol_id,
+         activo
+       )
+       VALUES ($1, $2, $3, $4, TRUE)
+       RETURNING id, nombre, email, activo`,
+      [nombre, email, passwordHash, rolId]
+    );
+
+    await cliente.query('COMMIT');
+    transaccionIniciada = false;
+
+    const nuevoAdmin = resultado.rows[0];
+
+    // Sincronizar con Prisma y memoria
+    await sincronizarAdminEnPrismaYMemoria(nuevoAdmin.id, nombre, email, passwordHash, true);
+
+    return {
+      creado: true,
+      motivo: 'ADMINISTRADOR_CREADO',
+      id: nuevoAdmin.id,
+      email: nuevoAdmin.email,
+      nombre: nuevoAdmin.nombre,
+      usuario: nuevoAdmin,
+    };
+  } catch (error: any) {
+    if (transaccionIniciada) {
+      try {
+        await cliente.query('ROLLBACK');
+      } catch (rollbackError: any) {
+        console.error('Error al revertir bootstrap:', rollbackError.message);
+      }
+    }
+    throw error;
+  } finally {
+    cliente.release();
+  }
 };
 
 // ========================================

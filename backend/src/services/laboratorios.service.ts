@@ -84,12 +84,54 @@ export const crearLaboratorio = async (
   return mapearLaboratorio(res.rows[0]);
 };
 
+export const actualizarLaboratorio = async (
+  id: number | string,
+  datos: Partial<DatosLaboratorio>
+): Promise<Laboratorio | null> => {
+  const actual = await obtenerLaboratorioPorId(id);
+  if (!actual) return null;
+
+  const num = (datos.numero || datos.codigo || datos.nombre || actual.numero).trim();
+  const pisoVal = String(
+    datos.piso !== undefined ? datos.piso : datos.ubicacion !== undefined ? datos.ubicacion : actual.piso
+  ).trim();
+  const activo = datos.activo !== undefined ? Boolean(datos.activo) : actual.activo;
+
+  const query = `
+    UPDATE laboratorios
+    SET numero = $1, piso = $2, activo = $3
+    WHERE id = $4
+    RETURNING id, numero, piso, activo
+  `;
+  const res = await consultar(query, [num, pisoVal, activo, Number(id)]);
+  return mapearLaboratorio(res.rows[0]);
+};
+
+export const eliminarLaboratorio = async (
+  id: number | string
+): Promise<{ eliminado: boolean; tieneRevisiones?: boolean }> => {
+  const labId = Number(id);
+  // Verificar si tiene revisiones o citas asociadas
+  const check = await consultar('SELECT COUNT(*) as count FROM revisiones WHERE laboratorio_id = $1', [labId]);
+  if (parseInt(check.rows[0]?.count || '0', 10) > 0) {
+    return { eliminado: false, tieneRevisiones: true };
+  }
+
+  const res = await consultar('DELETE FROM laboratorios WHERE id = $1 RETURNING id', [labId]);
+  return { eliminado: res.rows.length > 0 };
+};
+
 export default {
   obtenerLaboratorios,
   obtenerLaboratorioPorId,
   crearLaboratorio,
+  actualizarLaboratorio,
+  actualizarLaboratorioParcial: actualizarLaboratorio,
+  eliminarLaboratorio,
   // Alias de compatibilidad (Consultorios - Rúbrica Hospitalaria)
   obtenerConsultorios: obtenerLaboratorios,
   obtenerConsultorioPorId: obtenerLaboratorioPorId,
   crearConsultorio: crearLaboratorio,
+  actualizarConsultorio: actualizarLaboratorio,
+  eliminarConsultorio: eliminarLaboratorio,
 };

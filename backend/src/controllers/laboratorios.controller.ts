@@ -78,12 +78,89 @@ export const crearLaboratorio = async (
   }
 };
 
+export const actualizarLaboratorio = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const actualizado = await laboratoriosService.actualizarLaboratorio(id, req.body);
+
+    if (!actualizado) {
+      res.status(404).json({
+        success: false,
+        mensaje: 'Laboratorio no encontrado',
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      mensaje: 'Laboratorio actualizado correctamente',
+      laboratorio: actualizado,
+      consultorio: actualizado,
+    });
+  } catch (error: any) {
+    if (error.code === '23505') {
+      res.status(409).json({
+        success: false,
+        mensaje: 'Ya existe otro laboratorio con ese código o número.',
+      });
+      return;
+    }
+    next(error);
+  }
+};
+
+export const eliminarLaboratorio = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const lab = await laboratoriosService.obtenerLaboratorioPorId(id);
+
+    if (!lab) {
+      res.status(404).json({
+        success: false,
+        mensaje: 'Laboratorio no encontrado',
+      });
+      return;
+    }
+
+    const resultado = await laboratoriosService.eliminarLaboratorio(id);
+
+    if (resultado.tieneRevisiones) {
+      res.status(409).json({
+        success: false,
+        mensaje: 'No se puede eliminar el laboratorio porque tiene revisiones asociadas',
+        message: 'No se puede eliminar el laboratorio porque tiene revisiones asociadas',
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      mensaje: 'Laboratorio eliminado correctamente',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   obtenerLaboratorios,
   obtenerLaboratorioPorId,
   crearLaboratorio,
+  actualizarLaboratorio,
+  actualizarLaboratorioParcial: actualizarLaboratorio,
+  eliminarLaboratorio,
   // Alias de compatibilidad
   obtenerConsultorios: obtenerLaboratorios,
   obtenerConsultorioPorId: obtenerLaboratorioPorId,
   crearConsultorio: crearLaboratorio,
+  actualizarConsultorio: actualizarLaboratorio,
+  eliminarConsultorio: eliminarLaboratorio,
 };

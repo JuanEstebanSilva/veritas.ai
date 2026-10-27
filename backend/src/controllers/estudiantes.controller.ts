@@ -60,7 +60,14 @@ export const crearEstudiante = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const datos = matchedData(req, { locations: ['body'] }) as any;
+    const raw = req.body || {};
+    const matched = matchedData(req, { locations: ['body'] }) as any;
+    const datos = {
+      ...raw,
+      ...matched,
+    };
+    datos.fechaNacimiento = datos.fechaNacimiento || datos.fecha_nacimiento;
+    datos.usuarioId = datos.usuarioId !== undefined ? datos.usuarioId : datos.usuario_id;
 
     if (datos.usuarioId !== undefined && datos.usuarioId !== null) {
       const usuario = await usuariosService.obtenerUsuarioPorId(datos.usuarioId);
@@ -141,7 +148,14 @@ export const actualizarEstudiante = async (
 ): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const datos = matchedData(req, { locations: ['body'] }) as any;
+    const raw = req.body || {};
+    const matched = matchedData(req, { locations: ['body'] }) as any;
+    const datos = {
+      ...raw,
+      ...matched,
+    };
+    datos.fechaNacimiento = datos.fechaNacimiento || datos.fecha_nacimiento;
+    datos.usuarioId = datos.usuarioId !== undefined ? datos.usuarioId : datos.usuario_id;
 
     if (datos.usuarioId !== undefined && datos.usuarioId !== null) {
       const usuario = await usuariosService.obtenerUsuarioPorId(datos.usuarioId);
@@ -208,7 +222,14 @@ export const actualizarEstudianteParcial = async (
 ): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const datos = matchedData(req, { locations: ['body'] }) as any;
+    const raw = req.body || {};
+    const matched = matchedData(req, { locations: ['body'] }) as any;
+    const datos = {
+      ...raw,
+      ...matched,
+    };
+    datos.fechaNacimiento = datos.fechaNacimiento || datos.fecha_nacimiento;
+    datos.usuarioId = datos.usuarioId !== undefined ? datos.usuarioId : datos.usuario_id;
 
     if (datos.usuarioId !== undefined && datos.usuarioId !== null) {
       const usuario = await usuariosService.obtenerUsuarioPorId(datos.usuarioId);

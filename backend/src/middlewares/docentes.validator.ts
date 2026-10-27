@@ -1,6 +1,30 @@
 import { body, param } from 'express-validator';
 
 export const validarCreacionDocente = [
+  (req: any, _res: any, next: any) => {
+    if (req.body) {
+      if (req.body.registro_academico && !req.body.registroAcademico) {
+        req.body.registroAcademico = req.body.registro_academico;
+      }
+      if (req.body.registro_medico && !req.body.registroMedico) {
+        req.body.registroMedico = req.body.registro_medico;
+      }
+      if (req.body.registro_profesional && !req.body.registroAcademico) {
+        req.body.registroAcademico = req.body.registro_profesional;
+      }
+      if (req.body.departamento_id !== undefined && req.body.departamentoId === undefined) {
+        req.body.departamentoId = req.body.departamento_id;
+      }
+      if (req.body.especialidad_id !== undefined && req.body.especialidadId === undefined) {
+        req.body.especialidadId = req.body.especialidad_id;
+      }
+      if (req.body.usuario_id !== undefined && req.body.usuarioId === undefined) {
+        req.body.usuarioId = req.body.usuario_id;
+      }
+    }
+    next();
+  },
+
   body('nombre')
     .isString()
     .withMessage('El nombre debe ser texto')
@@ -85,6 +109,29 @@ export const validarCreacionDocente = [
 ];
 
 export const validarDocenteParcial = [
+  (req: any, _res: any, next: any) => {
+    if (req.body) {
+      if (req.body.registro_academico && !req.body.registroAcademico) {
+        req.body.registroAcademico = req.body.registro_academico;
+      }
+      if (req.body.registro_medico && !req.body.registroMedico) {
+        req.body.registroMedico = req.body.registro_medico;
+      }
+      if (req.body.registro_profesional && !req.body.registroAcademico) {
+        req.body.registroAcademico = req.body.registro_profesional;
+      }
+      if (req.body.departamento_id !== undefined && req.body.departamentoId === undefined) {
+        req.body.departamentoId = req.body.departamento_id;
+      }
+      if (req.body.especialidad_id !== undefined && req.body.especialidadId === undefined) {
+        req.body.especialidadId = req.body.especialidad_id;
+      }
+      if (req.body.usuario_id !== undefined && req.body.usuarioId === undefined) {
+        req.body.usuarioId = req.body.usuario_id;
+      }
+    }
+    next();
+  },
   body('nombre').optional().isString().trim(),
   body('registroAcademico').optional().isString().trim(),
   body('registroMedico').optional().isString().trim(),

@@ -1,6 +1,18 @@
 import { body, param } from 'express-validator';
 
 export const validarCreacionEstudiante = [
+  (req: any, _res: any, next: any) => {
+    if (req.body) {
+      if (req.body.fecha_nacimiento && !req.body.fechaNacimiento) {
+        req.body.fechaNacimiento = req.body.fecha_nacimiento;
+      }
+      if (req.body.usuario_id !== undefined && req.body.usuarioId === undefined) {
+        req.body.usuarioId = req.body.usuario_id;
+      }
+    }
+    next();
+  },
+
   body('nombre')
     .isString()
     .withMessage('El nombre debe ser texto')
@@ -60,6 +72,17 @@ export const validarCreacionEstudiante = [
 ];
 
 export const validarEstudianteParcial = [
+  (req: any, _res: any, next: any) => {
+    if (req.body) {
+      if (req.body.fecha_nacimiento && !req.body.fechaNacimiento) {
+        req.body.fechaNacimiento = req.body.fecha_nacimiento;
+      }
+      if (req.body.usuario_id !== undefined && req.body.usuarioId === undefined) {
+        req.body.usuarioId = req.body.usuario_id;
+      }
+    }
+    next();
+  },
   body('nombre').optional().isString().trim(),
   body('documento').optional().isString().trim(),
   body('email').optional().isEmail().normalizeEmail(),

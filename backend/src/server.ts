@@ -4,7 +4,6 @@ import { prisma } from './config/prisma';
 import { ConfiguracionApiKeysError } from './config/apiClients';
 import { consultar } from './config/database';
 import { sincronizarClientesApi } from './services/apiClients.service';
-import usuariosService from './services/usuarios.service';
 
 const startServer = async () => {
   try {
@@ -20,8 +19,8 @@ const startServer = async () => {
     const clientes = await sincronizarClientesApi();
     console.log(`✓ API Keys: ${clientes.length} clientes registrados (solo se guarda su hash SHA-256).`);
 
-    // Lab 10: Bootstrap del Administrador Inicial (Bloque 6A, Parte 15 & 16)
-    await usuariosService.crearAdministradorInicial();
+    // Bloque 7.5.1: Se desacopla el bootstrap del arranque HTTP normal.
+    // El administrador se inicializa explícitamente mediante npm run seed:admin
 
     app.listen(ENV.PORT, () => {
       console.log(`===================================================`);

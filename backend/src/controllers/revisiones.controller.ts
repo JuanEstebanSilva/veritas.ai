@@ -213,9 +213,12 @@ export const crearRevision = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const datos = matchedData(req, { locations: ['body'] }) as any;
-    const estId = Number(datos.estudianteId || datos.pacienteId);
-    const docId = Number(datos.docenteId || datos.medicoId);
+    const datos = {
+      ...(matchedData(req, { locations: ['body'] }) as any),
+      ...req.body,
+    };
+    const estId = Number(datos.estudianteId || datos.estudiante_id || datos.pacienteId || datos.paciente_id);
+    const docId = Number(datos.docenteId || datos.docente_id || datos.medicoId || datos.medico_id);
 
     const estudiante = await estudiantesService.obtenerEstudiantePorId(estId);
     if (!estudiante) {
@@ -233,6 +236,26 @@ export const crearRevision = async (
         success: false,
         mensaje: 'El docente especificado no existe',
         message: 'El docente especificado no existe',
+      });
+      return;
+    }
+
+    if (!docente.activo) {
+      res.status(409).json({
+        success: false,
+        mensaje: 'El docente asignado se encuentra inactivo',
+        message: 'El docente asignado se encuentra inactivo',
+      });
+      return;
+    }
+
+    const labId = Number(datos.laboratorioId || datos.laboratorio_id || datos.consultorioId || datos.consultorio_id || 1);
+    const labDisponible = await revisionesService.verificarDisponibilidadLaboratorio(labId, datos.fecha, datos.hora);
+    if (!labDisponible) {
+      res.status(409).json({
+        success: false,
+        mensaje: 'El laboratorio o nodo de cómputo ya se encuentra reservado en esa fecha y horario',
+        message: 'Conflicto: solapamiento de horario para el laboratorio',
       });
       return;
     }
