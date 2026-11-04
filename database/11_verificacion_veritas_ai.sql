@@ -134,3 +134,4 @@ SELECT current_user AS usuario,
        rolbypassrls AS puede_omitir_rls
 FROM pg_roles
 WHERE rolname = current_user;
+

@@ -311,3 +311,4 @@ Total: 91 pruebas ejecutadas exitosamente (100% aprobado).
 2. **Desacoplamiento Seguro**:
    - El inicio de sesión (`/api/auth/login`) y la consulta de recursos propios (`/api/revisiones/mis-revisiones`) operan sin exponer la API Key en el cliente de React + Vite.
    - Las operaciones privilegiadas de integración cliente-servidor continúan protegidas con `X-API-Key` y hash criptográfico en base de datos.
+

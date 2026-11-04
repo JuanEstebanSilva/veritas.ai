@@ -725,3 +725,4 @@ const collection = {
 const destino = path.join(__dirname, '..', '..', 'Postman_Lab11_VeritasAI.json');
 fs.writeFileSync(destino, JSON.stringify(collection, null, 2), 'utf8');
 console.log('Coleccion escrita en:', destino);
+
