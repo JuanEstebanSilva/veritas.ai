@@ -46,6 +46,8 @@ export interface UsuarioMemoria {
   is_premium?: boolean;
   daily_analysis_count?: number;
   last_analysis_date?: Date;
+  versionSesion?: number;
+  version_sesion?: number;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -124,6 +126,9 @@ export const obtenerUsuarioPorEmail = async (email: string): Promise<any | null>
         enMemoria.is_active = user.is_active;
         enMemoria.password_hash = user.password_hash;
         enMemoria.passwordHash = user.password_hash;
+        user.versionSesion = enMemoria.versionSesion ?? 0;
+        user.version_sesion = enMemoria.versionSesion ?? 0;
+        user.rol = user.rol || enMemoria.rol || (user.role === Role.ADMIN ? 'administrador' : 'estudiante');
       } else {
         const seed = LAB_USERS_SEED.find((s) => aliases.includes(s.email.toLowerCase()) || (s.aliasEmail && aliases.includes(s.aliasEmail.toLowerCase())));
         const numId = seed
@@ -153,22 +158,92 @@ export const obtenerUsuarioPorEmail = async (email: string): Promise<any | null>
           is_active: user.is_active,
           is_premium: user.is_premium,
           daily_analysis_count: 0,
+          versionSesion: 0,
+          version_sesion: 0,
           last_analysis_date: new Date(),
         };
         (memUser as any).numId = numId;
         (memUser as any).dbId = user.id;
         (memUser as any).uuid = user.id;
         usuariosMemoria.push(memUser);
+        user.versionSesion = 0;
+        user.version_sesion = 0;
+        user.rol = rolSeed;
       }
+      // Sincronizar version_sesion si existe en public.usuarios o memoria
+      try {
+        const dbRes = await pool.query(
+          `SELECT u.id, COALESCE(u.version_sesion, 0) AS "versionSesion"
+           FROM public.usuarios u
+           WHERE LOWER(u.email) = LOWER($1)
+           LIMIT 1`,
+          [user.email]
+        );
+        if (dbRes.rows.length > 0) {
+          user.versionSesion = dbRes.rows[0].versionSesion;
+          user.version_sesion = dbRes.rows[0].versionSesion;
+          const mem = usuariosMemoria.find((u) => aliases.includes(u.email.toLowerCase()));
+          if (mem) {
+            mem.versionSesion = dbRes.rows[0].versionSesion;
+            mem.version_sesion = dbRes.rows[0].versionSesion;
+          }
+        }
+      } catch {}
       return user;
     }
   } catch {
     // Si la base de datos no está disponible, continuar con memoria
   }
 
+  // 1.5 Buscar en public.usuarios directamente
+  try {
+    for (const alias of aliases) {
+      const dbRes = await pool.query(
+        `SELECT u.id, u.nombre, u.email, u.password_hash AS "passwordHash", r.nombre AS rol, u.activo, COALESCE(u.version_sesion, 0) AS "versionSesion"
+         FROM public.usuarios u
+         INNER JOIN public.roles r ON r.id = u.rol_id
+         WHERE LOWER(u.email) = LOWER($1)
+         LIMIT 1`,
+        [alias]
+      );
+      if (dbRes.rows.length > 0) {
+        const row = dbRes.rows[0];
+        let mem = usuariosMemoria.find((u) => aliases.includes(u.email.toLowerCase()));
+        if (!mem) {
+          mem = {
+            id: row.id,
+            nombre: row.nombre,
+            name: row.nombre,
+            last_name: 'Veritas',
+            email: row.email,
+            passwordHash: row.passwordHash,
+            password_hash: row.passwordHash,
+            rol: row.rol,
+            activo: row.activo,
+            is_active: row.activo,
+            versionSesion: row.versionSesion,
+            version_sesion: row.versionSesion,
+          };
+          (mem as any).numId = row.id;
+          usuariosMemoria.push(mem);
+        } else {
+          mem.versionSesion = row.versionSesion;
+          mem.version_sesion = row.versionSesion;
+          mem.passwordHash = row.passwordHash;
+          mem.password_hash = row.passwordHash;
+        }
+        return mem;
+      }
+    }
+  } catch {}
+
   // 2. Buscar en registro en memoria si no está en BD
   const enMemoria = usuariosMemoria.find((u) => aliases.includes(u.email.toLowerCase()));
   if (enMemoria) {
+    if (typeof enMemoria.versionSesion !== 'number') {
+      enMemoria.versionSesion = 0;
+      enMemoria.version_sesion = 0;
+    }
     return enMemoria;
   }
 
@@ -260,6 +335,15 @@ export const obtenerUsuarioPorId = async (id: string | number): Promise<any | nu
       where: { id: strId },
     });
     if (user) {
+      let vs = 0;
+      try {
+        const r = await pool.query(
+          `SELECT COALESCE(version_sesion, 0) AS "versionSesion" FROM public.usuarios WHERE LOWER(email) = LOWER($1)`,
+          [user.email]
+        );
+        if (r.rows.length > 0) vs = r.rows[0].versionSesion;
+      } catch {}
+
       const memUser: UsuarioMemoria = {
         id: user.id,
         nombre: `${user.name} ${user.last_name || ''}`.trim(),
@@ -274,6 +358,8 @@ export const obtenerUsuarioPorId = async (id: string | number): Promise<any | nu
         is_active: user.is_active,
         is_premium: user.is_premium,
         daily_analysis_count: 0,
+        versionSesion: vs,
+        version_sesion: vs,
         last_analysis_date: new Date(),
       };
       (memUser as any).numId = usuariosMemoria.length + 1;
@@ -282,10 +368,53 @@ export const obtenerUsuarioPorId = async (id: string | number): Promise<any | nu
       usuariosMemoria.push(memUser);
       return memUser;
     }
-    return user;
-  } catch {
-    return null;
-  }
+  } catch {}
+
+  // 4. Buscar en public.usuarios directamente por ID numérico
+  try {
+    if (!isNaN(numId)) {
+      const dbRes = await pool.query(
+        `SELECT u.id, u.nombre, u.email, u.password_hash AS "passwordHash", r.nombre AS rol, u.activo, COALESCE(u.version_sesion, 0) AS "versionSesion"
+         FROM public.usuarios u
+         INNER JOIN public.roles r ON r.id = u.rol_id
+         WHERE u.id = $1
+         LIMIT 1`,
+        [numId]
+      );
+      if (dbRes.rows.length > 0) {
+        const row = dbRes.rows[0];
+        let mem = usuariosMemoria.find(
+          (u) => String(u.id) === String(numId) || (u as any).numId === numId
+        );
+        if (!mem) {
+          mem = {
+            id: row.id,
+            nombre: row.nombre,
+            name: row.nombre,
+            last_name: 'Veritas',
+            email: row.email,
+            passwordHash: row.passwordHash,
+            password_hash: row.passwordHash,
+            rol: row.rol,
+            activo: row.activo,
+            is_active: row.activo,
+            versionSesion: row.versionSesion,
+            version_sesion: row.versionSesion,
+          };
+          (mem as any).numId = row.id;
+          usuariosMemoria.push(mem);
+        } else {
+          mem.versionSesion = row.versionSesion;
+          mem.version_sesion = row.versionSesion;
+          mem.passwordHash = row.passwordHash;
+          mem.password_hash = row.passwordHash;
+        }
+        return mem;
+      }
+    }
+  } catch {}
+
+  return null;
 };
 
 // ========================================
@@ -331,9 +460,32 @@ export const crearUsuario = async (datos: DatosRegistroUsuario): Promise<any> =>
     // Si falla la conexión a BD o id duplicado en tests, se usa ID en memoria
   }
 
+  // Generar ID numérico consecutivo para laboratorio y persistir en public.usuarios
+  let dbUsuarioId: number | null = null;
+  try {
+    const rolRes = await pool.query(
+      `SELECT id FROM public.roles WHERE nombre IN ('estudiante', 'paciente') AND activo = TRUE ORDER BY id ASC LIMIT 1`
+    );
+    const rolId = rolRes.rows[0]?.id || 3;
+    const insertRes = await pool.query(
+      `INSERT INTO public.usuarios (nombre, email, password_hash, rol_id, activo, version_sesion)
+       VALUES ($1, $2, $3, $4, TRUE, 0)
+       ON CONFLICT (email) DO UPDATE
+       SET password_hash = EXCLUDED.password_hash, activo = TRUE
+       RETURNING id, version_sesion`,
+      [`${finalName} ${finalLastName}`.trim(), datos.email.toLowerCase().trim(), passwordHash, rolId]
+    );
+    if (insertRes.rows.length > 0) {
+      dbUsuarioId = insertRes.rows[0].id;
+    }
+  } catch (err) {
+    // Si pool no está listo o error, continuar con fallback
+  }
+
   // Generar ID numérico consecutivo para laboratorio
   const siguienteId =
-    usuariosMemoria.length > 0
+    dbUsuarioId ||
+    (usuariosMemoria.length > 0
       ? Math.max(
           ...usuariosMemoria.map((u) =>
             typeof (u as any).numId === 'number'
@@ -343,10 +495,10 @@ export const crearUsuario = async (datos: DatosRegistroUsuario): Promise<any> =>
               : 0
           )
         ) + 1
-      : 1;
+      : 1);
 
   // Si existe en base de datos, usamos su UUID real para compatibilidad completa con Prisma
-  const finalId = nuevoUsuarioDb ? nuevoUsuarioDb.id : siguienteId;
+  const finalId = nuevoUsuarioDb ? nuevoUsuarioDb.id : (dbUsuarioId || siguienteId);
 
   const usuarioMem: UsuarioMemoria = {
     id: finalId,
@@ -362,13 +514,18 @@ export const crearUsuario = async (datos: DatosRegistroUsuario): Promise<any> =>
     is_active: true,
     is_premium: false,
     daily_analysis_count: 0,
+    versionSesion: 0,
+    version_sesion: 0,
     last_analysis_date: new Date(),
   };
 
-  (usuarioMem as any).numId = siguienteId;
+  (usuarioMem as any).numId = dbUsuarioId || siguienteId;
   if (nuevoUsuarioDb) {
     (usuarioMem as any).dbId = nuevoUsuarioDb.id;
     (usuarioMem as any).uuid = nuevoUsuarioDb.id;
+    nuevoUsuarioDb.versionSesion = 0;
+    nuevoUsuarioDb.version_sesion = 0;
+    nuevoUsuarioDb.rol = 'user';
   }
 
   usuariosMemoria.push(usuarioMem);
@@ -724,6 +881,90 @@ export const verificarCredenciales = async (
   return usuario;
 };
 
+// ========================================
+// Cambiar contraseña con control de concurrencia e invalidación de sesión
+// ========================================
+export const cambiarPasswordPropio = async (
+  usuarioId: string | number,
+  passwordActual: string,
+  passwordNueva: string
+): Promise<{ estado: string }> => {
+  const usuario = await obtenerUsuarioPorId(usuarioId);
+  const passwordHash = usuario?.passwordHash || usuario?.password_hash;
+  if (!usuario || !passwordHash) {
+    return { estado: 'NO_AUTORIZADO' };
+  }
+  const activo = usuario.activo ?? usuario.is_active ?? true;
+  if (!activo) {
+    return { estado: 'NO_AUTORIZADO' };
+  }
+
+  const esValida = await verificarPassword(passwordActual, passwordHash);
+  if (!esValida) {
+    return { estado: 'CLAVE_INCORRECTA' };
+  }
+
+  const esMisma = await verificarPassword(passwordNueva, passwordHash);
+  if (esMisma) {
+    return { estado: 'MISMA_CLAVE' };
+  }
+
+  const nuevoHash = await generarPasswordHash(passwordNueva);
+
+  // 1. Actualizar en public.usuarios si hay conexión de pool
+  try {
+    const numId = Number(usuarioId);
+    if (!isNaN(numId)) {
+      await pool.query(
+        `UPDATE public.usuarios
+         SET password_hash = $1, version_sesion = COALESCE(version_sesion, 0) + 1
+         WHERE id = $2 AND activo = TRUE`,
+        [nuevoHash, numId]
+      );
+    } else {
+      await pool.query(
+        `UPDATE public.usuarios
+         SET password_hash = $1, version_sesion = COALESCE(version_sesion, 0) + 1
+         WHERE LOWER(email) = LOWER($2) AND activo = TRUE`,
+        [nuevoHash, usuario.email]
+      );
+    }
+  } catch (err) {
+    console.warn('Advertencia actualizando public.usuarios:', (err as any)?.message);
+  }
+
+  // 2. Actualizar en Prisma si existe
+  try {
+    const strId = String((usuario as any).uuid || (usuario as any).dbId || usuario.id);
+    if (strId.length > 10) {
+      await prisma.user.update({
+        where: { id: strId },
+        data: { password_hash: nuevoHash },
+      });
+    }
+  } catch {}
+
+  // 3. Actualizar en memoria
+  const enMemoria = usuariosMemoria.find(
+    (u) =>
+      String(u.id) === String(usuarioId) ||
+      (u as any).numId === Number(usuarioId) ||
+      u.email.toLowerCase() === usuario.email.toLowerCase()
+  );
+  if (enMemoria) {
+    enMemoria.passwordHash = nuevoHash;
+    enMemoria.password_hash = nuevoHash;
+    enMemoria.versionSesion = (enMemoria.versionSesion || 0) + 1;
+    enMemoria.version_sesion = enMemoria.versionSesion;
+  }
+  usuario.passwordHash = nuevoHash;
+  usuario.password_hash = nuevoHash;
+  usuario.versionSesion = (usuario.versionSesion || 0) + 1;
+  usuario.version_sesion = usuario.versionSesion;
+
+  return { estado: 'OK' };
+};
+
 export default {
   obtenerUsuarioPorEmail,
   obtenerUsuarioPorId,
@@ -731,4 +972,5 @@ export default {
   crearUsuarioAdministrativo,
   crearAdministradorInicial,
   verificarCredenciales,
+  cambiarPasswordPropio,
 };

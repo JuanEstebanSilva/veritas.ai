@@ -37,13 +37,33 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// Configuración de CORS
+// Configuración de CORS (Bloque 11: Soporte para SPA React en http://localhost:5173 y preflight OPTIONS 204)
+const origenesPermitidos = (
+  process.env.ALLOWED_ORIGIN ||
+  process.env.FRONTEND_URL ||
+  'http://localhost:5173,http://localhost:3000,http://localhost:5000'
+)
+  .split(',')
+  .map((origen) => origen.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: ENV.NODE_ENV === 'development' ? '*' : [ENV.FRONTEND_URL],
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        origenesPermitidos.includes('*') ||
+        origenesPermitidos.includes(origin) ||
+        origin.includes('localhost')
+      ) {
+        return callback(null, true);
+      }
+      return callback(new Error('Origen CORS no autorizado'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'stripe-signature', 'X-API-Key'],
+    optionsSuccessStatus: 204,
   })
 );
 
@@ -60,6 +80,15 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+
+// Ruta principal (Bloque 11)
+app.get('/', (_req: Request, res: Response) => {
+  res.status(200).json({
+    plataforma: 'Veritas AI',
+    mensaje: 'API Veritas AI funcionando correctamente',
+    version: '1.0.0',
+  });
+});
 
 // Health Check
 app.get('/api/health', (_req: Request, res: Response) => {

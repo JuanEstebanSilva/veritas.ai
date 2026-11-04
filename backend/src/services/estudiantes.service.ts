@@ -149,7 +149,15 @@ export const obtenerEstudiantePorUsuarioId = async (
 };
 
 export const crearEstudiante = async (datos: DatosEstudiante): Promise<Estudiante> => {
-  const uId = sanitizarUsuarioId(datos.usuarioId);
+  let uId = sanitizarUsuarioId(datos.usuarioId);
+  if (uId) {
+    try {
+      const u = await obtenerUsuarioPorId(uId);
+      if (u && ((u as any).uuid || (u as any).dbId)) {
+        uId = String((u as any).uuid || (u as any).dbId);
+      }
+    } catch {}
+  }
 
   const query = `
     INSERT INTO estudiantes (
@@ -189,7 +197,15 @@ export const actualizarEstudiante = async (
   const actual = await obtenerEstudiantePorId(id);
   if (!actual) return null;
 
-  const uId = datos.usuarioId !== undefined ? sanitizarUsuarioId(datos.usuarioId) : actual.usuarioId;
+  let uId = datos.usuarioId !== undefined ? sanitizarUsuarioId(datos.usuarioId) : actual.usuarioId;
+  if (uId) {
+    try {
+      const u = await obtenerUsuarioPorId(uId);
+      if (u && ((u as any).uuid || (u as any).dbId)) {
+        uId = String((u as any).uuid || (u as any).dbId);
+      }
+    } catch {}
+  }
 
   const query = `
     UPDATE estudiantes
@@ -235,7 +251,15 @@ export const actualizarEstudianteParcial = async (
   const email = datos.email !== undefined ? datos.email.toLowerCase().trim() : actual.email;
   const telefono = datos.telefono !== undefined ? datos.telefono.trim() : actual.telefono;
   const fechaNacimiento = datos.fechaNacimiento !== undefined ? datos.fechaNacimiento : actual.fechaNacimiento;
-  const uId = datos.usuarioId !== undefined ? sanitizarUsuarioId(datos.usuarioId) : actual.usuarioId;
+  let uId = datos.usuarioId !== undefined ? sanitizarUsuarioId(datos.usuarioId) : actual.usuarioId;
+  if (uId) {
+    try {
+      const u = await obtenerUsuarioPorId(uId);
+      if (u && ((u as any).uuid || (u as any).dbId)) {
+        uId = String((u as any).uuid || (u as any).dbId);
+      }
+    } catch {}
+  }
 
   const query = `
     UPDATE estudiantes

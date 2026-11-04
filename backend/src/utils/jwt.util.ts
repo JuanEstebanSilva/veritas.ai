@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
 
 /**
- * Laboratorio No. 9 — Construcción del proyecto — Autenticación con JWT
- * PARTE 5 — Crear jwt.util
+ * Laboratorio No. 9 y Bloque 11 — Veritas AI
+ * Autenticación con JWT e invalidación de sesión por versionSesion (vs)
  *
  * Utilidad centralizada para configuración, emisión y verificación de tokens JWT.
  * Sigue las buenas prácticas de OWASP:
@@ -10,6 +10,7 @@ import jwt from 'jsonwebtoken';
  * - Restricción estricta de algoritmos en verificación (previene algorithm confusion)
  * - Identificador único en subject (sub)
  * - Control de expiración (exp)
+ * - Versión de sesión (vs) para invalidación al cambiar o restablecer contraseña
  * - No incluye datos sensibles (contraseñas ni hashes) en el payload
  */
 
@@ -25,6 +26,9 @@ export interface UsuarioTokenPayload {
   role?: string;
   nombre?: string;
   name?: string;
+  versionSesion?: number;
+  version_sesion?: number;
+  vs?: number;
   [key: string]: any;
 }
 
@@ -32,6 +36,7 @@ export interface TokenPayloadDecoded {
   sub: string;
   email: string;
   rol: string;
+  vs?: number;
   iat: number;
   exp: number;
   [key: string]: any;
@@ -55,7 +60,7 @@ export const obtenerConfiguracionJWT = (): ConfiguracionJWT => {
 };
 
 // ========================================
-// Generar JWT
+// Generar JWT con control de version_sesion (vs)
 // ========================================
 export const generarToken = (usuario: UsuarioTokenPayload): string => {
   const { secret, expiresIn } = obtenerConfiguracionJWT();
@@ -64,9 +69,19 @@ export const generarToken = (usuario: UsuarioTokenPayload): string => {
     usuario.rol ||
     (usuario.role ? String(usuario.role).toLowerCase() : 'user');
 
+  const vs =
+    typeof usuario.versionSesion === 'number'
+      ? usuario.versionSesion
+      : typeof usuario.version_sesion === 'number'
+      ? usuario.version_sesion
+      : typeof usuario.vs === 'number'
+      ? usuario.vs
+      : 0;
+
   const payload = {
     email: usuario.email,
     rol: rol,
+    vs: vs,
   };
 
   return jwt.sign(payload, secret, {

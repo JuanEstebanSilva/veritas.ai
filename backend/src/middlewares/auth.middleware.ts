@@ -1,13 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import { verificarToken } from '../utils/jwt.util';
 import { prisma } from '../config/prisma';
+import usuariosService from '../services/usuarios.service';
 
 /**
- * Laboratorio No. 9 — Construcción del proyecto — Autenticación con JWT
- * PARTE 8 — Crear middleware JWT
+ * Laboratorio No. 9 y Bloque 11 — Veritas AI
+ * Autenticación con JWT, verificación de cuenta activa y version_sesion (vs)
  *
  * Middleware para validar el token Bearer en cabecera Authorization.
- * Descompone, verifica firma criptográfica (HS256) y comprueba vigencia (exp).
+ * Descompone, verifica firma criptográfica (HS256), comprueba vigencia (exp),
+ * valida que el usuario no esté deshabilitado y rechaza tokens anteriores
+ * tras un cambio o restablecimiento de contraseña (Sesión revocada).
  * Asocia los datos del usuario autenticado en `req.usuario`.
  */
 export const autenticarJWT = async (
@@ -32,7 +35,7 @@ export const autenticarJWT = async (
   // --------------------------------------
   // Validar formato Bearer
   // --------------------------------------
-  const partes = authorization.split(' ');
+  const partes = authorization.trim().split(/\s+/);
   if (
     partes.length !== 2 ||
     partes[0] !== 'Bearer' ||
@@ -55,15 +58,54 @@ export const autenticarJWT = async (
     const payload = verificarToken(token);
 
     // ------------------------------------
-    // Asociar usuario a la petición
+    // Consultar identidad real y version_sesion
     // ------------------------------------
     const subVal = payload.sub;
     const subNum = Number(subVal);
+    const usuarioId = !isNaN(subNum) && String(subNum) === String(subVal) ? subNum : subVal;
 
+    const usuario = await usuariosService.obtenerUsuarioPorId(usuarioId);
+    if (!usuario) {
+      res.status(401).json({
+        success: false,
+        message: 'La cuenta asociada al token no existe',
+        mensaje: 'La cuenta asociada al token no existe',
+      });
+      return;
+    }
+
+    if (usuario.activo === false || usuario.is_active === false) {
+      res.status(403).json({
+        success: false,
+        message: 'Usuario deshabilitado',
+        mensaje: 'Usuario deshabilitado',
+      });
+      return;
+    }
+
+    // Rechazar JWT emitidos antes de un cambio de contraseña
+    const vsUsuario = typeof usuario.versionSesion === 'number'
+      ? usuario.versionSesion
+      : typeof usuario.version_sesion === 'number'
+      ? usuario.version_sesion
+      : 0;
+
+    if (!Number.isSafeInteger(payload.vs) || payload.vs !== vsUsuario) {
+      res.status(401).json({
+        success: false,
+        message: 'Sesión revocada',
+        mensaje: 'Sesión revocada',
+      });
+      return;
+    }
+
+    // ------------------------------------
+    // Asociar usuario a la petición
+    // ------------------------------------
     req.usuario = {
-      id: !isNaN(subNum) && String(subNum) === String(subVal) ? subNum : subVal,
-      email: payload.email,
-      rol: payload.rol,
+      id: usuarioId,
+      email: usuario.email || payload.email,
+      rol: usuario.rol || payload.rol,
     };
 
     // Compatibilidad adicional para endpoints que consumen req.user en Veritas AI

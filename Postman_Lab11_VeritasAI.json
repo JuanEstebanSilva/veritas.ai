@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "name": "Lab 11 — Veritas AI (Auditoría de Integridad Académica y Detección de IA)",
-    "description": "Colección automatizada del Laboratorio 11 para Veritas AI: Persistencia PostgreSQL en Supabase con TLS, Autenticación JWT, RBAC, Control BOLA/IDOR, e Integridad Referencial.",
+    "_postman_id": "b8e9f1a2-c3d4-4e5f-6a7b-8c9d0e1f2a3b",
+    "name": "Lab 11 — Veritas AI: Actualización Progresiva de API Segura (Paso 8 y Bloque 11)",
+    "description": "Colección oficial de pruebas automatizadas del Bloque 11 para Veritas AI (Plataforma de Integridad Académica). Incluye los 25 casos de prueba de actualización progresiva de seguridad, version_sesion, recuperación administrativa, códigos de respaldo de un solo uso, desacoplamiento de API Key, RBAC, BOLA/IDOR y CORS.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -37,115 +37,115 @@
       "type": "string"
     },
     {
-      "key": "timestamp",
-      "value": "1",
-      "type": "string"
-    },
-    {
-      "key": "departamentoId",
-      "value": "1",
-      "type": "string"
-    },
-    {
-      "key": "docenteId",
-      "value": "1",
-      "type": "string"
-    },
-    {
-      "key": "estudianteId",
-      "value": "1",
-      "type": "string"
-    },
-    {
-      "key": "revisionId",
-      "value": "1",
-      "type": "string"
-    },
-    {
-      "key": "fechaRevision",
-      "value": "2027-11-15",
-      "type": "string"
-    },
-    {
-      "key": "horaRevision",
-      "value": "09:30:00",
-      "type": "string"
-    },
-    {
-      "key": "tokenPaciente",
+      "key": "tokenEstudianteAnterior",
       "value": "",
       "type": "string"
     },
     {
-      "key": "especialidadId",
-      "value": "1",
+      "key": "estudianteId",
+      "value": "2",
       "type": "string"
     },
     {
-      "key": "medicoId",
-      "value": "1",
+      "key": "estudianteEmail",
+      "value": "estudiante.a@veritas.com",
       "type": "string"
     },
     {
-      "key": "pacienteId",
-      "value": "1",
+      "key": "claveEstudiante",
+      "value": "Password123*",
       "type": "string"
     },
     {
-      "key": "citaId",
-      "value": "1",
+      "key": "claveNueva",
+      "value": "NuevaClaveSegura2026!",
       "type": "string"
     },
     {
-      "key": "fechaCita",
-      "value": "2027-11-15",
+      "key": "tokenRecuperacion",
+      "value": "",
       "type": "string"
     },
     {
-      "key": "horaCita",
-      "value": "09:30:00",
+      "key": "codigoRespaldo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "codigoRespaldo2",
+      "value": "",
       "type": "string"
     }
   ],
   "item": [
     {
-      "name": "Bloque A: Autenticación y Perfil Académico",
+      "name": "00. Configuración Inicial (Registro de Estudiante de Prueba)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{apiKey}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Estudiante Auditoria Bloque 11\",\n  \"email\": \"estudiante.bloque11.postman@veritas.ai\",\n  \"password\": \"Password123*\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/registro",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "registro"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201 || pm.response.code === 200) {",
+              "    var json = pm.response.json();",
+              "    pm.collectionVariables.set(\"estudianteEmail\", \"estudiante.bloque11.postman@veritas.ai\");",
+              "    pm.collectionVariables.set(\"claveEstudiante\", \"Password123*\");",
+              "    if (json.usuario && json.usuario.id) {",
+              "        pm.collectionVariables.set(\"estudianteId\", String(json.usuario.id));",
+              "    }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Fase 1: Login, JWT y version_sesion (Pruebas 1 a 7)",
       "item": [
         {
-          "name": "1. Login Administrador Veritas AI (200 OK)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 200 OK', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "var res = pm.response.json();",
-                  "if (res.token) {",
-                  "    pm.environment.set('tokenAdmin', res.token);",
-                  "    pm.collectionVariables.set('tokenAdmin', res.token);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "01. Login válido POST /api/auth/login",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
+                "value": "application/json",
+                "type": "text"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+              "raw": "{\"email\":\"{{estudianteEmail}}\",\"password\":\"{{claveEstudiante}}\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
@@ -158,38 +158,37 @@
                 "login"
               ]
             }
-          }
-        },
-        {
-          "name": "2. Login Contraseña Errónea (401 Unauthorized)",
+          },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 401 Unauthorized', function () {",
-                  "    pm.response.to.have.status(401);",
-                  "});"
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.expect(json.token).to.be.a(\"string\");",
+                  "pm.collectionVariables.set(\"tokenEstudiante\", json.token);",
+                  "pm.collectionVariables.set(\"tokenEstudianteAnterior\", json.token);"
                 ],
                 "type": "text/javascript"
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "01B. Login Administrador (Captura tokenAdmin)",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
+                "value": "application/json",
+                "type": "text"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"MAL\"\n}"
+              "raw": "{\"email\":\"{{adminEmail}}\",\"password\":\"{{adminPassword}}\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
@@ -202,120 +201,35 @@
                 "login"
               ]
             }
-          }
-        },
-        {
-          "name": "3. Registro de Estudiante / Autor (201 Created)",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "var ts = Date.now();",
-                  "pm.environment.set('timestamp', ts);",
-                  "pm.collectionVariables.set('timestamp', ts);",
-                  "var day = String((ts % 25) + 1).padStart(2, '0');",
-                  "var hour = String((Math.floor(ts / 1000) % 10) + 8).padStart(2, '0');",
-                  "var min = String(Math.floor(ts / 100) % 60).padStart(2, '0');",
-                  "var f = '2027-11-' + day;",
-                  "var h = hour + ':' + min + ':00';",
-                  "pm.environment.set('fechaRevision', f);",
-                  "pm.collectionVariables.set('fechaRevision', f);",
-                  "pm.environment.set('horaRevision', h);",
-                  "pm.collectionVariables.set('horaRevision', h);",
-                  "pm.environment.set('fechaCita', f);",
-                  "pm.collectionVariables.set('fechaCita', f);",
-                  "pm.environment.set('horaCita', h);",
-                  "pm.collectionVariables.set('horaCita', h);"
-                ],
-                "type": "text/javascript"
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 201 Created', function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "var res = pm.response.json();",
-                  "if (res.token) {",
-                  "    pm.environment.set('tokenEstudiante', res.token);",
-                  "    pm.collectionVariables.set('tokenEstudiante', res.token);",
-                  "    pm.environment.set('tokenPaciente', res.token);",
-                  "    pm.collectionVariables.set('tokenPaciente', res.token);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Estudiante Investigador {{timestamp}}\",\n  \"email\": \"estudiante.autor.{{timestamp}}@veritas.ai\",\n  \"password\": \"Password123*\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/registro",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "registro"
-              ]
-            }
-          }
-        },
-        {
-          "name": "4. Login Estudiante Registrado (200 OK)",
+          },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 200 OK', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "var res = pm.response.json();",
-                  "if (res.token) {",
-                  "    pm.environment.set('tokenEstudiante', res.token);",
-                  "    pm.collectionVariables.set('tokenEstudiante', res.token);",
-                  "    pm.environment.set('tokenPaciente', res.token);",
-                  "    pm.collectionVariables.set('tokenPaciente', res.token);",
-                  "}"
+                  "pm.test(\"Admin login 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set(\"tokenAdmin\", json.token);"
                 ],
                 "type": "text/javascript"
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "02. Login con JSON o cuerpo inválido",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
+                "value": "application/json",
+                "type": "text"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"estudiante.autor.{{timestamp}}@veritas.ai\",\n  \"password\": \"Password123*\"\n}"
+              "raw": "{\"email\":\"correo-no-valido\",\"password\":\"\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
@@ -328,33 +242,100 @@
                 "login"
               ]
             }
-          }
-        },
-        {
-          "name": "5. Consultar Perfil con Bearer Token (200 OK)",
+          },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 200 OK', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
                 ],
                 "type": "text/javascript"
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "03. Perfil o recurso protegido GET /api/auth/perfil sin JWT",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/perfil",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "perfil"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "04. Cambio de contraseña con contraseña actual correcta",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenEstudiante}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"passwordActual\":\"{{claveEstudiante}}\",\"passwordNueva\":\"{{claveNueva}}\",\"confirmarPassword\":\"{{claveNueva}}\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/cambiar-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "cambiar-password"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "05. Intento de usar JWT anterior (Sesión revocada)",
           "request": {
             "method": "GET",
             "header": [
               {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
                 "key": "Authorization",
-                "value": "Bearer {{tokenAdmin}}"
+                "value": "Bearer {{tokenEstudianteAnterior}}",
+                "type": "text"
               }
             ],
             "url": {
@@ -368,746 +349,611 @@
                 "perfil"
               ]
             }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Bloque B: Departamentos Académicos",
-      "item": [
-        {
-          "name": "6. Listar Departamentos Académicos (200 OK)",
+          },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 200 OK', function () {",
-                  "    pm.response.to.have.status(200);",
+                  "pm.test(\"Status code is 401 Sesión revocada\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.mensaje || json.message).to.match(/Sesión revocada/i);",
                   "});"
                 ],
                 "type": "text/javascript"
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "06. Login con contraseña nueva",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{estudianteEmail}}\",\"password\":\"{{claveNueva}}\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set(\"tokenEstudiante\", json.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "07. Cambio de contraseña con contraseña actual incorrecta",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenEstudiante}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"passwordActual\":\"ClaveCompletamenteErronea999*\",\"passwordNueva\":\"OtraClaveCualquiera2026!\",\"confirmarPassword\":\"OtraClaveCualquiera2026!\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/cambiar-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "cambiar-password"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Contraseña actual inválida\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Fase 2: Recuperación Administrativa y Token (Pruebas 8 a 11)",
+      "item": [
+        {
+          "name": "08. Administrador genera recuperación para una cuenta de prueba",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/recuperacion/admin/{{estudianteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "recuperacion",
+                "admin",
+                "{{estudianteId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.expect(json.token).to.be.a(\"string\");",
+                  "pm.collectionVariables.set(\"tokenRecuperacion\", json.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "09. Restablecimiento mediante token válido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"token\":\"{{tokenRecuperacion}}\",\"passwordNueva\":\"ClaveRestablecidaToken2026!\",\"confirmarPassword\":\"ClaveRestablecidaToken2026!\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/restablecer-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "restablecer-password"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.collectionVariables.set(\"claveEstudiante\", \"ClaveRestablecidaToken2026!\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "10. Reutilización o vencimiento del token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"token\":\"{{tokenRecuperacion}}\",\"passwordNueva\":\"IntentoReutilizacion2026!\",\"confirmarPassword\":\"IntentoReutilizacion2026!\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/restablecer-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "restablecer-password"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "11. Login estudiante con clave restablecida",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{estudianteEmail}}\",\"password\":\"{{claveEstudiante}}\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set(\"tokenEstudiante\", json.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "11B. Estudiante intenta generar recuperación administrativa (403 RBAC)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenEstudiante}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/recuperacion/admin/{{estudianteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "recuperacion",
+                "admin",
+                "{{estudianteId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 403 Forbidden por RBAC\", function () { pm.response.to.have.status(403); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Fase 3: Códigos de Respaldo de Un Solo Uso (Pruebas 12 a 16)",
+      "item": [
+        {
+          "name": "12. Usuario autenticado genera ocho códigos de respaldo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenEstudiante}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"passwordActual\":\"{{claveEstudiante}}\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/codigos-recuperacion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "codigos-recuperacion"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created y 8 códigos\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.codigos).to.be.an(\"array\").with.lengthOf(8);",
+                  "    pm.collectionVariables.set(\"codigoRespaldo\", json.codigos[0]);",
+                  "    pm.collectionVariables.set(\"codigoRespaldo2\", json.codigos[1]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "13. Consulta de estado de códigos de respaldo",
           "request": {
             "method": "GET",
             "header": [
               {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
                 "key": "Authorization",
-                "value": "Bearer {{tokenAdmin}}"
+                "value": "Bearer {{tokenEstudiante}}",
+                "type": "text"
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/departamentos",
+              "raw": "{{baseUrl}}/api/auth/codigos-recuperacion/estado",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "departamentos"
-              ]
-            }
-          }
-        },
-        {
-          "name": "7. Crear Departamento Académico (201 Created)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 201 Created', function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "var res = pm.response.json();",
-                  "var dep = res.departamento || res.especialidad;",
-                  "if (dep && dep.id) {",
-                  "    pm.environment.set('departamentoId', dep.id);",
-                  "    pm.collectionVariables.set('departamentoId', dep.id);",
-                  "    pm.environment.set('especialidadId', dep.id);",
-                  "    pm.collectionVariables.set('especialidadId', dep.id);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenAdmin}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Inteligencia Artificial y Ética Computacional {{timestamp}}\",\n  \"descripcion\": \"Investigación en integridad académica, modelos LLM y PLN\",\n  \"activa\": true\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/departamentos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "departamentos"
-              ]
-            }
-          }
-        },
-        {
-          "name": "8. Departamento Académico Duplicado (409 Conflict)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 409 Conflict', function () {",
-                  "    pm.response.to.have.status(409);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenAdmin}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"inteligencia artificial y ética computacional {{timestamp}}\",\n  \"descripcion\": \"Duplicado en minúsculas\",\n  \"activa\": true\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/departamentos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "departamentos"
-              ]
-            }
-          }
-        },
-        {
-          "name": "9. Crear Departamento con Token de Estudiante (403 Forbidden - RBAC)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 403 Forbidden', function () {",
-                  "    pm.response.to.have.status(403);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenEstudiante}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Departamento No Autorizado {{timestamp}}\",\n  \"descripcion\": \"Intento sin privilegios\",\n  \"activa\": true\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/departamentos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "departamentos"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Bloque C: Docentes y Auditores de Ética",
-      "item": [
-        {
-          "name": "10. Crear Docente Auditor (201 Created)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 201 Created', function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "var res = pm.response.json();",
-                  "var doc = res.docente || res.medico;",
-                  "if (doc && doc.id) {",
-                  "    pm.environment.set('docenteId', doc.id);",
-                  "    pm.collectionVariables.set('docenteId', doc.id);",
-                  "    pm.environment.set('medicoId', doc.id);",
-                  "    pm.collectionVariables.set('medicoId', doc.id);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenAdmin}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Dr. Carlos Ruiz {{timestamp}}\",\n  \"registroAcademico\": \"DOC-{{timestamp}}\",\n  \"registroMedico\": \"DOC-{{timestamp}}\",\n  \"email\": \"carlos.ruiz.{{timestamp}}@veritas.ai\",\n  \"telefono\": \"3101112233\",\n  \"departamentoId\": 1,\n  \"especialidadId\": 1,\n  \"activo\": true\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/docentes",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "docentes"
-              ]
-            }
-          }
-        },
-        {
-          "name": "11. Código de Docente Duplicado (409 Conflict)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 409 Conflict', function () {",
-                  "    pm.response.to.have.status(409);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenAdmin}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Dr. Carlos Ruiz Duplicado\",\n  \"registroAcademico\": \"DOC-{{timestamp}}\",\n  \"registroMedico\": \"DOC-{{timestamp}}\",\n  \"email\": \"carlos.otro.{{timestamp}}@veritas.ai\",\n  \"telefono\": \"3101112233\",\n  \"departamentoId\": 1,\n  \"especialidadId\": 1,\n  \"activo\": true\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/docentes",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "docentes"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Bloque D: Estudiantes Autores y Laboratorios de Cómputo",
-      "item": [
-        {
-          "name": "12. Crear Estudiante Autor (201 Created)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 201 Created', function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "var res = pm.response.json();",
-                  "var est = res.estudiante || res.paciente;",
-                  "if (est && est.id) {",
-                  "    pm.environment.set('estudianteId', est.id);",
-                  "    pm.collectionVariables.set('estudianteId', est.id);",
-                  "    pm.environment.set('pacienteId', est.id);",
-                  "    pm.collectionVariables.set('pacienteId', est.id);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenAdmin}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Laura Méndez {{timestamp}}\",\n  \"documento\": \"DOC-{{timestamp}}\",\n  \"email\": \"laura.{{timestamp}}@veritas.ai\",\n  \"telefono\": \"3123456789\",\n  \"fechaNacimiento\": \"1998-05-12\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/estudiantes",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "estudiantes"
-              ]
-            }
-          }
-        },
-        {
-          "name": "13. Documento de Estudiante Duplicado (409 Conflict)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 409 Conflict', function () {",
-                  "    pm.response.to.have.status(409);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenAdmin}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Laura Méndez Copia\",\n  \"documento\": \"DOC-{{timestamp}}\",\n  \"email\": \"laura.copia.{{timestamp}}@veritas.ai\",\n  \"telefono\": \"3123456789\",\n  \"fechaNacimiento\": \"1998-05-12\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/estudiantes",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "estudiantes"
-              ]
-            }
-          }
-        },
-        {
-          "name": "14. Crear Laboratorio de Cómputo (201 Created)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 201 Created', function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenAdmin}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"codigo\": \"LAB-{{timestamp}}\",\n  \"nombre\": \"Laboratorio de PLN y Cómputo Ético {{timestamp}}\",\n  \"piso\": 3,\n  \"ubicacion\": \"Edificio de Ingeniería - Cómputo Avanzado\",\n  \"activo\": true\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/laboratorios",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "laboratorios"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Bloque E: Revisiones Éticas y Agenda de Auditoría",
-      "item": [
-        {
-          "name": "15. Crear Revisión Ética Válida (201 Created)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 201 Created', function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "var res = pm.response.json();",
-                  "var r = res.revision || res.cita;",
-                  "if (r && r.id) {",
-                  "    pm.environment.set('revisionId', r.id);",
-                  "    pm.collectionVariables.set('revisionId', r.id);",
-                  "    pm.environment.set('citaId', r.id);",
-                  "    pm.collectionVariables.set('citaId', r.id);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenAdmin}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estudianteId\": 1,\n  \"docenteId\": 1,\n  \"laboratorioId\": 1,\n  \"pacienteId\": 1,\n  \"medicoId\": 1,\n  \"consultorioId\": 1,\n  \"fecha\": \"{{fechaRevision}}\",\n  \"hora\": \"{{horaRevision}}\",\n  \"motivo\": \"Auditoría de originalidad, perplejidad y similitud semántica en tesis de IA\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/revisiones",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "revisiones"
-              ]
-            }
-          }
-        },
-        {
-          "name": "16. Conflicto de Horario / Doble Asignación (409 Conflict)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 409 Conflict', function () {",
-                  "    pm.response.to.have.status(409);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenAdmin}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estudianteId\": 2,\n  \"docenteId\": 1,\n  \"laboratorioId\": 1,\n  \"pacienteId\": 2,\n  \"medicoId\": 1,\n  \"consultorioId\": 1,\n  \"fecha\": \"{{fechaRevision}}\",\n  \"hora\": \"{{horaRevision}}\",\n  \"motivo\": \"Auditoría solapada en mismo laboratorio y docente\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/revisiones",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "revisiones"
-              ]
-            }
-          }
-        },
-        {
-          "name": "17. Cambio de Estado Válido: confirmada (200 OK)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 200 OK', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenAdmin}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"confirmada\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/revisiones/{{revisionId}}/estado",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "revisiones",
-                "{{revisionId}}",
+                "auth",
+                "codigos-recuperacion",
                 "estado"
               ]
             }
-          }
-        },
-        {
-          "name": "18. Cambio de Estado Válido: atendida (200 OK)",
+          },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 200 OK', function () {",
+                  "pm.test(\"Status code is 200 OK y saldo 8\", function () {",
                   "    pm.response.to.have.status(200);",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.disponibles).to.eql(8);",
                   "});"
                 ],
                 "type": "text/javascript"
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "14. Regeneración de códigos de respaldo",
           "request": {
-            "method": "PATCH",
+            "method": "POST",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
                 "key": "Authorization",
-                "value": "Bearer {{tokenAdmin}}"
+                "value": "Bearer {{tokenEstudiante}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"estado\": \"atendida\"\n}"
+              "raw": "{\"passwordActual\":\"{{claveEstudiante}}\"}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/revisiones/{{revisionId}}/estado",
+              "raw": "{{baseUrl}}/api/auth/codigos-recuperacion/regenerar",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "revisiones",
-                "{{revisionId}}",
-                "estado"
+                "auth",
+                "codigos-recuperacion",
+                "regenerar"
               ]
             }
-          }
-        },
-        {
-          "name": "19. Cambio de Estado Inválido de atendida a programada (409 Conflict)",
+          },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 409 Conflict', function () {",
-                  "    pm.response.to.have.status(409);",
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set(\"codigoRespaldo\", json.codigos[0]);",
+                  "    pm.collectionVariables.set(\"codigoRespaldo2\", json.codigos[1]);",
                   "});"
                 ],
                 "type": "text/javascript"
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "15. Restablecimiento con un código válido",
           "request": {
-            "method": "PATCH",
+            "method": "POST",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
                 "key": "X-API-Key",
-                "value": "{{apiKey}}"
+                "value": "{{apiKey}}",
+                "type": "text"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{tokenAdmin}}"
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"estado\": \"programada\"\n}"
+              "raw": "{\"email\":\"{{estudianteEmail}}\",\"codigo\":\"{{codigoRespaldo2}}\",\"passwordNueva\":\"ClaveRestablecidaCodigo2026!\",\"confirmarPassword\":\"ClaveRestablecidaCodigo2026!\"}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/revisiones/{{revisionId}}/estado",
+              "raw": "{{baseUrl}}/api/auth/restablecer-con-codigo",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "revisiones",
-                "{{revisionId}}",
-                "estado"
+                "auth",
+                "restablecer-con-codigo"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.collectionVariables.set(\"claveEstudiante\", \"ClaveRestablecidaCodigo2026!\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "16. Reutilización de un código ya consumido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{estudianteEmail}}\",\"codigo\":\"{{codigoRespaldo2}}\",\"passwordNueva\":\"OtraClaveCualquiera2026!\",\"confirmarPassword\":\"OtraClaveCualquiera2026!\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/restablecer-con-codigo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "restablecer-con-codigo"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "Bloque F: Seguridad BOLA / IDOR e Integridad Referencial",
+      "name": "Fase 4: Revisiones Éticas y Defensa BOLA / IDOR (Pruebas 17 a 19)",
       "item": [
         {
-          "name": "20. Consultar Revisiones Propias con Token de Estudiante (200 OK)",
+          "name": "17. Login estudiante con clave restablecida tras código",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{estudianteEmail}}\",\"password\":\"{{claveEstudiante}}\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 200 OK', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
+                  "pm.test(\"Login 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set(\"tokenEstudiante\", json.token);"
                 ],
                 "type": "text/javascript"
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "17B. Estudiante consulta /api/revisiones/mis-revisiones con JWT",
           "request": {
             "method": "GET",
             "header": [
               {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
                 "key": "Authorization",
-                "value": "Bearer {{tokenEstudiante}}"
+                "value": "Bearer {{tokenEstudiante}}",
+                "type": "text"
               }
             ],
             "url": {
@@ -1121,33 +967,28 @@
                 "mis-revisiones"
               ]
             }
-          }
-        },
-        {
-          "name": "21. Consultar Revisión Ajena con Token de Estudiante (403 Forbidden - BOLA Bloqueado)",
+          },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 403 Forbidden', function () {",
-                  "    pm.response.to.have.status(403);",
-                  "});"
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
                 ],
                 "type": "text/javascript"
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "18. Estudiante consulta revisión de otro autor/estudiante (BOLA / IDOR)",
           "request": {
             "method": "GET",
             "header": [
               {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
                 "key": "Authorization",
-                "value": "Bearer {{tokenEstudiante}}"
+                "value": "Bearer {{tokenEstudiante}}",
+                "type": "text"
               }
             ],
             "url": {
@@ -1161,47 +1002,307 @@
                 "1"
               ]
             }
-          }
-        },
-        {
-          "name": "22. Eliminar Estudiante con Revisiones Activas (409 Conflict - Integridad Referencial)",
+          },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 409 Conflict', function () {",
-                  "    pm.response.to.have.status(409);",
-                  "});"
+                  "pm.test(\"Status code is 403 Forbidden por BOLA\", function () { pm.response.to.have.status(403); });"
                 ],
                 "type": "text/javascript"
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "19. Estudiante intenta GET /api/revisiones global administrativo",
           "request": {
-            "method": "DELETE",
+            "method": "GET",
             "header": [
               {
-                "key": "X-API-Key",
-                "value": "{{apiKey}}"
-              },
-              {
                 "key": "Authorization",
-                "value": "Bearer {{tokenAdmin}}"
+                "value": "Bearer {{tokenEstudiante}}",
+                "type": "text"
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/estudiantes/1",
+              "raw": "{{baseUrl}}/api/revisiones",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "estudiantes",
-                "1"
+                "revisiones"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 403 Forbidden por RBAC\", function () { pm.response.to.have.status(403); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Fase 5: Desacoplamiento de API Key, Recursos JWT y Swagger (Pruebas 20 a 25)",
+      "item": [
+        {
+          "name": "20. GET /api/seguridad/cliente sin API Key",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/seguridad/cliente",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "seguridad",
+                "cliente"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "21. GET /api/seguridad/cliente con API Key válida",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/seguridad/cliente",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "seguridad",
+                "cliente"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "22. Login sin API Key y con cuerpo inválido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"invalido\",\"password\":\"\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "23. mis-revisiones sin JWT y sin API Key",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/revisiones/mis-revisiones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "revisiones",
+                "mis-revisiones"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "24. mis-revisiones con JWT y sin API Key (Recurso desacoplado)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenEstudiante}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/revisiones/mis-revisiones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "revisiones",
+                "mis-revisiones"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK desacoplado\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "25. OpenAPI / Swagger expone especificación con seguridad explícita",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/docs/swagger.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "docs",
+                "swagger.json"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK y OpenAPI 3.0.3\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.openapi).to.match(/^3\\./);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Fase 6: Preflight CORS para React + Vite (Paso 10)",
+      "item": [
+        {
+          "name": "Preflight OPTIONS /api/auth/login desde http://localhost:5173",
+          "request": {
+            "method": "OPTIONS",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "http://localhost:5173",
+                "type": "text"
+              },
+              {
+                "key": "Access-Control-Request-Method",
+                "value": "POST",
+                "type": "text"
+              },
+              {
+                "key": "Access-Control-Request-Headers",
+                "value": "content-type",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204 No Content y CORS permitido\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "    pm.expect(pm.response.headers.get(\"Access-Control-Allow-Origin\")).to.eql(\"http://localhost:5173\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     }

@@ -8,6 +8,8 @@ import { isSameCalendarDay, FREE_DAILY_LIMIT } from '../middleware/dailyLimitGua
 import { validarPassword } from '../utils/passwordPolicy';
 import { matchedData } from 'express-validator';
 import usuariosService from '../services/usuarios.service';
+import passwordResetService from '../services/passwordReset.service';
+import codigosRecuperacionService from '../services/codigosRecuperacion.service';
 import { generarToken } from '../utils/jwt.util';
 
 export class AuthController {
@@ -86,11 +88,12 @@ export class AuthController {
         password: rawPassword,
       });
 
-      // 3. Generación de Token JWT (Laboratorio 9)
+      // 3. Generación de Token JWT (Laboratorio 9 y Bloque 11)
       const token = generarToken({
         id: newUser.id,
         email: newUser.email,
         rol: newUser.role.toLowerCase(),
+        versionSesion: newUser.versionSesion ?? newUser.version_sesion ?? 0,
       });
 
       res.status(201).json({
@@ -199,11 +202,12 @@ export class AuthController {
         }
       }
 
-      // Generación de Token JWT (Laboratorio 9)
+      // Generación de Token JWT (Laboratorio 9 y Bloque 11)
       const token = generarToken({
         id: user.id,
         email: user.email,
         rol: rolEfectivo,
+        versionSesion: user.versionSesion ?? (user as any).version_sesion ?? 0,
       });
 
       res.status(200).json({
@@ -327,6 +331,177 @@ export class AuthController {
       });
     } catch (error: any) {
       res.status(500).json({ success: false, message: 'Error al actualizar perfil.' });
+    }
+  }
+
+  /**
+   * Bloque 11: Cambiar contraseña propia y revocar sesiones JWT anteriores
+   */
+  public static async cambiarPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const datos = matchedData(req, { locations: ['body'] }) as {
+        passwordActual?: string;
+        passwordNueva?: string;
+        confirmarPassword?: string;
+      };
+      const usuarioId = req.usuario?.id || (req as any).user?.id;
+      if (!usuarioId) {
+        res.status(401).json({ success: false, mensaje: 'Usuario no autenticado', message: 'Usuario no autenticado' });
+        return;
+      }
+      const resultado = await usuariosService.cambiarPasswordPropio(
+        usuarioId,
+        datos.passwordActual ?? req.body.passwordActual,
+        datos.passwordNueva ?? req.body.passwordNueva
+      );
+      if (resultado.estado === 'CLAVE_INCORRECTA' || resultado.estado === 'NO_AUTORIZADO') {
+        res.status(401).json({ success: false, mensaje: 'Contraseña actual inválida', message: 'Contraseña actual inválida' });
+        return;
+      }
+      if (resultado.estado === 'MISMA_CLAVE') {
+        res.status(400).json({ success: false, mensaje: 'La nueva contraseña debe ser diferente', message: 'La nueva contraseña debe ser diferente' });
+        return;
+      }
+      if (resultado.estado === 'CONFLICTO') {
+        res.status(409).json({ success: false, mensaje: 'La contraseña cambió durante la operación; inténtelo nuevamente' });
+        return;
+      }
+      res.status(200).json({
+        success: true,
+        mensaje: 'Contraseña actualizada. Inicie sesión nuevamente.',
+        message: 'Contraseña actualizada. Inicie sesión nuevamente.',
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error?.message || 'Error al cambiar contraseña' });
+    }
+  }
+
+  /**
+   * Bloque 11: Recuperación administrativa de contraseña autorizada por docente/admin
+   */
+  public static async generarRecuperacionAdmin(req: Request, res: Response): Promise<void> {
+    try {
+      const { usuarioId } = (matchedData(req, { locations: ['params'] }) as any);
+      const targetId = usuarioId ?? req.params.usuarioId;
+      const adminId = req.usuario?.id || (req as any).user?.id || 1;
+      const resultado = await passwordResetService.generarRecuperacion(targetId, adminId);
+      if (resultado.estado === 'NO_ENCONTRADO') {
+        res.status(404).json({ success: false, mensaje: 'Usuario no encontrado o inactivo', message: 'Usuario no encontrado o inactivo' });
+        return;
+      }
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(201).json({
+        success: true,
+        mensaje: 'Token generado. Entréguelo únicamente al titular verificado.',
+        message: 'Token generado. Entréguelo únicamente al titular verificado.',
+        token: resultado.token,
+        expiraEn: resultado.expiraEn,
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error?.message || 'Error al generar token de recuperación' });
+    }
+  }
+
+  /**
+   * Bloque 11: Restablecimiento de contraseña con token temporal de un solo uso
+   */
+  public static async restablecerPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const datos = matchedData(req, { locations: ['body'] }) as {
+        token?: string;
+        passwordNueva?: string;
+      };
+      const token = datos.token ?? req.body.token;
+      const passwordNueva = datos.passwordNueva ?? req.body.passwordNueva;
+      const resultado = await passwordResetService.restablecerPassword(token, passwordNueva);
+      if (resultado.estado === 'TOKEN_INVALIDO') {
+        res.status(400).json({ success: false, mensaje: 'Token inválido, utilizado o expirado', message: 'Token inválido, utilizado o expirado' });
+        return;
+      }
+      if (resultado.estado === 'MISMA_CLAVE') {
+        res.status(400).json({ success: false, mensaje: 'La nueva contraseña debe ser diferente', message: 'La nueva contraseña debe ser diferente' });
+        return;
+      }
+      res.status(200).json({
+        success: true,
+        mensaje: 'Contraseña restablecida. Inicie sesión nuevamente.',
+        message: 'Contraseña restablecida. Inicie sesión nuevamente.',
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error?.message || 'Error al restablecer contraseña' });
+    }
+  }
+
+  /**
+   * Bloque 11: Generar códigos de respaldo de un solo uso
+   */
+  public static async generarCodigos(req: Request, res: Response): Promise<void> {
+    try {
+      const datos = matchedData(req, { locations: ['body'] }) as { passwordActual?: string };
+      const passwordActual = datos.passwordActual ?? req.body.passwordActual;
+      const usuarioId = req.usuario?.id || (req as any).user?.id;
+      const resultado = await codigosRecuperacionService.generar(usuarioId, passwordActual);
+      if (resultado.estado !== 'OK') {
+        res.status(401).json({ success: false, mensaje: 'Reautenticación incorrecta', message: 'Reautenticación incorrecta' });
+        return;
+      }
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(201).json({
+        success: true,
+        mensaje: 'Guarde estos códigos. No se mostrarán nuevamente.',
+        message: 'Guarde estos códigos. No se mostrarán nuevamente.',
+        codigos: resultado.codigos,
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error?.message || 'Error al generar códigos' });
+    }
+  }
+
+  /**
+   * Bloque 11: Consultar estado y saldo de códigos de respaldo
+   */
+  public static async estadoCodigos(req: Request, res: Response): Promise<void> {
+    try {
+      const usuarioId = req.usuario?.id || (req as any).user?.id;
+      const disponibles = await codigosRecuperacionService.estado(usuarioId);
+      res.status(200).json({
+        success: true,
+        disponibles,
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error?.message || 'Error al consultar códigos' });
+    }
+  }
+
+  /**
+   * Bloque 11: Restablecer contraseña con código de respaldo
+   */
+  public static async restablecerConCodigo(req: Request, res: Response): Promise<void> {
+    try {
+      const datos = matchedData(req, { locations: ['body'] }) as {
+        email?: string;
+        codigo?: string;
+        passwordNueva?: string;
+      };
+      const email = datos.email ?? req.body.email;
+      const codigo = datos.codigo ?? req.body.codigo;
+      const passwordNueva = datos.passwordNueva ?? req.body.passwordNueva;
+      const resultado = await codigosRecuperacionService.restablecer(email, codigo, passwordNueva);
+      if (resultado.estado === 'MISMA_CLAVE') {
+        res.status(400).json({ success: false, mensaje: 'La nueva contraseña debe ser diferente', message: 'La nueva contraseña debe ser diferente' });
+        return;
+      }
+      if (resultado.estado !== 'OK') {
+        res.status(400).json({ success: false, mensaje: 'Código o cuenta inválidos', message: 'Código o cuenta inválidos' });
+        return;
+      }
+      res.status(200).json({
+        success: true,
+        mensaje: 'Contraseña restablecida. Inicie sesión nuevamente.',
+        message: 'Contraseña restablecida. Inicie sesión nuevamente.',
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error?.message || 'Error al restablecer con código' });
     }
   }
 }

@@ -84,11 +84,8 @@ const options: swaggerJsdoc.Options = {
         },
       },
     },
-    security: [
-      {
-        ApiKeyAuth: [],
-      },
-    ],
+    // LAB 11.6.4: Cada operación declara su esquema de seguridad explícitamente
+    security: [],
   },
   apis: docFiles,
 };
