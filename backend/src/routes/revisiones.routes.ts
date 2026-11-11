@@ -5,9 +5,14 @@ import {
   obtenerRevisionesPorEstudiante,
   obtenerRevisionesPorDocente,
   obtenerMisRevisiones,
+  obtenerMiContexto,
+  obtenerEstadisticasResumen,
   crearRevision,
   actualizarRevision,
   cambiarEstadoRevision,
+  confirmarRevision,
+  atenderRevision,
+  cancelarRevision,
   eliminarRevision,
 } from '../controllers/revisiones.controller';
 import {
@@ -32,6 +37,19 @@ router.get(
   ['/mis-revisiones', '/mis-citas'],
   autenticarJWT,
   obtenerMisRevisiones
+);
+
+router.get(
+  ['/mi-contexto', '/contexto'],
+  autenticarJWT,
+  obtenerMiContexto
+);
+
+router.get(
+  ['/estadisticas', '/estadisticas/resumen'],
+  autenticarJWT,
+  autorizarRoles('administrador', 'admin'),
+  obtenerEstadisticasResumen
 );
 
 router.get(
@@ -97,6 +115,33 @@ router.patch(
   validarEstadoRevision,
   validar,
   cambiarEstadoRevision
+);
+
+router.patch(
+  '/:id/confirmar',
+  autenticarJWT,
+  autorizarRoles('administrador', 'admin', 'docente', 'profesor', 'auditor'),
+  validarIdRevision,
+  validar,
+  confirmarRevision
+);
+
+router.patch(
+  '/:id/atender',
+  autenticarJWT,
+  autorizarRoles('administrador', 'admin', 'docente', 'profesor', 'auditor'),
+  validarIdRevision,
+  validar,
+  atenderRevision
+);
+
+router.patch(
+  '/:id/cancelar',
+  autenticarJWT,
+  autorizarRoles('administrador', 'admin', 'docente', 'profesor', 'auditor', 'estudiante', 'paciente', 'user'),
+  validarIdRevision,
+  validar,
+  cancelarRevision
 );
 
 router.delete(

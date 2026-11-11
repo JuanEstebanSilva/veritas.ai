@@ -106,6 +106,7 @@ export const autenticarJWT = async (
       id: usuarioId,
       email: usuario.email || payload.email,
       rol: usuario.rol || payload.rol,
+      versionSesion: vsUsuario,
     };
 
     // Compatibilidad adicional para endpoints que consumen req.user en Veritas AI

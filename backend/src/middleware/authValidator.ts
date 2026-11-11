@@ -159,7 +159,13 @@ export const validarRestablecerConCodigo = [
 
   body('codigo')
     .isString()
-    .matches(/^[a-fA-F0-9]{4}(?:-[a-fA-F0-9]{4}){7}$/)
+    .custom((val) => {
+      const clean = String(val).replace(/-/g, '').trim();
+      if (clean.length < 8 || clean.length > 32 || !/^[A-Za-z0-9]+$/.test(clean)) {
+        throw new Error('Código inválido');
+      }
+      return true;
+    })
     .withMessage('Código inválido'),
 
   body('passwordNueva')

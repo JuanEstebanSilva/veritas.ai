@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { pool } from '../config/database';
 import { prisma } from '../config/prisma';
 import { generarPasswordHash, verificarPassword } from '../utils/password.util';
+import { generarLoteCodigos } from '../utils/crypto.util';
 import usuariosService, { usuariosMemoria } from './usuarios.service';
 import { passwordResetTokensMemoria } from './passwordReset.service';
 
@@ -10,7 +11,7 @@ import { passwordResetTokensMemoria } from './passwordReset.service';
  * Veritas AI — Plataforma de Integridad Académica
  *
  * Permite que los usuarios autenticados (estudiantes, docentes, administradores)
- * generen un lote de 8 códigos de respaldo de un solo uso.
+ * generen un lote de 8 códigos de respaldo de un solo uso en formato XXXX-XXXX.
  */
 
 export interface CodigoRecuperacionMemoria {
@@ -31,7 +32,7 @@ export const hashCodigo = (codigo: string): string =>
   crypto.createHash('sha256').update(normalizar(codigo), 'utf8').digest('hex');
 
 export const codigoNuevo = (): string =>
-  crypto.randomBytes(16).toString('hex').toUpperCase().match(/.{1,4}/g)!.join('-');
+  generarLoteCodigos(1)[0];
 
 /**
  * Genera ocho códigos de respaldo para el usuario autenticado
@@ -56,7 +57,7 @@ export async function generar(
   if (isNaN(numUsuarioId) && usuario) {
     numUsuarioId = Number((usuario as any).numId || (usuario as any).dbId || usuario.id);
   }
-  const codigos = Array.from({ length: 8 }, codigoNuevo);
+  const codigos = generarLoteCodigos(8);
 
   // 1. Intentar persistir en PostgreSQL
   try {

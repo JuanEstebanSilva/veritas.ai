@@ -365,6 +365,161 @@ export const cambiarEstadoRevision = async (
   }
 };
 
+export const confirmarRevision = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const resultado = await revisionesService.confirmarRevision(id);
+
+    if (!resultado.exito) {
+      if (resultado.error === 'NO_ENCONTRADA') {
+        res.status(404).json({
+          success: false,
+          mensaje: 'Revisión no encontrada',
+          message: 'Revisión no encontrada',
+        });
+        return;
+      }
+      res.status(409).json({
+        success: false,
+        mensaje: 'Transición de estado inválida: solo se pueden confirmar revisiones en estado programada',
+        message: 'Transición de estado inválida',
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      mensaje: 'Revisión confirmada exitosamente',
+      revision: resultado.revision,
+      cita: resultado.revision,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const atenderRevision = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const resultado = await revisionesService.atenderRevision(id);
+
+    if (!resultado.exito) {
+      if (resultado.error === 'NO_ENCONTRADA') {
+        res.status(404).json({
+          success: false,
+          mensaje: 'Revisión no encontrada',
+          message: 'Revisión no encontrada',
+        });
+        return;
+      }
+      res.status(409).json({
+        success: false,
+        mensaje: 'Transición de estado inválida: solo se pueden atender revisiones confirmadas',
+        message: 'Transición de estado inválida',
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      mensaje: 'Revisión atendida exitosamente',
+      revision: resultado.revision,
+      cita: resultado.revision,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const cancelarRevision = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const resultado = await revisionesService.cancelarRevision(id);
+
+    if (!resultado.exito) {
+      if (resultado.error === 'NO_ENCONTRADA') {
+        res.status(404).json({
+          success: false,
+          mensaje: 'Revisión no encontrada',
+          message: 'Revisión no encontrada',
+        });
+        return;
+      }
+      res.status(409).json({
+        success: false,
+        mensaje: 'Transición de estado inválida: no se puede cancelar una revisión ya atendida o cancelada',
+        message: 'Transición de estado inválida',
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      mensaje: 'Revisión cancelada exitosamente',
+      revision: resultado.revision,
+      cita: resultado.revision,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const obtenerMiContexto = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const usuario = req.usuario || (req as any).user;
+    if (!usuario) {
+      res.status(401).json({
+        success: false,
+        mensaje: 'Token de autenticación requerido',
+      });
+      return;
+    }
+
+    const contexto = await revisionesService.obtenerContextoUsuario(usuario);
+    res.status(200).json({
+      success: true,
+      mensaje: 'Contexto de usuario obtenido correctamente',
+      ...contexto,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const obtenerEstadisticasResumen = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const resumen = await revisionesService.obtenerEstadisticasResumen();
+    res.status(200).json({
+      success: true,
+      mensaje: 'Estadísticas del sistema obtenidas exitosamente',
+      datos: resumen,
+      estadisticas: resumen,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const eliminarRevision = async (
   req: Request,
   res: Response,
@@ -400,9 +555,14 @@ export default {
   obtenerRevisionesPorEstudiante,
   obtenerRevisionesPorDocente,
   obtenerMisRevisiones,
+  obtenerMiContexto,
+  obtenerEstadisticasResumen,
   crearRevision,
   actualizarRevision,
   cambiarEstadoRevision,
+  confirmarRevision,
+  atenderRevision,
+  cancelarRevision,
   eliminarRevision,
   // Alias de compatibilidad
   obtenerTodasLasCitas: obtenerTodasLasRevisiones,

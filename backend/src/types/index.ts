@@ -38,6 +38,7 @@ declare global {
         id: number | string;
         email: string;
         rol: string;
+        versionSesion?: number;
       };
       user?: User;
     }

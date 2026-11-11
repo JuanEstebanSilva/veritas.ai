@@ -40,6 +40,9 @@ const rutasRecursosJWT = new Set([
   '/analyses',
   '/writing',
   '/payments',
+  '/mi-contexto',
+  '/contexto',
+  '/estadisticas',
 ]);
 
 const rutasAuthJWT = new Set([

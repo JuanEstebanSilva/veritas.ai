@@ -219,3 +219,116 @@
  *       409:
  *         description: Transición de estado inválida
  */
+
+
+/**
+ * @swagger
+ * /api/revisiones/mi-contexto:
+ *   get:
+ *     tags:
+ *       - Revisiones Éticas y Agenda
+ *     summary: Contexto integral del usuario autenticado y su ficha de negocio
+ *     description: >
+ *       Retorna los datos del usuario autenticado junto con su registro de negocio asociado
+ *       (estudiante con documento/ficha académica, docente con registro y departamento, o administrador).
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Contexto recuperado correctamente
+ *       401:
+ *         description: Token no proporcionado o inválido
+ */
+
+/**
+ * @swagger
+ * /api/estadisticas/resumen:
+ *   get:
+ *     tags:
+ *       - Revisiones Éticas y Agenda
+ *     summary: Resumen estadístico consolidado para dashboard administrativo
+ *     description: >
+ *       Retorna el cómputo total de usuarios, estudiantes, docentes, departamentos,
+ *       laboratorios y revisiones desglosadas por estado para la vista de supervisión institucional.
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Estadísticas obtenidas exitosamente
+ *       401:
+ *         description: No autenticado
+ *       403:
+ *         description: Requiere rol de administrador
+ */
+
+/**
+ * @swagger
+ * /api/revisiones/{id}/confirmar:
+ *   patch:
+ *     tags:
+ *       - Revisiones Éticas y Agenda
+ *     summary: Confirmar una revisión programada
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Revisión confirmada exitosamente
+ *       404:
+ *         description: Revisión no encontrada
+ *       409:
+ *         description: Transición inválida (debe estar en estado programada)
+ */
+
+/**
+ * @swagger
+ * /api/revisiones/{id}/atender:
+ *   patch:
+ *     tags:
+ *       - Revisiones Éticas y Agenda
+ *     summary: Atender una revisión confirmada
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Revisión atendida exitosamente
+ *       404:
+ *         description: Revisión no encontrada
+ *       409:
+ *         description: Transición inválida (debe estar en estado confirmada)
+ */
+
+/**
+ * @swagger
+ * /api/revisiones/{id}/cancelar:
+ *   patch:
+ *     tags:
+ *       - Revisiones Éticas y Agenda
+ *     summary: Cancelar una revisión no atendida
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Revisión cancelada exitosamente
+ *       404:
+ *         description: Revisión no encontrada
+ *       409:
+ *         description: Transición inválida (no se puede cancelar una revisión ya atendida)
+ */

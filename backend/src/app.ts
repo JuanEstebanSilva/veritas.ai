@@ -13,6 +13,9 @@ import docentesRoutes from './routes/docentes.routes';
 import departamentosRoutes from './routes/departamentos.routes';
 import laboratoriosRoutes from './routes/laboratorios.routes';
 import revisionesRoutes from './routes/revisiones.routes';
+import { obtenerMiContexto, obtenerEstadisticasResumen } from './controllers/revisiones.controller';
+import { autenticarJWT } from './middlewares/auth.middleware';
+import { autorizarRoles } from './middlewares/roles.middleware';
 import { errorHandler } from './middleware/errorHandler';
 import { apiKeyMiddleware } from './middleware/apiKeyMiddleware';
 import { setupSwagger } from './docs/swagger';
@@ -122,6 +125,15 @@ app.use(['/api/docentes', '/api/auditores', '/api/profesores', '/api/medicos'], 
 app.use(['/api/departamentos', '/api/materias', '/api/especialidades'], departamentosRoutes);
 app.use(['/api/laboratorios', '/api/nodos', '/api/consultorios'], laboratoriosRoutes);
 app.use(['/api/revisiones', '/api/escaneos', '/api/citas'], revisionesRoutes);
+
+// Endpoints de Soporte de Contexto y Estadísticas (Fase 5 del Plan de Seguridad)
+app.get(['/api/mi-contexto', '/api/contexto'], autenticarJWT, obtenerMiContexto);
+app.get(
+  ['/api/estadisticas/resumen', '/api/estadisticas'],
+  autenticarJWT,
+  autorizarRoles('administrador', 'admin'),
+  obtenerEstadisticasResumen
+);
 
 // Manejo de rutas 404
 app.use((_req: Request, res: Response) => {

@@ -302,6 +302,136 @@ export const cambiarEstadoRevision = async (
   return { exito: true, revision: mapearRevision(res.rows[0]) };
 };
 
+export const confirmarRevision = async (
+  id: number | string
+): Promise<{ exito: boolean; error?: string; revision?: Revision }> => {
+  return cambiarEstadoRevision(id, 'confirmada');
+};
+
+export const atenderRevision = async (
+  id: number | string
+): Promise<{ exito: boolean; error?: string; revision?: Revision }> => {
+  return cambiarEstadoRevision(id, 'atendida');
+};
+
+export const cancelarRevision = async (
+  id: number | string
+): Promise<{ exito: boolean; error?: string; revision?: Revision }> => {
+  return cambiarEstadoRevision(id, 'cancelada');
+};
+
+export const obtenerContextoUsuario = async (
+  usuario: any
+): Promise<{ usuario: any; ficha: any }> => {
+  const rawRol = String(usuario.rol || usuario.role || '').toLowerCase().trim();
+  const usuarioInfo = {
+    id: usuario.id,
+    email: usuario.email,
+    rol: rawRol,
+    versionSesion: usuario.versionSesion ?? usuario.version_sesion ?? 0,
+  };
+
+  if (rawRol === 'administrador' || rawRol === 'admin') {
+    return {
+      usuario: usuarioInfo,
+      ficha: null,
+    };
+  }
+
+  if (
+    rawRol === 'estudiante' ||
+    rawRol === 'paciente' ||
+    rawRol === 'user' ||
+    rawRol === 'usuario'
+  ) {
+    const q = `
+      SELECT id, nombre, documento, email, telefono, TO_CHAR(fecha_nacimiento, 'YYYY-MM-DD') AS "fechaNacimiento"
+      FROM estudiantes
+      WHERE usuario_id = $1::text OR usuario_id = $1::varchar OR email = $2
+      LIMIT 1
+    `;
+    const res = await consultar(q, [String(usuario.id), usuario.email || '']);
+    return {
+      usuario: usuarioInfo,
+      ficha: res.rows[0] || null,
+    };
+  }
+
+  if (
+    rawRol === 'docente' ||
+    rawRol === 'profesor' ||
+    rawRol === 'auditor' ||
+    rawRol === 'medico' ||
+    rawRol === 'doctor'
+  ) {
+    const q = `
+      SELECT id, nombre, registro_academico AS "registroAcademico", email, telefono, departamento_id AS "departamentoId", activo
+      FROM docentes
+      WHERE usuario_id = $1::text OR usuario_id = $1::varchar OR email = $2
+      LIMIT 1
+    `;
+    const res = await consultar(q, [String(usuario.id), usuario.email || '']);
+    return {
+      usuario: usuarioInfo,
+      ficha: res.rows[0] || null,
+    };
+  }
+
+  return {
+    usuario: usuarioInfo,
+    ficha: null,
+  };
+};
+
+export const obtenerEstadisticasResumen = async (): Promise<any> => {
+  const [
+    resUsuarios,
+    resEstudiantes,
+    resDocentes,
+    resDepartamentos,
+    resLaboratorios,
+    resRevisiones,
+    resRevisionesEstados,
+    resAnalisis,
+  ] = await Promise.all([
+    consultar('SELECT COUNT(*)::int AS total FROM usuarios'),
+    consultar('SELECT COUNT(*)::int AS total FROM estudiantes'),
+    consultar('SELECT COUNT(*)::int AS total FROM docentes WHERE activo = true'),
+    consultar('SELECT COUNT(*)::int AS total FROM departamentos WHERE activo = true'),
+    consultar('SELECT COUNT(*)::int AS total FROM laboratorios WHERE activo = true'),
+    consultar('SELECT COUNT(*)::int AS total FROM revisiones'),
+    consultar(`
+      SELECT estado, COUNT(*)::int AS cantidad
+      FROM revisiones
+      GROUP BY estado
+    `),
+    consultar('SELECT COUNT(*)::int AS total FROM analyses').catch(() => ({ rows: [{ total: 0 }] })),
+  ]);
+
+  const desgloseEstados: Record<string, number> = {
+    programada: 0,
+    confirmada: 0,
+    atendida: 0,
+    cancelada: 0,
+  };
+  resRevisionesEstados.rows.forEach((r: any) => {
+    desgloseEstados[r.estado] = Number(r.cantidad);
+  });
+
+  return {
+    usuarios: Number(resUsuarios.rows[0]?.total || 0),
+    estudiantes: Number(resEstudiantes.rows[0]?.total || 0),
+    docentes: Number(resDocentes.rows[0]?.total || 0),
+    departamentos: Number(resDepartamentos.rows[0]?.total || 0),
+    laboratorios: Number(resLaboratorios.rows[0]?.total || 0),
+    revisiones: {
+      total: Number(resRevisiones.rows[0]?.total || 0),
+      ...desgloseEstados,
+    },
+    analisis: Number(resAnalisis.rows[0]?.total || 0),
+  };
+};
+
 export const eliminarRevision = async (id: number | string): Promise<boolean> => {
   const query = `DELETE FROM revisiones WHERE id = $1 RETURNING id`;
   const res = await consultar(query, [Number(id)]);
@@ -317,6 +447,11 @@ export default {
   actualizarRevision,
   actualizarRevisionParcial,
   cambiarEstadoRevision,
+  confirmarRevision,
+  atenderRevision,
+  cancelarRevision,
+  obtenerContextoUsuario,
+  obtenerEstadisticasResumen,
   eliminarRevision,
   extraerFechaYHora,
   verificarDisponibilidadLaboratorio,

@@ -25,6 +25,7 @@
     "test:lab10": "jest tests/lab10.test.ts --detectOpenHandles --runInBand",
     "test:lab11": "jest tests/lab11.test.ts --detectOpenHandles --runInBand",
     "test:bloque11": "jest tests/bloque11_veritas.test.ts --detectOpenHandles --runInBand",
+    "test:plan": "jest tests/plan_seguridad_fases.test.ts --detectOpenHandles --runInBand",
     "vault:secure": "ts-node scripts/vaultCli.ts secure-env",
     "vault:check": "ts-node scripts/vaultCli.ts check-env",
     "lab5:fixtures": "ts-node scripts/lab5Fixtures.ts"
