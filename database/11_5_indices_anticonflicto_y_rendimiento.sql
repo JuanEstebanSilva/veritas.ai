@@ -26,3 +26,4 @@ WHERE estado != 'cancelada';
 CREATE UNIQUE INDEX IF NOT EXISTS idx_espacio_horario_unique 
 ON public.revisiones (laboratorio_id, fecha, hora) 
 WHERE estado != 'cancelada';
+

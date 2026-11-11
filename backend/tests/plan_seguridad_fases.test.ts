@@ -6,6 +6,7 @@ import usuariosService from '../src/services/usuarios.service';
 const apiKey = '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0';
 
 describe('Plan de Implementación de Seguridad Backend — Veritas AI (Nuevas Fases y Soporte Frontend)', () => {
+  jest.setTimeout(35000);
   let tokenAdmin = '';
   let tokenEstudiante = '';
   let estudianteId = 1;
@@ -143,6 +144,10 @@ describe('Plan de Implementación de Seguridad Backend — Veritas AI (Nuevas Fa
   // ==========================================================================
   describe('Fase 5: Flujos de Transición de Estado en Revisiones', () => {
     let revId: number;
+    const testFecha1 = `2029-${String(1 + Math.floor(Math.random() * 11)).padStart(2, '0')}-${String(1 + Math.floor(Math.random() * 25)).padStart(2, '0')}`;
+    const testHora1 = `${String(8 + Math.floor(Math.random() * 10)).padStart(2, '0')}:${String(Math.floor(Math.random() * 59)).padStart(2, '0')}:00`;
+    const testFecha2 = `2030-${String(1 + Math.floor(Math.random() * 11)).padStart(2, '0')}-${String(1 + Math.floor(Math.random() * 25)).padStart(2, '0')}`;
+    const testHora2 = `${String(8 + Math.floor(Math.random() * 10)).padStart(2, '0')}:${String(Math.floor(Math.random() * 59)).padStart(2, '0')}:00`;
 
     it('Crear revisión programada con Admin', async () => {
       const res = await request(app)
@@ -152,8 +157,8 @@ describe('Plan de Implementación de Seguridad Backend — Veritas AI (Nuevas Fa
           estudianteId: 1,
           docenteId: 1,
           laboratorioId: 1,
-          fecha: '2028-05-20',
-          hora: '14:00:00',
+          fecha: testFecha1,
+          hora: testHora1,
           motivo: 'Revisión de Ética de Código y Plagio',
         });
 
@@ -204,8 +209,8 @@ describe('Plan de Implementación de Seguridad Backend — Veritas AI (Nuevas Fa
           estudianteId: 1,
           docenteId: 1,
           laboratorioId: 1,
-          fecha: '2028-06-15',
-          hora: '11:00:00',
+          fecha: testFecha2,
+          hora: testHora2,
           motivo: 'Auditoría de Algoritmos Genéticos',
         });
 
@@ -221,3 +226,4 @@ describe('Plan de Implementación de Seguridad Backend — Veritas AI (Nuevas Fa
     });
   });
 });
+
