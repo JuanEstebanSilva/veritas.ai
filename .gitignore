@@ -52,6 +52,9 @@ design/PRINCIPIOS.md
 # Postman collections
 Postman_*.json
 
+# Evidencias y capturas locales generadas
+Evidencias_*/
+
 # Documentación, guías de laboratorios y evidencias extraíbles
 extraible/
 extraíble/

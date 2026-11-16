@@ -151,3 +151,4 @@ npm run preview
 ```
 
 > **Verificación**: `npm run build` compila con Vite y TypeScript en menos de 20 segundos sin advertencias críticas ni errores.
+
