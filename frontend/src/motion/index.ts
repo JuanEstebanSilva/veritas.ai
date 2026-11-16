@@ -2,7 +2,8 @@ export { gsap, ScrollTrigger, EASE, EASE_IN_OUT, prefersReducedMotion, hasFinePo
 export { useReveal } from './useReveal';
 export { useScrollGroup, refreshScroll } from './useScrollGroup';
 export type { ScrollGroupOptions } from './useScrollGroup';
-export { usePointerParallax, useMagnetic } from './usePointer';
+export { usePointerParallax } from './usePointer';
+export { Magnetic } from './Magnetic';
 export { useSplitEntrance } from './useSplitEntrance';
 export { CountUp } from './CountUp';
 export { Odometer } from './Odometer';

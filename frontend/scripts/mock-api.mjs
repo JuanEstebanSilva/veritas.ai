@@ -44,7 +44,7 @@ const users = [
   { id: 'u-4', name: 'Tomás', last_name: 'Ibáñez', fullName: 'Tomás Ibáñez', email: 'tomas@correo.com', role: 'USER', is_active: false, is_premium: false, premium_since: null, totalAnalyses: 2, dailyAnalysisCount: 0, lastAccess: '2026-07-01', createdAt: '2026-06-30' },
 ];
 
-const json = (res, status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type, Authorization', 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS' }); res.end(JSON.stringify(body)); };
+const json = (res, status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key', 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS' }); res.end(JSON.stringify(body)); };
 
 http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x'); const p = url.pathname;

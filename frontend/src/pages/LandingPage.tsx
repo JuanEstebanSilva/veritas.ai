@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { sound } from '../utils/soundEffects';
-import { gsap, ScrollTrigger, prefersReducedMotion, useReveal, useScrollGroup, usePointerParallax, useMagnetic, useSplitEntrance, CountUp, Odometer, span, easeOut, refreshScroll } from '../motion';
+import { gsap, ScrollTrigger, prefersReducedMotion, useReveal, useScrollGroup, usePointerParallax, Magnetic, useSplitEntrance, CountUp, Odometer, span, easeOut, refreshScroll } from '../motion';
 import { createWordFall, type WordFall } from '../motion/wordFall';
 import { HeroScene, Sheet, SimilarityInstrument, RewriteInstrument, WordDiff } from '../components/landing';
 import { CadenceSignal, ParticleVerdict, type Verdict } from '../components/viz';
@@ -65,9 +65,7 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
   const reveal = useReveal<HTMLDivElement>();
   const hero = useScrollGroup<HTMLElement>({ scrub: 0.4, start: 'top top', end: 'bottom top', staticValue: 0 });
   const heroParallax = usePointerParallax<HTMLDivElement>();
-  const ctaMagnet = useMagnetic<HTMLButtonElement>();
   const heroTitle = useSplitEntrance<HTMLHeadingElement>(80);
-  const closeMagnet = useMagnetic<HTMLButtonElement>();
 
   // Cifras del informe: el único texto que escribe el JS mientras se hace scroll.
   const counters = useRef<{ el: HTMLElement; target: number; dec: number; at: number }[]>([]);
@@ -154,9 +152,11 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
                 <span className="lead-in">Un documento, tres lecturas.</span> Plagelio detecta plagio cotejando similitud con fuentes abiertas, analiza probabilidad de IA y humaniza el texto eliminando fórmulas sintéticas sin tocar tus citas.
               </p>
               <div className="flex flex-wrap items-center gap-3 animate-rise" style={{ animationDelay: '.3s' }}>
-                <button ref={ctaMagnet} type="button" onClick={handleStart} className="btn btn-primary">
-                  Iniciar verificación <ArrowRight className="w-4 h-4" strokeWidth={2} />
-                </button>
+                <Magnetic>
+                  <button type="button" onClick={handleStart} className="btn btn-primary">
+                    Iniciar verificación <ArrowRight className="w-4 h-4" strokeWidth={2} />
+                  </button>
+                </Magnetic>
                 <button type="button" onClick={scrollToScanner} className="btn btn-ghost">
                   Ver cómo lee <ArrowDown className="w-4 h-4" strokeWidth={2} />
                 </button>
@@ -350,7 +350,7 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
         </div>
       </section>
 
-      <PricingAndClose onStart={handleStart} onPremium={handlePremium} closeMagnet={closeMagnet} />
+      <PricingAndClose onStart={handleStart} onPremium={handlePremium} />
     </div>
   );
 };
@@ -368,7 +368,7 @@ const HonestyStatement: React.FC = () => {
   );
 };
 
-const PricingAndClose: React.FC<{ onStart: () => void; onPremium: () => void; closeMagnet: React.RefObject<HTMLButtonElement> }> = ({ onStart, onPremium, closeMagnet }) => {
+const PricingAndClose: React.FC<{ onStart: () => void; onPremium: () => void }> = ({ onStart, onPremium }) => {
   const ref = useReveal<HTMLDivElement>();
   return (
     <div ref={ref} className="relative z-[2]">
@@ -426,9 +426,11 @@ const PricingAndClose: React.FC<{ onStart: () => void; onPremium: () => void; cl
           <figcaption className="text-[12.5px] text-low">Veredictos de ejemplo. Pasa el cursor: cada partícula vuelve a su sitio.</figcaption>
         </figure>
         <div data-reveal>
-          <button ref={closeMagnet} type="button" onClick={onStart} className="btn btn-primary h-[58px] px-9 text-[16px]">
-            Crear cuenta gratis <ArrowRight className="w-4 h-4" strokeWidth={2} />
-          </button>
+          <Magnetic>
+            <button type="button" onClick={onStart} className="btn btn-primary h-[58px] px-9 text-[16px]">
+              Crear cuenta gratis <ArrowRight className="w-4 h-4" strokeWidth={2} />
+            </button>
+          </Magnetic>
         </div>
       </section>
 
