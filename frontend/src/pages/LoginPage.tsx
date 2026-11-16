@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { sound } from '../utils/soundEffects';
 import { PlagelioLogo } from '../components/brand';
 import { AuthShell } from '../components/auth/AuthShell';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Loader2, Crown, User as UserIcon } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -40,13 +40,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const fillDemoUser = (type: 'admin' | 'user') => {
-    sound.playClick();
-    if (type === 'admin') { setEmail('admin@plagelio.com'); setPassword('Admin123!Secure*'); }
-    else { setEmail('usuario@plagelio.com'); setPassword('User123!Secure*'); }
-    setError(null);
-  };
-
   return (
     <AuthShell
       tone="azure"
@@ -54,11 +47,11 @@ export const LoginPage: React.FC = () => {
       lede="Perplejidad, cadencia y similitud, medidas párrafo a párrafo. Accede para continuar donde dejaste tu último informe."
       aside={
         <div className="flex items-center gap-8">
-          <div className="flex flex-col gap-1.5"><span className="eyebrow">Cuota gratuita</span><span className="num text-[25px] text-hi">5<span className="text-low text-[15px]"> / día</span></span></div>
+          <div className="flex flex-col gap-1.5"><span className="eyebrow">Acceso</span><span className="text-[20px] font-bold text-human">100% Libre</span></div>
           <div className="h-10 w-px bg-hair" />
-          <div className="flex flex-col gap-1.5"><span className="eyebrow">Licencia</span><span className="num text-[25px] text-human">$2</span></div>
+          <div className="flex flex-col gap-1.5"><span className="eyebrow">Licencia</span><span className="text-[20px] font-bold text-gold">Open Source</span></div>
           <div className="h-10 w-px bg-hair" />
-          <div className="flex flex-col gap-1.5"><span className="eyebrow">Formatos</span><span className="text-[15px] font-semibold text-hi mt-1">Texto · .docx</span></div>
+          <div className="flex flex-col gap-1.5"><span className="eyebrow">Formatos</span><span className="text-[15px] font-semibold text-hi mt-1">Word · PDF · ODT · TXT</span></div>
         </div>
       }
     >
@@ -108,32 +101,7 @@ export const LoginPage: React.FC = () => {
         </button>
       </form>
 
-      <div className="flex items-center gap-4" aria-hidden="true">
-        <span className="h-px flex-1 bg-hair" />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-low">Acceso de demostración</span>
-        <span className="h-px flex-1 bg-hair" />
-      </div>
-
-      <div className="flex flex-col">
-        {[
-          { key: 'admin' as const, Icon: Crown, tone: 'text-gold', title: 'Administrador', mail: 'admin@plagelio.com' },
-          { key: 'user' as const, Icon: UserIcon, tone: 'text-azure', title: 'Usuario de prueba', mail: 'usuario@plagelio.com' },
-        ].map((d, i) => (
-          <button key={d.key} type="button" onClick={() => fillDemoUser(d.key)}
-            className={`group flex items-center justify-between gap-4 h-14 border-b hair text-left transition-colors duration-240 hover:bg-hair -mx-2 px-2 rounded-lg ${i === 0 ? 'border-t' : ''}`}>
-            <span className="flex items-center gap-3.5">
-              <d.Icon className={`w-[17px] h-[17px] ${d.tone}`} strokeWidth={1.7} />
-              <span className="flex flex-col gap-0.5">
-                <span className="text-[13px] font-semibold text-hi">{d.title}</span>
-                <span className="font-mono text-[11px] text-low">{d.mail}</span>
-              </span>
-            </span>
-            <span className={`text-[11.5px] font-semibold ${d.tone} group-hover:text-hi transition-colors`}>Rellenar</span>
-          </button>
-        ))}
-      </div>
-
-      <p className="text-[11.5px] leading-[1.6] text-low text-center">Al continuar aceptas los términos y la política de privacidad.</p>
+      <p className="text-[11.5px] leading-[1.6] text-low text-center mt-2">Al continuar aceptas los términos y la política de privacidad.</p>
       <div className="sm:hidden flex justify-center pt-2"><PlagelioLogo variant="compact" size="sm" /></div>
     </AuthShell>
   );

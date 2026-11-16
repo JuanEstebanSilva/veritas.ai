@@ -99,7 +99,7 @@ export const HistoryPage: React.FC = () => {
                     <span className={`num text-[20px] w-14 shrink-0 ${m.textClass}`}>{aiScore}%</span>
                     <span className="flex flex-col gap-1 min-w-0 flex-1">
                       <span className="text-[13.5px] font-semibold text-hi truncate">{title}</span>
-                      <span className="font-mono text-[11px] text-low">{item.type === 'DOCX' ? '.docx' : 'texto'} · sim {item.similarity_score ?? item.similarityScore}%{impAi !== null ? ` · reescrito a ${impAi}%` : ''} · {fmtDate(item.created_at || item.createdAt)}</span>
+                      <span className="font-mono text-[11px] text-low">{item.type === 'TEXT' ? 'texto' : `.${(item.type || 'doc').toLowerCase()}`} · sim {item.similarity_score ?? item.similarityScore}%{impAi !== null ? ` · reescrito a ${impAi}%` : ''} · {fmtDate(item.created_at || item.createdAt)}</span>
                     </span>
                   </button>
                   <button type="button" disabled={deletingId === item.id} onClick={() => handleDelete(item.id, title)} aria-label={`Eliminar ${title}`} className="btn-icon hover:!text-ai disabled:opacity-40"><Trash2 className="w-4 h-4" strokeWidth={1.7} /></button>
@@ -132,7 +132,7 @@ export const HistoryPage: React.FC = () => {
                           <span className="truncate text-[13.5px] font-semibold text-hi">{title}</span>
                         </button>
                       </td>
-                      <td className="py-4 pr-3 font-mono text-[11.5px] text-low">{isDocx ? '.docx' : 'texto'}</td>
+                      <td className="py-4 pr-3 font-mono text-[11.5px] text-low">{item.type === 'TEXT' ? 'texto' : `.${(item.type || 'doc').toLowerCase()}`}</td>
                       <td className="py-4 pr-3">
                         <span className={`inline-flex items-center gap-2.5 num text-[13.5px] ${m.textClass}`} title={m.shortStatus}>
                           <span className="status-dot" style={{ color: `rgb(${m.cssVar} / .18)`, background: `rgb(${m.cssVar})` }} />{aiScore}%

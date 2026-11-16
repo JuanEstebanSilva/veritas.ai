@@ -25,6 +25,8 @@ import {
   X,
   BookOpen,
   Quote,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 export const AnalyzerPage: React.FC = () => {
@@ -48,6 +50,7 @@ export const AnalyzerPage: React.FC = () => {
   const [loadingStage, setLoadingStage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [showAllParagraphs, setShowAllParagraphs] = useState(false);
 
   // Reescritura / Humanización
   const [improving, setImproving] = useState(false);
@@ -77,6 +80,7 @@ export const AnalyzerPage: React.FC = () => {
     const res = await analysisApi.getById(id);
     setLoading(false);
     if (res.data?.success && res.data.analysis) {
+      setShowAllParagraphs(false);
       setAnalysis(res.data.analysis);
       if (res.data.analysis.improvedText) {
         setImprovedResult({
@@ -91,20 +95,34 @@ export const AnalyzerPage: React.FC = () => {
     }
   };
 
+  const ALLOWED_EXTS = [
+    '.docx',
+    '.doc',
+    '.pdf',
+    '.odt',
+    '.rtf',
+    '.txt',
+    '.text',
+    '.md',
+    '.markdown',
+    '.csv',
+    '.tsv',
+    '.html',
+    '.htm',
+  ];
+
   const validateAndSetFile = (file: File) => {
     setError(null);
-    const ext = file.name.toLowerCase();
-    const isDocx = ext.endsWith('.docx');
-    const isPdf = ext.endsWith('.pdf');
+    const ext = '.' + (file.name.split('.').pop() || '').toLowerCase();
 
-    if (!isDocx && !isPdf) {
+    if (!ALLOWED_EXTS.includes(ext)) {
       sound.playError();
-      setError('Formato no admitido. Solo se permiten documentos en formato .docx o .pdf');
+      setError('Formato no admitido. Se admiten documentos .docx, .doc, .pdf, .odt, .rtf, .txt, .md, .csv y .html');
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 15 * 1024 * 1024) {
       sound.playError();
-      setError('El archivo excede el tamaño máximo permitido de 10 MB.');
+      setError('El archivo excede el tamaño máximo permitido de 15 MB.');
       return;
     }
     setSelectedFile(file);
@@ -152,6 +170,7 @@ export const AnalyzerPage: React.FC = () => {
       }
       if (res.data?.success && res.data.analysis) {
         sound.playSuccess();
+        setShowAllParagraphs(false);
         setAnalysis(res.data.analysis);
         await refreshProfile();
       } else {
@@ -161,12 +180,12 @@ export const AnalyzerPage: React.FC = () => {
     } else {
       if (!selectedFile) {
         sound.playError();
-        setError('Por favor selecciona un archivo .docx o .pdf para analizar.');
+        setError('Por favor selecciona un documento para analizar (.docx, .doc, .pdf, .odt, .rtf, .txt, etc.).');
         return;
       }
-      const isPdf = selectedFile.name.toLowerCase().endsWith('.pdf');
+      const fileExt = (selectedFile.name.split('.').pop() || 'DOC').toUpperCase();
       setLoading(true);
-      setLoadingStage(`Extrayendo contenido de ${isPdf ? 'PDF' : 'Word'} y analizando similitud e IA`);
+      setLoadingStage(`Extrayendo contenido de ${fileExt} y analizando similitud e IA`);
       sound.playScan();
       const res = await analysisApi.analyzeDocument(selectedFile);
       setLoading(false);
@@ -178,6 +197,7 @@ export const AnalyzerPage: React.FC = () => {
       }
       if (res.data?.success && res.data.analysis) {
         sound.playSuccess();
+        setShowAllParagraphs(false);
         setAnalysis(res.data.analysis);
         await refreshProfile();
       } else {
@@ -221,7 +241,7 @@ export const AnalyzerPage: React.FC = () => {
     } else {
       if (!selectedFile) {
         sound.playError();
-        setError('Por favor selecciona un archivo .docx o .pdf para humanizar.');
+        setError('Por favor selecciona un documento para humanizar (.docx, .doc, .pdf, .odt, .rtf, .txt, etc.).');
         return;
       }
       setImproving(true);
@@ -616,7 +636,7 @@ export const AnalyzerPage: React.FC = () => {
                   ref={fileInput}
                   id="document-file-input"
                   type="file"
-                  accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  accept=".docx,.doc,.pdf,.odt,.rtf,.txt,.text,.md,.markdown,.csv,.tsv,.html,.htm"
                   onChange={handleFileChange}
                   className="hidden"
                   tabIndex={-1}
@@ -635,7 +655,7 @@ export const AnalyzerPage: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <span className="text-[14px] font-semibold text-hi break-all">{selectedFile.name}</span>
                         <span className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-azure/10 text-azure uppercase">
-                          {selectedFile.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'DOCX'}
+                          {(selectedFile.name.split('.').pop() || 'DOC').toUpperCase()}
                         </span>
                       </div>
                       <span className="font-mono text-[11.5px] text-low">
@@ -646,9 +666,9 @@ export const AnalyzerPage: React.FC = () => {
                   ) : (
                     <>
                       <span className="text-[14px] font-semibold text-hi">
-                        Arrastra tu archivo .docx o .pdf aquí, o haz clic para elegirlo
+                        Arrastra tu archivo aquí, o haz clic para elegirlo
                       </span>
-                      <span className="text-[12px] text-low">Formatos soportados: Microsoft Word (.docx) y Adobe PDF (.pdf) · máximo 10 MB</span>
+                      <span className="text-[12px] text-low">Formatos soportados: Word (.docx, .doc), Adobe PDF (.pdf), LibreOffice (.odt), Rich Text (.rtf), Texto (.txt, .md, .csv) y Web (.html) · máx. 15 MB</span>
                     </>
                   )}
                 </div>
@@ -687,11 +707,6 @@ export const AnalyzerPage: React.FC = () => {
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.8} />
               <div className="flex flex-col gap-1.5">
                 <span className="font-semibold">{error}</span>
-                {error.includes('5 análisis') && (
-                  <button type="button" onClick={openPremiumModal} className="self-start text-azure hover:text-hi transition-colors font-semibold">
-                    Activar la licencia vitalicia por $2
-                  </button>
-                )}
               </div>
             </div>
           )}
@@ -714,7 +729,7 @@ export const AnalyzerPage: React.FC = () => {
                 className="btn btn-primary min-w-[200px] bg-human hover:bg-human/90"
               >
                 <Sparkles className="w-4 h-4" strokeWidth={2} />{' '}
-                {activeTab === 'document' ? 'Humanizar documento (.docx o .pdf)' : 'Humanizar texto'}{' '}
+                {activeTab === 'document' ? 'Humanizar documento cargado' : 'Humanizar texto'}{' '}
                 <ArrowRight className="w-4 h-4" strokeWidth={2} />
               </button>
             )}
@@ -736,7 +751,7 @@ export const AnalyzerPage: React.FC = () => {
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="text-d-5 font-semibold break-words">{analysis.title}</h2>
             <span className="font-mono text-[11.5px] text-low">
-              {analysis.type === 'PDF' ? 'documento .pdf' : analysis.type === 'DOCX' ? 'documento .docx' : 'texto'} ·{' '}
+              {analysis.type ? `documento .${analysis.type.toLowerCase()}` : 'documento'} ·{' '}
               {new Date(analysis.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
             </span>
           </div>
@@ -804,10 +819,16 @@ export const AnalyzerPage: React.FC = () => {
                 <h3 className="text-d-5 font-light">
                   No un número. <span className="serif">Un argumento.</span>
                 </h3>
-                <span className="font-mono text-[11.5px] text-low">{analysis.paragraphs.length} párrafos</span>
+                <span className="font-mono text-[11.5px] text-low">
+                  {analysis.paragraphs.length > 5
+                    ? showAllParagraphs
+                      ? `Mostrando los ${analysis.paragraphs.length} párrafos`
+                      : `Mostrando 5 de ${analysis.paragraphs.length} párrafos`
+                    : `${analysis.paragraphs.length} párrafos`}
+                </span>
               </div>
               <ol className="flex flex-col gap-3">
-                {analysis.paragraphs.map((p, idx) => {
+                {(showAllParagraphs ? analysis.paragraphs : analysis.paragraphs.slice(0, 5)).map((p, idx) => {
                   const m = getScoreMood(p.aiScore);
                   return (
                     <li key={idx} className="card px-6 py-6 flex flex-col sm:flex-row gap-5 sm:gap-7">
@@ -837,6 +858,31 @@ export const AnalyzerPage: React.FC = () => {
                   );
                 })}
               </ol>
+
+              {analysis.paragraphs.length > 5 && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sound.playClick();
+                      setShowAllParagraphs((prev) => !prev);
+                    }}
+                    className="btn btn-ghost btn-sm inline-flex items-center gap-2 text-azure border border-azure/30 hover:bg-azure/10 px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-all shadow-xs cursor-pointer"
+                  >
+                    {showAllParagraphs ? (
+                      <>
+                        <ChevronUp className="w-4 h-4" />
+                        Mostrar menos (ver solo 5 párrafos)
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="w-4 h-4" />
+                        Mostrar más ({analysis.paragraphs.length - 5} párrafos adicionales)
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -952,15 +998,35 @@ export const AnalyzerPage: React.FC = () => {
                             />
                             {isHighMatch ? 'Posible Plagio' : isModMatch ? 'Similitud Moderada' : 'Coincidencia'}
                           </span>
-                          <a
-                            href={src.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-hi hover:text-azure transition-colors truncate"
-                          >
-                            {src.title}
-                            <ExternalLink className="w-3.5 h-3.5 text-low shrink-0" strokeWidth={1.8} />
-                          </a>
+                          {src.url.startsWith('http') ? (
+                            <div className="flex flex-col min-w-0">
+                              <a
+                                href={src.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-hi hover:text-azure transition-colors truncate max-w-[500px]"
+                                title={src.url}
+                              >
+                                {src.title}
+                                <ExternalLink className="w-3.5 h-3.5 text-azure shrink-0" strokeWidth={1.8} />
+                              </a>
+                              <a
+                                href={src.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[11.5px] text-azure/70 hover:text-azure underline decoration-azure/30 underline-offset-2 truncate max-w-[500px]"
+                              >
+                                {src.url}
+                              </a>
+                            </div>
+                          ) : (
+                            <span
+                              className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-hi truncate max-w-[500px]"
+                              title="Documento del repositorio institucional"
+                            >
+                              📚 {src.title}
+                            </span>
+                          )}
                         </div>
                         <span className="num text-[14px] font-bold text-azure">{src.similarityPercentage}% coincidencia</span>
                       </div>
