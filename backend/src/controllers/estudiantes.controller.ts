@@ -5,7 +5,7 @@ import usuariosService from '../services/usuarios.service';
 import revisionesService from '../services/revisiones.service';
 
 /**
- * Veritas AI — Controlador de Estudiantes / Autores de Trabajos
+ * Plagelio — Controlador de Estudiantes / Autores de Trabajos
  */
 
 export const obtenerEstudiantes = async (

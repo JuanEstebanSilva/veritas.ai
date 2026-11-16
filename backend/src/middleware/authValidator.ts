@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { body, param, matchedData, validationResult } from 'express-validator';
 
 /**
- * Validaciones de Autenticación para Veritas AI (Laboratorio 8 y Bloque 11)
+ * Validaciones de Autenticación para Plagelio (Laboratorio 8 y Bloque 11)
  *
  * Incluye validaciones para:
  * - Registro público seguro (rol fijado por el servidor)

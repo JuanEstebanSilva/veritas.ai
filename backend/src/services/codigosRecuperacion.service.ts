@@ -8,7 +8,7 @@ import { passwordResetTokensMemoria } from './passwordReset.service';
 
 /**
  * Servicio de Códigos de Recuperación de Respaldo (Laboratorio / Bloque 11)
- * Veritas AI — Plataforma de Integridad Académica
+ * Plagelio — Plataforma de Integridad Académica
  *
  * Permite que los usuarios autenticados (estudiantes, docentes, administradores)
  * generen un lote de 8 códigos de respaldo de un solo uso en formato XXXX-XXXX.

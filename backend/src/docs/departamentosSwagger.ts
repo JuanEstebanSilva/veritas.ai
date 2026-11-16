@@ -2,7 +2,7 @@
  * @swagger
  * tags:
  *   - name: Departamentos Académicos
- *     description: Gestión de facultades y departamentos de Veritas AI (Bloque B / Especialidades)
+ *     description: Gestión de facultades y departamentos de Plagelio (Bloque B / Especialidades)
  */
 
 /**

@@ -17,7 +17,7 @@ export const revisiones: Revision[] = [
     docenteId: 1,
     medicoId: 1,
     fecha: '2026-11-20T10:00:00Z',
-    motivo: 'Evaluación y escaneo de integridad académica Veritas AI',
+    motivo: 'Evaluación y escaneo de integridad académica Plagelio',
     estado: 'programada',
   },
 ];

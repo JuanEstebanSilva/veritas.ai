@@ -1,8 +1,8 @@
 -- ============================================================================
--- VERITAS AI — LAB 11.4.2: CÓDIGOS DE RECUPERACIÓN DE RESPALDO
+-- PLAGELIO — LAB 11.4.2: CÓDIGOS DE RECUPERACIÓN DE RESPALDO
 -- ============================================================================
 -- Conserva hashes de códigos de respaldo de un solo uso generados por estudiantes,
--- docentes o administradores de Veritas AI mientras se encuentran autenticados.
+-- docentes o administradores de Plagelio mientras se encuentran autenticados.
 -- ============================================================================
 
 BEGIN;

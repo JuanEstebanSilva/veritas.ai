@@ -1,11 +1,11 @@
 -- ============================================================================
--- VERITAS AI — LAB 11: CONSULTAS DE AUDITORÍA Y VERIFICACIÓN
+-- PLAGELIO — LAB 11: CONSULTAS DE AUDITORÍA Y VERIFICACIÓN
 -- Dominio Académico: Estudiantes, Docentes, Departamentos, Laboratorios,
 -- Revisiones Éticas, Usuarios, Tokens y Códigos de Recuperación
 -- ============================================================================
 
 -- ============================================================================
--- 1. Comprobación inicial de tablas del dominio Veritas AI
+-- 1. Comprobación inicial de tablas del dominio Plagelio
 -- ============================================================================
 SELECT table_name
 FROM information_schema.tables
@@ -19,7 +19,7 @@ WHERE table_schema = 'public'
 ORDER BY table_name;
 
 -- ============================================================================
--- 2. Roles vigentes en Veritas AI (administrador, docente, estudiante)
+-- 2. Roles vigentes en Plagelio (administrador, docente, estudiante)
 -- ============================================================================
 SELECT id, nombre, activo FROM public.roles ORDER BY id;
 

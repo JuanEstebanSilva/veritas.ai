@@ -1,5 +1,5 @@
 -- ============================================================================
--- VERITAS AI — PLATAFORMA DE INTEGRIDAD ACADÉMICA Y DETECCIÓN ANTIPLAGIO
+-- PLAGELIO — PLATAFORMA DE INTEGRIDAD ACADÉMICA Y DETECCIÓN ANTIPLAGIO
 -- SCRIPT DML & SEGURIDAD: 02_datos_seguridad.sql (Root Reference)
 -- ============================================================================
 -- 1. Inserción de Catálogos Iniciales (Departamentos, Docentes, Estudiantes,
@@ -41,7 +41,7 @@ SELECT setval('laboratorios_id_seq', (SELECT GREATEST(MAX(id), 3) FROM laborator
 -- Docentes Iniciales
 INSERT INTO docentes (id, usuario_id, nombre, registro_academico, email, telefono, departamento_id, activo)
 VALUES
-  (1, NULL, 'Carlos Rodríguez', 'DOC-45871', 'carlos.rodriguez@veritas.com', '3109876543', 2, true)
+  (1, NULL, 'Carlos Rodríguez', 'DOC-45871', 'carlos.rodriguez@plagelio.com', '3109876543', 2, true)
 ON CONFLICT (id) DO UPDATE SET
   nombre = EXCLUDED.nombre,
   registro_academico = EXCLUDED.registro_academico,
@@ -55,9 +55,9 @@ SELECT setval('docentes_id_seq', (SELECT GREATEST(MAX(id), 1) FROM docentes));
 -- Estudiantes Iniciales
 INSERT INTO estudiantes (id, usuario_id, nombre, documento, email, telefono, fecha_nacimiento)
 VALUES
-  (1, NULL, 'Laura Gómez', '1001001001', 'laura@veritas.com', '3001234567', '1995-04-10'),
-  (2, NULL, 'Carlos Ramírez', '1001001002', 'carlos@veritas.com', '3012345678', '1988-08-22'),
-  (3, NULL, 'Ana Martínez', '1001001003', 'ana@veritas.com', '3023456789', '2000-01-15')
+  (1, NULL, 'Laura Gómez', '1001001001', 'laura@plagelio.com', '3001234567', '1995-04-10'),
+  (2, NULL, 'Carlos Ramírez', '1001001002', 'carlos@plagelio.com', '3012345678', '1988-08-22'),
+  (3, NULL, 'Ana Martínez', '1001001003', 'ana@plagelio.com', '3023456789', '2000-01-15')
 ON CONFLICT (id) DO UPDATE SET
   nombre = EXCLUDED.nombre,
   documento = EXCLUDED.documento,
@@ -70,7 +70,7 @@ SELECT setval('estudiantes_id_seq', (SELECT GREATEST(MAX(id), 3) FROM estudiante
 -- Revisiones Iniciales
 INSERT INTO revisiones (id, estudiante_id, docente_id, laboratorio_id, fecha, hora, motivo, estado)
 VALUES
-  (1, 1, 1, 1, '2026-11-20', '10:00:00', 'Evaluación y escaneo de integridad académica Veritas AI', 'programada')
+  (1, 1, 1, 1, '2026-11-20', '10:00:00', 'Evaluación y escaneo de integridad académica Plagelio', 'programada')
 ON CONFLICT (id) DO UPDATE SET
   estudiante_id = EXCLUDED.estudiante_id,
   docente_id = EXCLUDED.docente_id,

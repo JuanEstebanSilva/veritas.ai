@@ -5,7 +5,7 @@ import revisionesService from '../services/revisiones.service';
 
 /**
  * Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/BOLA
- * Middleware de comprobación de propiedad a nivel de objeto (BOLA/IDOR) en Veritas AI
+ * Middleware de comprobación de propiedad a nivel de objeto (BOLA/IDOR) en Plagelio
  * Adaptado a consultas asíncronas contra PostgreSQL / Supabase
  */
 

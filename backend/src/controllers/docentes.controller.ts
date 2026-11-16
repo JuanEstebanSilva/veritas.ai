@@ -5,7 +5,7 @@ import usuariosService from '../services/usuarios.service';
 import revisionesService from '../services/revisiones.service';
 
 /**
- * Veritas AI — Controlador de Docentes / Auditores de Integridad Académica
+ * Plagelio — Controlador de Docentes / Auditores de Integridad Académica
  */
 
 export const obtenerDocentes = async (

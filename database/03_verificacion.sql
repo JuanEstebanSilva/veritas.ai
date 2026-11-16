@@ -1,5 +1,5 @@
 -- ============================================================================
--- VERITAS AI — PLATAFORMA DE INTEGRIDAD ACADÉMICA Y DETECCIÓN ANTIPLAGIO
+-- PLAGELIO — PLATAFORMA DE INTEGRIDAD ACADÉMICA Y DETECCIÓN ANTIPLAGIO
 -- SCRIPT DE VERIFICACIÓN: 03_verificacion.sql
 -- ============================================================================
 -- Valida que el esquema relacional, claves foráneas, restricciones de integridad,

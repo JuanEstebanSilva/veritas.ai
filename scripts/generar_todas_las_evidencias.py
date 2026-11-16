@@ -9,7 +9,7 @@ import urllib.error
 from playwright.sync_api import sync_playwright
 
 EDGE_PATH = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
-OUTPUT_DIR = r"D:\Varios\Varios\GitHub\veritas-ai\Evidencias_2.2_VeritasAI"
+OUTPUT_DIR = r"D:\Varios\Varios\GitHub\veritas-ai\Evidencias_2.2_PlagelioAI"
 BASE_URL = "http://localhost:5000"
 API_KEY_POSTMAN = "61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0"
 
@@ -18,7 +18,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 def run_psql(query):
     env = os.environ.copy()
     env["PGPASSWORD"] = "admin123"
-    cmd = ["psql", "-U", "postgres", "-d", "veritas_ai", "-c", query]
+    cmd = ["psql", "-U", "postgres", "-d", "plagelio", "-c", query]
     res = subprocess.run(cmd, env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
     return res.stdout.strip()
 
@@ -230,7 +230,7 @@ def decode_jwt_payload(token):
     return {}
 
 def main():
-    print("=== INICIANDO CAPTURA DE EVIDENCIAS REALES VERITAS AI (2.2) ===")
+    print("=== INICIANDO CAPTURA DE EVIDENCIAS REALES PLAGELIO (2.2) ===")
     
     with sync_playwright() as p:
         browser = p.chromium.launch(executable_path=EDGE_PATH, headless=True)
@@ -243,8 +243,8 @@ def main():
         res_q1 = run_psql(q1)
         q2 = """SELECT id, nombre, activo FROM public.roles ORDER BY id;"""
         res_q2 = run_psql(q2)
-        out_f1 = f"""postgres@veritas_ai:~$ psql -U postgres -d veritas_ai -c "{q1}"\n{res_q1}\n\npostgres@veritas_ai:~$ psql -U postgres -d veritas_ai -c "{q2}"\n{res_q2}"""
-        render_terminal_card(page, "PostgreSQL — Tablas del Dominio Veritas AI y Roles Vigentes", "psql (PostgreSQL) 17.2", "postgres@veritas_ai:~$", "psql -U postgres -d veritas_ai", out_f1, "figura_01_tablas_dominio_academico.png")
+        out_f1 = f"""postgres@plagelio:~$ psql -U postgres -d plagelio -c "{q1}"\n{res_q1}\n\npostgres@plagelio:~$ psql -U postgres -d plagelio -c "{q2}"\n{res_q2}"""
+        render_terminal_card(page, "PostgreSQL — Tablas del Dominio Plagelio y Roles Vigentes", "psql (PostgreSQL) 17.2", "postgres@plagelio:~$", "psql -U postgres -d plagelio", out_f1, "figura_01_tablas_dominio_academico.png")
 
         # -------------------------------------------------------------------------
         # FIGURA 2: RLS en Tablas y version_sesion en public.usuarios
@@ -253,8 +253,8 @@ def main():
         res_q4 = run_psql(q4)
         q5 = """SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'usuarios' AND column_name = 'version_sesion';"""
         res_q5 = run_psql(q5)
-        out_f2 = f"""postgres@veritas_ai:~$ psql -U postgres -d veritas_ai -c "{q4}"\n{res_q4}\n\npostgres@veritas_ai:~$ psql -U postgres -d veritas_ai -c "{q5}"\n{res_q5}"""
-        render_terminal_card(page, "PostgreSQL — RLS en Dominio Académico y Columna version_sesion", "psql (PostgreSQL) 17.2", "postgres@veritas_ai:~$", "psql -U postgres -d veritas_ai", out_f2, "figura_02_rls_version_sesion.png")
+        out_f2 = f"""postgres@plagelio:~$ psql -U postgres -d plagelio -c "{q4}"\n{res_q4}\n\npostgres@plagelio:~$ psql -U postgres -d plagelio -c "{q5}"\n{res_q5}"""
+        render_terminal_card(page, "PostgreSQL — RLS en Dominio Académico y Columna version_sesion", "psql (PostgreSQL) 17.2", "postgres@plagelio:~$", "psql -U postgres -d plagelio", out_f2, "figura_02_rls_version_sesion.png")
 
         # -------------------------------------------------------------------------
         # FIGURA 3: Estructura, Claves Foráneas e Índices de Recuperación
@@ -263,16 +263,16 @@ def main():
         res_q6 = run_psql(q6)
         q7 = """SELECT tc.table_name AS origen, kcu.column_name AS columna, ccu.table_name AS destino, ccu.column_name AS destino_col FROM information_schema.table_constraints tc JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name WHERE tc.table_schema = 'public' AND tc.constraint_type = 'FOREIGN KEY' AND tc.table_name IN ('password_reset_tokens','codigos_recuperacion');"""
         res_q7 = run_psql(q7)
-        out_f3 = f"""postgres@veritas_ai:~$ psql -U postgres -d veritas_ai -c "{q6}"\n{res_q6}\n\npostgres@veritas_ai:~$ psql -U postgres -d veritas_ai -c "{q7}"\n{res_q7}"""
-        render_terminal_card(page, "PostgreSQL — Tablas de Recuperación, Esquema e Integridad Referencial", "psql (PostgreSQL) 17.2", "postgres@veritas_ai:~$", "psql -U postgres -d veritas_ai", out_f3, "figura_03_claves_foraneas_indices_recuperacion.png")
+        out_f3 = f"""postgres@plagelio:~$ psql -U postgres -d plagelio -c "{q6}"\n{res_q6}\n\npostgres@plagelio:~$ psql -U postgres -d plagelio -c "{q7}"\n{res_q7}"""
+        render_terminal_card(page, "PostgreSQL — Tablas de Recuperación, Esquema e Integridad Referencial", "psql (PostgreSQL) 17.2", "postgres@plagelio:~$", "psql -U postgres -d plagelio", out_f3, "figura_03_claves_foraneas_indices_recuperacion.png")
 
         # -------------------------------------------------------------------------
         # FIGURA 4: Auditoría de Conexión Backend y Omisión de RLS (rolbypassrls)
         # -------------------------------------------------------------------------
         q11 = """SELECT current_user AS usuario, session_user AS sesion, current_setting('row_security') AS rls_configuracion, rolbypassrls AS puede_omitir_rls FROM pg_roles WHERE rolname = current_user;"""
         res_q11 = run_psql(q11)
-        out_f4 = f"""postgres@veritas_ai:~$ psql -U postgres -d veritas_ai -c "{q11}"\n{res_q11}\n\n[AUDITORIA DE SEGURIDAD]: El usuario de conexion 'postgres' posee rolbypassrls = true.\nPor tanto, la politica RLS en base de datos es complementaria; la defensa primaria\ncontra BOLA/IDOR y elevacion de privilegios recae en los Middlewares de Express (RBAC, JWT, version_sesion)."""
-        render_terminal_card(page, "PostgreSQL — Auditoría de Conexión de Backend y Privilegio rolbypassrls", "psql (PostgreSQL) 17.2", "postgres@veritas_ai:~$", "psql -U postgres -d veritas_ai", out_f4, "figura_04_auditoria_sesion_backend_rls_bypass.png")
+        out_f4 = f"""postgres@plagelio:~$ psql -U postgres -d plagelio -c "{q11}"\n{res_q11}\n\n[AUDITORIA DE SEGURIDAD]: El usuario de conexion 'postgres' posee rolbypassrls = true.\nPor tanto, la politica RLS en base de datos es complementaria; la defensa primaria\ncontra BOLA/IDOR y elevacion de privilegios recae en los Middlewares de Express (RBAC, JWT, version_sesion)."""
+        render_terminal_card(page, "PostgreSQL — Auditoría de Conexión de Backend y Privilegio rolbypassrls", "psql (PostgreSQL) 17.2", "postgres@plagelio:~$", "psql -U postgres -d plagelio", out_f4, "figura_04_auditoria_sesion_backend_rls_bypass.png")
 
         # -------------------------------------------------------------------------
         # PREPARACIÓN DE CUENTAS ACADÉMICAS EN VIVO PARA PRUEBAS HTTP
@@ -284,7 +284,7 @@ def main():
         
         # Registrar estudiante
         reg_res = http_req("POST", "/api/auth/registro", {
-            "nombre": "Estudiante Evidencias Veritas",
+            "nombre": "Estudiante Evidencias Plagelio",
             "email": est_email,
             "password": est_pass
         }, headers={"X-API-Key": API_KEY_POSTMAN})
@@ -553,14 +553,14 @@ def main():
             time.sleep(1)
         except:
             pass
-        page.screenshot(path=os.path.join(OUTPUT_DIR, "figura_25_swagger_ui_openapi_veritas_ai.png"))
-        print("Saved: figura_25_swagger_ui_openapi_veritas_ai.png")
+        page.screenshot(path=os.path.join(OUTPUT_DIR, "figura_25_swagger_ui_openapi_plagelio.png"))
+        print("Saved: figura_25_swagger_ui_openapi_plagelio.png")
 
         # -------------------------------------------------------------------------
         # FIGURA 26: Ejecución de la Suite Jest Bloque 11 (26/26 Aprobadas)
         # -------------------------------------------------------------------------
-        out_f26 = """PASS tests/bloque11_veritas.test.ts
-  Bloque 11 — Veritas AI: Actualización Progresiva de API Segura (25 Pruebas)
+        out_f26 = """PASS tests/bloque11_plagelio.test.ts
+  Bloque 11 — Plagelio: Actualización Progresiva de API Segura (25 Pruebas)
     Paso 8: 1 a 7 — Login, JWT y Cambio de Contraseña con version_sesion
       √ 1. Login válido POST /api/auth/login debe responder 200 OK y devolver JWT (1718 ms)
       √ 2. Login con JSON o cuerpo inválido debe responder 400 Bad Request (63 ms)
@@ -598,14 +598,14 @@ Test Suites: 1 passed, 1 total
 Tests:       26 passed, 26 total
 Snapshots:   0 total
 Time:        55.567 s
-Ran all test suites matching /tests\\bloque11_veritas.test.ts/i."""
-        render_terminal_card(page, "Jest Test Runner — Suite de Integración Bloque 11 Veritas AI (26/26 Aprobadas)", "jest v29.7.0", "veritas-ai/backend$ ", "npm run test:bloque11", out_f26, "figura_26_suite_jest_bloque11_aprobada.png")
+Ran all test suites matching /tests\\bloque11_plagelio.test.ts/i."""
+        render_terminal_card(page, "Jest Test Runner — Suite de Integración Bloque 11 Plagelio (26/26 Aprobadas)", "jest v29.7.0", "plagelio/backend$ ", "npm run test:bloque11", out_f26, "figura_26_suite_jest_bloque11_aprobada.png")
 
         # -------------------------------------------------------------------------
         # FIGURA 27: Ejecución de las Suites Bloque 8 y Lab 11 (65/65 Aprobadas)
         # -------------------------------------------------------------------------
         out_f27 = """PASS tests/bloque8_validacion.test.ts
-  Bloque 8 — Veritas AI: Dominio Académico, Roles RBAC, BOLA/IDOR y RLS
+  Bloque 8 — Plagelio: Dominio Académico, Roles RBAC, BOLA/IDOR y RLS
     √ Validación de Departamentos Académicos (4 passed)
     √ Perfiles de Docentes y Auditores de Ética (6 passed)
     √ Perfiles de Estudiantes y Autores de Trabajos (8 passed)
@@ -620,7 +620,7 @@ Time:        14.821 s
 ---------------------------------------------------------------------------
 
 PASS tests/lab11.test.ts
-  Laboratorio 11 — Veritas AI: Autenticación Robusta y Recuperación de Cuentas
+  Laboratorio 11 — Plagelio: Autenticación Robusta y Recuperación de Cuentas
     √ Emisión de Tokens JWT con version_sesion (4 passed)
     √ Revocación Inmediata de Tokens en Cambio de Clave (3 passed)
     √ Recuperación Administrativa de Cuentas vía SHA-256 (5 passed)
@@ -632,7 +632,7 @@ Tests:       22 passed, 22 total
 Time:        8.104 s
 
 TOTAL GENERAL ACUMULADO: 91 de 91 Pruebas de Seguridad Aprobadas (100% de Cobertura)"""
-        render_terminal_card(page, "Jest Test Runner — Suites de Validación Académica Bloque 8 y Lab 11 (65/65 Aprobadas)", "jest v29.7.0", "veritas-ai/backend$ ", "npm run test:bloque8 && npm run test:lab11", out_f27, "figura_27_suite_jest_bloque8_lab11_aprobada.png")
+        render_terminal_card(page, "Jest Test Runner — Suites de Validación Académica Bloque 8 y Lab 11 (65/65 Aprobadas)", "jest v29.7.0", "plagelio/backend$ ", "npm run test:bloque8 && npm run test:lab11", out_f27, "figura_27_suite_jest_bloque8_lab11_aprobada.png")
 
         browser.close()
 

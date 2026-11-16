@@ -1,5 +1,5 @@
 -- ============================================================================
--- VERITAS AI — PLATAFORMA DE INTEGRIDAD ACADÉMICA Y DETECCIÓN ANTIPLAGIO
+-- PLAGELIO — PLATAFORMA DE INTEGRIDAD ACADÉMICA Y DETECCIÓN ANTIPLAGIO
 -- SCRIPT DDL: 01_esquema.sql (Root Reference)
 -- ============================================================================
 -- Define las tablas relacionales con tipos de datos nativos de PostgreSQL,

@@ -5,7 +5,7 @@ import usuariosService from '../src/services/usuarios.service';
 
 const apiKey = '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0';
 
-describe('Plan de Implementación de Seguridad Backend — Veritas AI (Nuevas Fases y Soporte Frontend)', () => {
+describe('Plan de Implementación de Seguridad Backend — Plagelio (Nuevas Fases y Soporte Frontend)', () => {
   jest.setTimeout(35000);
   let tokenAdmin = '';
   let tokenEstudiante = '';

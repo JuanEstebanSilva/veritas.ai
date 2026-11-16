@@ -83,7 +83,7 @@ const mapearRevision = (row: any): Revision => {
 };
 
 /**
- * Veritas AI — Servicio de Revisiones y Escaneos de Integridad Académica
+ * Plagelio — Servicio de Revisiones y Escaneos de Integridad Académica
  * Migrado a persistencia PostgreSQL / Supabase
  */
 export const obtenerTodasLasRevisiones = async (): Promise<Revision[]> => {

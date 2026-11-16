@@ -5,7 +5,7 @@ import estudiantesService from '../services/estudiantes.service';
 import docentesService from '../services/docentes.service';
 
 /**
- * Veritas AI — Controlador de Revisiones y Escaneos de Integridad Académica
+ * Plagelio — Controlador de Revisiones y Escaneos de Integridad Académica
  */
 
 export const obtenerTodasLasRevisiones = async (

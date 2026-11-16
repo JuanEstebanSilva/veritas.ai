@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 
 /**
- * Manejador global de errores de Veritas AI.
+ * Manejador global de errores de Plagelio.
  *
  * Mapeo de errores de PostgreSQL / Supabase:
  * - 23505 (unique_violation) -> HTTP 409 Conflict
@@ -16,7 +16,7 @@ export const errorHandler = (
   _next: NextFunction
 ): void => {
   // El detalle completo queda en consola del servidor
-  console.error('[Error Veritas AI]:', err);
+  console.error('[Error Plagelio]:', err);
 
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {

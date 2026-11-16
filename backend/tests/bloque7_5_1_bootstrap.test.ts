@@ -5,11 +5,11 @@ import usuariosService, { crearAdministradorInicial } from '../src/services/usua
 
 /**
  * Suite de Pruebas Automatizadas: Bloque 7.5.1 — Bootstrap del Administrador Inicial
- * Casos BA01 - BA09 adaptados al dominio de Veritas AI
+ * Casos BA01 - BA09 adaptados al dominio de Plagelio
  */
 describe('Bloque 7.5.1 — Inicialización segura del administrador (Bootstrap)', () => {
   const apiKeyValida = '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0';
-  const adminNombre = 'Administrador Veritas';
+  const adminNombre = 'Administrador Plagelio';
   const adminEmail = 'admin@veritas.com';
   const adminPassword = 'SANTOTO_2026—2';
 
@@ -105,7 +105,7 @@ describe('Bloque 7.5.1 — Inicialización segura del administrador (Bootstrap)'
       const res = await request(app).get('/api/health');
       expect(res.status).toBe(200);
       expect(res.body.status).toBe('online');
-      expect(res.body.platform).toBe('Veritas AI');
+      expect(res.body.platform).toBe('Plagelio');
     } finally {
       process.env.ADMIN_NOMBRE = savedNombre;
       process.env.ADMIN_EMAIL = savedEmail;

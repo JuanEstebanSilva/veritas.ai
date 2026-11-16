@@ -23,19 +23,19 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.3',
     info: {
-      title: 'Veritas AI — Documentación Interactiva OpenAPI (Laboratorio 11)',
+      title: 'Plagelio — Documentación Interactiva OpenAPI (Laboratorio 11)',
       version: '1.0.0',
       description:
-        'Documentación OpenAPI y Swagger UI interactiva para la plataforma de Integridad Académica Veritas AI. Incluye persistencia PostgreSQL en Supabase con TLS, Autenticación en dos capas (X-API-Key y JWT Bearer), Control RBAC, Defensa BOLA/IDOR e Integridad Referencial.',
+        'Documentación OpenAPI y Swagger UI interactiva para la plataforma de Integridad Académica Plagelio. Incluye persistencia PostgreSQL en Supabase con TLS, Autenticación en dos capas (X-API-Key y JWT Bearer), Control RBAC, Defensa BOLA/IDOR e Integridad Referencial.',
       contact: {
-        name: 'Equipo de Desarrollo Veritas AI',
-        email: 'soporte@veritas.ai',
+        name: 'Equipo de Desarrollo Plagelio',
+        email: 'soporte@plagelio.com',
       },
     },
     servers: [
       {
         url: 'http://localhost:5000',
-        description: 'Servidor local de desarrollo Veritas AI (Puerto 5000)',
+        description: 'Servidor local de desarrollo Plagelio (Puerto 5000)',
       },
     ],
     tags: [
@@ -45,7 +45,7 @@ const options: swaggerJsdoc.Options = {
       },
       {
         name: 'Departamentos Académicos',
-        description: 'Bloque B: Gestión de facultades y departamentos de Veritas AI (Especialidades)',
+        description: 'Bloque B: Gestión de facultades y departamentos de Plagelio (Especialidades)',
       },
       {
         name: 'Docentes y Auditores',
@@ -57,7 +57,7 @@ const options: swaggerJsdoc.Options = {
       },
       {
         name: 'Laboratorios de Cómputo',
-        description: 'Bloque D: Infraestructura de cómputo y auditoría ética de Veritas AI (Consultorios)',
+        description: 'Bloque D: Infraestructura de cómputo y auditoría ética de Plagelio (Consultorios)',
       },
       {
         name: 'Revisiones Éticas y Agenda',
@@ -84,8 +84,12 @@ const options: swaggerJsdoc.Options = {
         },
       },
     },
-    // LAB 11.6.4: Cada operación declara su esquema de seguridad explícitamente
-    security: [],
+    // Seguridad global por defecto con ApiKeyAuth (compatible con Lab 9, Lab 10 y Bloque 11)
+    security: [
+      {
+        ApiKeyAuth: [],
+      },
+    ],
   },
   apis: docFiles,
 };
@@ -110,7 +114,7 @@ export const setupSwagger = (app: Application): void => {
         docExpansion: 'list',
         filter: true,
       },
-      customSiteTitle: 'Veritas AI — Documentación Interactiva OpenAPI (Lab 11)',
+      customSiteTitle: 'Plagelio — Documentación Interactiva OpenAPI (Lab 11)',
     })
   );
 };

@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 
 /**
- * Utilidades criptográficas para Veritas AI (Fase 2 del Plan de Seguridad)
+ * Utilidades criptográficas para Plagelio (Fase 2 del Plan de Seguridad)
  * Hashing SHA-256 para tokens temporales y generación de códigos de respaldo XXXX-XXXX.
  */
 

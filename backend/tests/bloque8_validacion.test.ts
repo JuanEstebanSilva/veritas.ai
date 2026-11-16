@@ -6,10 +6,10 @@ import usuariosService from '../src/services/usuarios.service';
 
 /**
  * Suite de Pruebas: LABORATORIO 8 — Validación Integral de la API
- * Proyecto: Veritas AI (Integridad Académica y Detección Antiplagio)
+ * Proyecto: Plagelio (Integridad Académica y Detección Antiplagio)
  * Compatible con la rúbrica P01 - P36 y SEG-01 - SEG-08
  */
-describe('Laboratorio 8 — Validación Integral de la API (Veritas AI)', () => {
+describe('Laboratorio 8 — Validación Integral de la API (Plagelio)', () => {
   jest.setTimeout(60000);
 
   const apiKeyValida = '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0';
@@ -43,7 +43,7 @@ describe('Laboratorio 8 — Validación Integral de la API (Veritas AI)', () => 
     } catch {}
 
     // 1. Inicializar Administrador
-    process.env.ADMIN_NOMBRE = 'Administrador Veritas';
+    process.env.ADMIN_NOMBRE = 'Administrador Plagelio';
     process.env.ADMIN_EMAIL = 'admin@veritas.com';
     process.env.ADMIN_PASSWORD = 'SANTOTO_2026—2';
 
@@ -84,7 +84,7 @@ describe('Laboratorio 8 — Validación Integral de la API (Veritas AI)', () => 
 
     // 3. Crear identidades de Estudiantes (Autores)
     const estAUser = await usuariosService.crearUsuario({
-      nombre: 'Estudiante Veritas A',
+      nombre: 'Estudiante Plagelio A',
       email: `estudiante.a_${timestamp}@veritas.com`,
       password: passwordSegura,
     });
@@ -96,7 +96,7 @@ describe('Laboratorio 8 — Validación Integral de la API (Veritas AI)', () => 
     });
 
     const estBUser = await usuariosService.crearUsuario({
-      nombre: 'Estudiante Veritas B',
+      nombre: 'Estudiante Plagelio B',
       email: `estudiante.b_${timestamp}@veritas.com`,
       password: passwordSegura,
     });

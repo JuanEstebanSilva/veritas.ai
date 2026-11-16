@@ -2,7 +2,7 @@
  * @swagger
  * tags:
  *   - name: Autenticación
- *     description: Bloque 11 — Autenticación segura, cambio de contraseña con version_sesion, recuperación administrativa y códigos de respaldo de Veritas AI
+ *     description: Bloque 11 — Autenticación segura, cambio de contraseña con version_sesion, recuperación administrativa y códigos de respaldo de Plagelio
  */
 
 /**
@@ -18,7 +18,7 @@
  *         email:
  *           type: string
  *           format: email
- *           example: admin@veritas.ai
+ *           example: admin@plagelio.com
  *         password:
  *           type: string
  *           format: password
@@ -37,7 +37,7 @@
  *         email:
  *           type: string
  *           format: email
- *           example: estudiante.demo@veritas.ai
+ *           example: estudiante.demo@plagelio.com
  *         password:
  *           type: string
  *           format: password
@@ -103,7 +103,7 @@
  *         email:
  *           type: string
  *           format: email
- *           example: estudiante.demo@veritas.ai
+ *           example: estudiante.demo@plagelio.com
  *         codigo:
  *           type: string
  *           example: A1B2-C3D4-E5F6-0718-9A0B-1C2D-3E4F-5A6B
@@ -150,7 +150,7 @@
  *       - Autenticación
  *     summary: 2. Registro público de Estudiante / Autor
  *     description: >
- *       Registra un nuevo usuario en la plataforma Veritas AI asignando en el servidor el rol seguro de estudiante/autor.
+ *       Registra un nuevo usuario en la plataforma Plagelio asignando en el servidor el rol seguro de estudiante/autor.
  *     security:
  *       - ApiKeyAuth: []
  *     requestBody:
@@ -175,6 +175,8 @@
  *     description: >
  *       Retorna la información del usuario autenticado a partir del JWT enviado en el header Authorization.
  *     security:
+ *       - ApiKeyAuth: []
+ *         BearerAuth: []
  *       - BearerAuth: []
  *     responses:
  *       200:
@@ -214,7 +216,7 @@
  *       - Autenticación
  *     summary: 5. Docente o Administrador autoriza recuperación y emite token temporal
  *     description: >
- *       Permite a un administrador o docente de Veritas AI autorizar la recuperación de una cuenta de prueba
+ *       Permite a un administrador o docente de Plagelio autorizar la recuperación de una cuenta de prueba
  *       emitiendo un token temporal de 15 minutos (almacenado como hash SHA-256 en password_reset_tokens).
  *     security:
  *       - BearerAuth: []

@@ -8,8 +8,8 @@ from docx.enum.table import WD_TABLE_ALIGNMENT, WD_ALIGN_VERTICAL
 from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import nsdecls, qn
 
-DOC_PATH = r"D:\Varios\Varios\GitHub\veritas-ai\Informes\2.2_Informe_Evidencias_Veritas_AI.docx"
-EVIDENCIAS_DIR = r"D:\Varios\Varios\GitHub\veritas-ai\Evidencias_2.2_VeritasAI"
+DOC_PATH = r"D:\Varios\Varios\GitHub\veritas-ai\Informes\2.2_Informe_Evidencias_Plagelio_AI.docx"
+EVIDENCIAS_DIR = r"D:\Varios\Varios\GitHub\veritas-ai\Evidencias_2.2_PlagelioAI"
 
 os.makedirs(os.path.dirname(DOC_PATH), exist_ok=True)
 
@@ -49,7 +49,7 @@ def create_report():
     p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p_title.paragraph_format.space_before = Pt(0)
     p_title.paragraph_format.space_after = Pt(8)
-    run_title = p_title.add_run("2.2. Evidencias de implementación y verificación del Bloque 11 en Veritas AI")
+    run_title = p_title.add_run("2.2. Evidencias de implementación y verificación del Bloque 11 en Plagelio")
     run_title.font.name = 'Times New Roman'
     run_title.font.size = Pt(16)
     run_title.font.bold = True
@@ -145,7 +145,7 @@ def create_report():
     # =========================================================================
     add_section_header("1. Verificación de la Arquitectura y Base de Datos Académica")
     add_context_p(
-        "La base de datos relacional de Veritas AI en PostgreSQL alberga el modelo educativo integral de la plataforma, "
+        "La base de datos relacional de Plagelio en PostgreSQL alberga el modelo educativo integral de la plataforma, "
         "compuesto por usuarios institucionales, perfiles de estudiantes y autores, docentes auditores de integridad, departamentos "
         "académicos, laboratorios de cómputo y revisiones éticas de coincidencia. La implementación del Bloque 11 introdujo mecanismos "
         "criptográficos de persistencia para el control de sesiones y recuperación de cuentas. A continuación, se documentan las "
@@ -156,7 +156,7 @@ def create_report():
         1,
         "Verificación de las tablas del dominio académico y roles vigentes en PostgreSQL",
         "figura_01_tablas_dominio_academico.png",
-        "Se ejecutaron consultas en PostgreSQL mediante la utilidad psql para auditar la existencia de las nueve tablas fundamentales de Veritas AI (roles, usuarios, departamentos, estudiantes, docentes, laboratorios, revisiones, password_reset_tokens y codigos_recuperacion). La respuesta confirma la creación íntegra de las entidades del modelo educativo y la presencia activa de los roles institucionales administrador (ID 1), docente (ID 2) y estudiante (ID 3). Esta verificación garantiza que el esquema relacional en PostgreSQL está sincronizado con la arquitectura modular y desacoplada de la plataforma."
+        "Se ejecutaron consultas en PostgreSQL mediante la utilidad psql para auditar la existencia de las nueve tablas fundamentales de Plagelio (roles, usuarios, departamentos, estudiantes, docentes, laboratorios, revisiones, password_reset_tokens y codigos_recuperacion). La respuesta confirma la creación íntegra de las entidades del modelo educativo y la presencia activa de los roles institucionales administrador (ID 1), docente (ID 2) y estudiante (ID 3). Esta verificación garantiza que el esquema relacional en PostgreSQL está sincronizado con la arquitectura modular y desacoplada de la plataforma."
     )
 
     add_evidence_figure(
@@ -196,7 +196,7 @@ def create_report():
         5,
         "Autenticación exitosa de estudiante con emisión de JWT conteniendo version_sesion",
         "figura_05_login_estudiante_jwt_version_sesion.png",
-        "Se envió una solicitud POST /api/auth/login con credenciales legítimas correspondientes a una cuenta de estudiante registrada en Veritas AI. El controlador respondió con código 200 OK, retornando el objeto del perfil y un token JWT con firma criptográfica HMAC-SHA256 cuyo payload decodificado expone el claim 'vs': 1 junto con el rol estudiante. Esto demuestra la correcta integración entre el ciclo de vida del usuario y la emisión de credenciales de sesión trazables."
+        "Se envió una solicitud POST /api/auth/login con credenciales legítimas correspondientes a una cuenta de estudiante registrada en Plagelio. El controlador respondió con código 200 OK, retornando el objeto del perfil y un token JWT con firma criptográfica HMAC-SHA256 cuyo payload decodificado expone el claim 'vs': 1 junto con el rol estudiante. Esto demuestra la correcta integración entre el ciclo de vida del usuario y la emisión de credenciales de sesión trazables."
     )
 
     add_evidence_figure(
@@ -331,7 +331,7 @@ def create_report():
     # =========================================================================
     add_section_header("5. Control de Acceso Basado en Roles (RBAC)")
     add_context_p(
-        "El control de acceso basado en roles en Veritas AI delimita con precisión las capacidades operativas de cada perfil "
+        "El control de acceso basado en roles en Plagelio delimita con precisión las capacidades operativas de cada perfil "
         "(Administrador, Docente Auditor y Estudiante Autor). Los endpoints de auditoría institucional y administración de infraestructura "
         "están vedados para los estudiantes, quienes únicamente pueden interactuar con sus propios recursos académicos."
     )
@@ -349,7 +349,7 @@ def create_report():
     add_section_header("6. Protección Contra Ataques BOLA / IDOR")
     add_context_p(
         "Las vulnerabilidades Broken Object Level Authorization (BOLA/IDOR) representan el riesgo crítico número uno según el Top 10 "
-        "de OWASP API Security. En Veritas AI, la consulta o manipulación de una revisión ética específica (/api/revisiones/:id) "
+        "de OWASP API Security. En Plagelio, la consulta o manipulación de una revisión ética específica (/api/revisiones/:id) "
         "requiere que el middleware de propiedad verifique que el solicitante sea efectivamente el autor asignado o el docente auditor tutor."
     )
 
@@ -392,7 +392,7 @@ def create_report():
         24,
         "Validación de solicitud Preflight CORS (OPTIONS) para frontend React + Vite",
         "figura_24_cors_preflight_options_vite_react.png",
-        "Se emitió una petición HTTP con método OPTIONS hacia /api/auth/login simulando el preflight del navegador web desde el origen http://localhost:5173. El servidor Express procesó la solicitud respondiendo con código estándar 204 No Content e incluyendo las cabeceras Access-Control-Allow-Origin: http://localhost:5173 y Access-Control-Allow-Methods: GET,POST,PUT,PATCH,DELETE,OPTIONS. Esta configuración garantiza la interoperabilidad segura del cliente web de Veritas AI sin interrupciones por políticas de origen cruzado."
+        "Se emitió una petición HTTP con método OPTIONS hacia /api/auth/login simulando el preflight del navegador web desde el origen http://localhost:5173. El servidor Express procesó la solicitud respondiendo con código estándar 204 No Content e incluyendo las cabeceras Access-Control-Allow-Origin: http://localhost:5173 y Access-Control-Allow-Methods: GET,POST,PUT,PATCH,DELETE,OPTIONS. Esta configuración garantiza la interoperabilidad segura del cliente web de Plagelio sin interrupciones por políticas de origen cruzado."
     )
 
     # =========================================================================
@@ -400,15 +400,15 @@ def create_report():
     # =========================================================================
     add_section_header("9. Documentación Interactiva OpenAPI / Swagger")
     add_context_p(
-        "La arquitectura de software de Veritas AI se encuentra documentada formalmente bajo la especificación OpenAPI 3.0.3, "
+        "La arquitectura de software de Plagelio se encuentra documentada formalmente bajo la especificación OpenAPI 3.0.3, "
         "disponible interactivamente mediante Swagger UI en la ruta /api-docs. Todos los esquemas de seguridad y contratos de los endpoints "
         "del Bloque 11 fueron tipificados con precisión semántica y ejemplos exhaustivos."
     )
 
     add_evidence_figure(
         25,
-        "Documentación interactiva OpenAPI 3.0.3 y Swagger UI en vivo para Veritas AI",
-        "figura_25_swagger_ui_openapi_veritas_ai.png",
+        "Documentación interactiva OpenAPI 3.0.3 y Swagger UI en vivo para Plagelio",
+        "figura_25_swagger_ui_openapi_plagelio.png",
         "Se capturó directamente la interfaz gráfica interactiva de Swagger UI alojada en http://localhost:5000/api-docs. En ella se aprecia la especificación formal bajo el estándar OpenAPI 3.0.3, la declaración explícita de los esquemas de seguridad BearerAuth (JWT) y ApiKeyAuth (X-API-Key), y la catalogación de los nuevos endpoints del Bloque 11 bajo el tag Autenticación. Esta documentación interactiva permite auditar, probar e integrar los servicios de la plataforma de manera transparente y estandarizada."
     )
 
@@ -426,14 +426,14 @@ def create_report():
         26,
         "Resultados de ejecución de la suite automatizada Bloque 11 (26/26 pruebas aprobadas)",
         "figura_26_suite_jest_bloque11_aprobada.png",
-        "Se ejecutó el ejecutor de pruebas Jest mediante el script npm run test:bloque11 sobre el archivo de pruebas tests/bloque11_veritas.test.ts. El resultado arrojó un total de 26 pruebas ejecutadas y 26 pruebas aprobadas al 100% de manera consecutiva en un tiempo de 55.5 segundos. La suite certifica de modo automatizado la totalidad de los requisitos de revocación de sesiones, recuperación administrativa, códigos de respaldo, RBAC, BOLA, API Key y CORS."
+        "Se ejecutó el ejecutor de pruebas Jest mediante el script npm run test:bloque11 sobre el archivo de pruebas tests/bloque11_plagelio.test.ts. El resultado arrojó un total de 26 pruebas ejecutadas y 26 pruebas aprobadas al 100% de manera consecutiva en un tiempo de 55.5 segundos. La suite certifica de modo automatizado la totalidad de los requisitos de revocación de sesiones, recuperación administrativa, códigos de respaldo, RBAC, BOLA, API Key y CORS."
     )
 
     add_evidence_figure(
         27,
         "Resultados acumulados de las suites de validación Bloque 8 y Lab 11 (65/65 pruebas aprobadas)",
         "figura_27_suite_jest_bloque8_lab11_aprobada.png",
-        "Se ejecutaron las suites complementarias de integración npm run test:bloque8 (43 pruebas sobre el modelo educativo, validaciones, agenda y defensa BOLA) y npm run test:lab11 (22 pruebas de autenticación robusta y seguridad relacional). Ambos conjuntos finalizaron con aprobación perfecta (65 de 65 pruebas aprobadas), consolidando un registro histórico global de 91 pruebas exitosas sin fallo alguno. Este balance evidencia la estabilidad y madurez de la arquitectura de ciberseguridad de Veritas AI."
+        "Se ejecutaron las suites complementarias de integración npm run test:bloque8 (43 pruebas sobre el modelo educativo, validaciones, agenda y defensa BOLA) y npm run test:lab11 (22 pruebas de autenticación robusta y seguridad relacional). Ambos conjuntos finalizaron con aprobación perfecta (65 de 65 pruebas aprobadas), consolidando un registro histórico global de 91 pruebas exitosas sin fallo alguno. Este balance evidencia la estabilidad y madurez de la arquitectura de ciberseguridad de Plagelio."
     )
 
     # =========================================================================
@@ -441,7 +441,7 @@ def create_report():
     # =========================================================================
     add_section_header("11. Tabla de Resultados de Pruebas")
     add_context_p(
-        "A continuación, se resume la matriz de verificación técnica de todas las pruebas ejecutadas en Veritas AI durante la auditoría "
+        "A continuación, se resume la matriz de verificación técnica de todas las pruebas ejecutadas en Plagelio durante la auditoría "
         "del Bloque 11. Se especifican el endpoint o consulta, el rol actuante, el código HTTP o resultado obtenido, el estado de "
         "conformidad y la observación técnica correspondiente."
     )
@@ -450,7 +450,7 @@ def create_report():
     table_data = [
         # (Prueba, Endpoint/Consulta, Rol, HTTP/Resultado, Estado, Observación)
         ("1. Estructura relacional", "information_schema.tables", "postgres", "9 tablas halladas", "APROBADO", "Tablas académicas y de recuperación persistidas"),
-        ("2. Roles institucionales", "public.roles", "postgres", "admin, docente, estudiante", "APROBADO", "Roles activos en dominio Veritas AI"),
+        ("2. Roles institucionales", "public.roles", "postgres", "admin, docente, estudiante", "APROBADO", "Roles activos en dominio Plagelio"),
         ("3. Catálogo RLS", "pg_class.relrowsecurity", "postgres", "true en 9 tablas", "APROBADO", "Seguridad por filas habilitada en motor"),
         ("4. Columna version_sesion", "public.usuarios", "postgres", "INT NOT NULL DEFAULT 1", "APROBADO", "Soporte para trazabilidad de sesión en BD"),
         ("5. Conexión de backend", "pg_roles.rolbypassrls", "postgres", "rolbypassrls = true", "APROBADO", "Demuestra primacía del middleware Express"),
@@ -476,7 +476,7 @@ def create_report():
         ("25. Recurso privado sin API Key", "GET /api/seguridad/cliente", "Anónimo", "HTTP 401 API Key requerida", "APROBADO", "Control perimetral de integraciones privadas"),
         ("26. Recurso privado con API Key", "GET /api/seguridad/cliente", "Cliente privado", "HTTP 200 OK", "APROBADO", "Autorización legítima de cliente institucional"),
         ("27. Preflight CORS React+Vite", "OPTIONS /api/auth/login", "Frontend 5173", "HTTP 204 No Content", "APROBADO", "Cabeceras Allow-Origin y Allow-Methods"),
-        ("28. Suite Jest Bloque 11", "tests/bloque11_veritas.test.ts", "CI/CD Automático", "26 / 26 superadas (100%)", "APROBADO", "Certificación automatizada de Bloque 11"),
+        ("28. Suite Jest Bloque 11", "tests/bloque11_plagelio.test.ts", "CI/CD Automático", "26 / 26 superadas (100%)", "APROBADO", "Certificación automatizada de Bloque 11"),
         ("29. Suite Jest Bloque 8", "tests/bloque8_validacion.test.ts", "CI/CD Automático", "43 / 43 superadas (100%)", "APROBADO", "Certificación de dominio académico y BOLA"),
         ("30. Suite Jest Lab 11", "tests/lab11.test.ts", "CI/CD Automático", "22 / 22 superadas (100%)", "APROBADO", "Certificación acumulada de seguridad"),
     ]
@@ -549,7 +549,7 @@ def create_report():
     add_section_header("12. Conclusión Técnica")
     
     add_context_p(
-        "La ejecución integral de la auditoría y verificación del Bloque 11 en la plataforma Veritas AI ha certificado la efectividad "
+        "La ejecución integral de la auditoría y verificación del Bloque 11 en la plataforma Plagelio ha certificado la efectividad "
         "del modelo de ciberseguridad defensiva implementado. Las pruebas reales, respaldadas por un índice perfecto del 100% de aprobación "
         "en las suites automatizadas de Jest (91 pruebas en total), acreditan que cada vector de vulnerabilidad identificado en los "
         "lineamientos de la actividad fue mitigado de forma exhaustiva conforme a los más rigurosos estándares de la industria (OWASP API Security Top 10)."
@@ -561,7 +561,7 @@ def create_report():
         "la consulta de auditoría que la conexión entre el backend y PostgreSQL opera bajo el superusuario 'postgres' (el cual posee el flag "
         "rolbypassrls = true habilitado por naturaleza en instancias gestionadas y en contenedores de desarrollo), se demuestra que las "
         "políticas RLS del motor no actúan como filtro restrictivo sobre las consultas originadas por el pool de la aplicación. Por consiguiente, "
-        "la defensa en profundidad de Veritas AI depende indefectiblemente de la rigurosidad con que los middlewares de la aplicación "
+        "la defensa en profundidad de Plagelio depende indefectiblemente de la rigurosidad con que los middlewares de la aplicación "
         "(auth.middleware.ts, roles.middleware.ts, propiedad.middleware.ts y apiKeyMiddleware.ts) fiscalizan cada solicitud."
     )
 
@@ -572,7 +572,7 @@ def create_report():
         "preservan la confidencialidad absoluta al almacenar únicamente resúmenes unidireccionales SHA-256; 3) el control de acceso basado en "
         "roles (RBAC) y la validación de pertenencia de objeto (defensa anti-BOLA/IDOR) garantizan que ningún estudiante o docente pueda acceder, "
         "consultar o alterar registros académicos ajenos; y 4) el desacoplamiento de API Key y el manejo estándar de preflight CORS (204 No Content) "
-        "aseguran la total compatibilidad con clientes web modernos construidos con React y Vite. Veritas AI dispone así de una infraestructura "
+        "aseguran la total compatibilidad con clientes web modernos construidos con React y Vite. Plagelio dispone así de una infraestructura "
         "robusta, resiliente y estrictamente ajustada a su dominio académico."
     )
 

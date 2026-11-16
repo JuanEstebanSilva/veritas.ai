@@ -35,7 +35,7 @@ export const autorizarRoles = (...rolesPermitidos: string[]) => {
       // Coincidencia exacta
       if (rolPermitido === rawRol) return true;
 
-      // Equivalencias de administrador en Veritas AI
+      // Equivalencias de administrador en Plagelio
       if (
         (rolPermitido === 'administrador' || rolPermitido === 'admin') &&
         (rawRol === 'administrador' || rawRol === 'admin')
@@ -43,7 +43,7 @@ export const autorizarRoles = (...rolesPermitidos: string[]) => {
         return true;
       }
 
-      // Equivalencias de paciente / estudiante / usuario en Veritas AI
+      // Equivalencias de paciente / estudiante / usuario en Plagelio
       if (
         (rolPermitido === 'paciente' || rolPermitido === 'user' || rolPermitido === 'usuario' || rolPermitido === 'estudiante') &&
         (rawRol === 'paciente' || rawRol === 'user' || rawRol === 'usuario' || rawRol === 'estudiante')
@@ -51,7 +51,7 @@ export const autorizarRoles = (...rolesPermitidos: string[]) => {
         return true;
       }
 
-      // Equivalencias de médico / docente / profesor / especialista en Veritas AI
+      // Equivalencias de médico / docente / profesor / especialista en Plagelio
       if (
         (rolPermitido === 'medico' || rolPermitido === 'doctor' || rolPermitido === 'auditor' || rolPermitido === 'docente' || rolPermitido === 'profesor') &&
         (rawRol === 'medico' || rawRol === 'doctor' || rawRol === 'auditor' || rawRol === 'docente' || rawRol === 'profesor')

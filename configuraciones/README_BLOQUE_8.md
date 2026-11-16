@@ -1,22 +1,22 @@
-# LABORATORIO 8 — Validación Integral de la API Veritas AI
+# LABORATORIO 8 — Validación Integral de la API Plagelio
 ## Plataforma de Integridad Académica, Detección de IA y Antiplagio
 
 ---
 
 ## 1. Objetivo del Laboratorio
 
-Ejecutar, documentar y validar integralmente los controles funcionales, de seguridad, persistencia, autorización basada en roles (RBAC), control de acceso por objeto (BOLA / IDOR) y restricciones transaccionales de la **API Veritas AI** (Node.js, Express, TypeScript y PostgreSQL / Supabase).
+Ejecutar, documentar y validar integralmente los controles funcionales, de seguridad, persistencia, autorización basada en roles (RBAC), control de acceso por objeto (BOLA / IDOR) y restricciones transaccionales de la **API Plagelio** (Node.js, Express, TypeScript y PostgreSQL / Supabase).
 
 ### Metáfora de Validación
-El Bloque 7.5 y 7.5.1 construyeron los módulos del campus digital de Veritas AI y asignaron la llave maestra (bootstrap). El **Laboratorio 8** es la inspección rigurosa de cada puerta, permiso de acceso, agenda de revisión y resguardo de datos para garantizar que ningún estudiante pueda vulnerar documentos ajenos y ningún docente inactivo pueda emitir dictámenes.
+El Bloque 7.5 y 7.5.1 construyeron los módulos del campus digital de Plagelio y asignaron la llave maestra (bootstrap). El **Laboratorio 8** es la inspección rigurosa de cada puerta, permiso de acceso, agenda de revisión y resguardo de datos para garantizar que ningún estudiante pueda vulnerar documentos ajenos y ningún docente inactivo pueda emitir dictámenes.
 
 ---
 
 ## 2. Equivalencia y Compatibilidad de Dominio
 
-Para garantizar coherencia con la misión del proyecto (Veritas AI) y a la vez permitir compatibilidad transparente con cualquier instrumento o script de evaluación basado en la rúbrica original, la plataforma implementa una capa de **equivalencias duales**:
+Para garantizar coherencia con la misión del proyecto (Plagelio) y a la vez permitir compatibilidad transparente con cualquier instrumento o script de evaluación basado en la rúbrica original, la plataforma implementa una capa de **equivalencias duales**:
 
-| Dominio Veritas AI (Principal) | Dominio Rúbrica (Alias de Compatibilidad) | Descripción en el Sistema |
+| Dominio Plagelio (Principal) | Dominio Rúbrica (Alias de Compatibilidad) | Descripción en el Sistema |
 |---|---|---|
 | **`estudiantes`** | `pacientes` | Autores de trabajos de grado, ensayos y artículos académicos. |
 | **`docentes`** / `auditores` | `medicos` | Profesores y evaluadores encargados de dictaminar integridad y plagio. |

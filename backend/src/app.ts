@@ -87,8 +87,8 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 // Ruta principal (Bloque 11)
 app.get('/', (_req: Request, res: Response) => {
   res.status(200).json({
-    plataforma: 'Veritas AI',
-    mensaje: 'API Veritas AI funcionando correctamente',
+    plataforma: 'Plagelio',
+    mensaje: 'API Plagelio funcionando correctamente',
     version: '1.0.0',
   });
 });
@@ -97,7 +97,7 @@ app.get('/', (_req: Request, res: Response) => {
 app.get('/api/health', (_req: Request, res: Response) => {
   res.status(200).json({
     status: 'online',
-    platform: 'Veritas AI',
+    platform: 'Plagelio',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
   });
@@ -118,7 +118,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/security', securityRoutes);
 app.use('/api/seguridad', securityRoutes);
 
-// Rutas de Autorización Segura, RBAC y BOLA (Lab 10 - Veritas AI: Dominio Académico)
+// Rutas de Autorización Segura, RBAC y BOLA (Lab 10 - Plagelio: Dominio Académico)
 app.use(['/api/usuarios', '/api/users'], usuariosRoutes);
 app.use(['/api/estudiantes', '/api/pacientes'], estudiantesRoutes);
 app.use(['/api/docentes', '/api/auditores', '/api/profesores', '/api/medicos'], docentesRoutes);

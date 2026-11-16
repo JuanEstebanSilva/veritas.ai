@@ -1,5 +1,5 @@
 /**
- * Veritas AI — Prueba de Integración de Extremo a Extremo (E2E)
+ * Plagelio — Prueba de Integración de Extremo a Extremo (E2E)
  * Valida la persistencia en PostgreSQL / Supabase, el ciclo de vida completo de entidades,
  * RBAC, BOLA/IDOR, rechazo de duplicados y bloqueo por integridad referencial.
  */
@@ -12,7 +12,7 @@ const apiKey = '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0
 
 async function ejecutarPruebaE2E() {
   console.log('================================================================');
-  console.log('🛡️  VERITAS AI — SUITE DE PRUEBAS DE INTEGRACIÓN E2E (SUPABASE / POSTGRESQL)');
+  console.log('🛡️  PLAGELIO — SUITE DE PRUEBAS DE INTEGRACIÓN E2E (SUPABASE / POSTGRESQL)');
   console.log('================================================================');
 
   const ts = Date.now();
@@ -65,7 +65,7 @@ async function ejecutarPruebaE2E() {
       .set('X-API-Key', apiKey)
       .set('Authorization', `Bearer ${tokenAdmin}`)
       .send({
-        nombre: 'Dr. Alejandro Veritas',
+        nombre: 'Dr. Alejandro Plagelio',
         email: emailDocente,
         password: 'ClaveDocente2026!',
         rol: 'docente',
@@ -88,7 +88,7 @@ async function ejecutarPruebaE2E() {
       .post('/api/auth/registro')
       .set('X-API-Key', apiKey)
       .send({
-        nombre: 'Estudiante A Veritas',
+        nombre: 'Estudiante A Plagelio',
         email: emailEstA,
         password: 'ClaveEstudiante2026!',
       });
@@ -110,7 +110,7 @@ async function ejecutarPruebaE2E() {
       .post('/api/auth/registro')
       .set('X-API-Key', apiKey)
       .send({
-        nombre: 'Estudiante B Veritas',
+        nombre: 'Estudiante B Plagelio',
         email: emailEstB,
         password: 'ClaveEstudiante2026!',
       });
@@ -134,7 +134,7 @@ async function ejecutarPruebaE2E() {
       .set('X-API-Key', apiKey)
       .set('Authorization', `Bearer ${tokenAdmin}`)
       .send({
-        nombre: 'Dr. Alejandro Veritas',
+        nombre: 'Dr. Alejandro Plagelio',
         registroAcademico: `REG-${ts}`,
         email: emailDocente,
         telefono: '3109988776',
@@ -153,7 +153,7 @@ async function ejecutarPruebaE2E() {
       .set('X-API-Key', apiKey)
       .set('Authorization', `Bearer ${tokenAdmin}`)
       .send({
-        nombre: 'Estudiante A Veritas',
+        nombre: 'Estudiante A Plagelio',
         documento: `DOC-A-${ts}`,
         email: emailEstA,
         telefono: '3001234567',
@@ -172,7 +172,7 @@ async function ejecutarPruebaE2E() {
       .set('X-API-Key', apiKey)
       .set('Authorization', `Bearer ${tokenAdmin}`)
       .send({
-        nombre: 'Estudiante B Veritas',
+        nombre: 'Estudiante B Plagelio',
         documento: `DOC-B-${ts}`,
         email: emailEstB,
         telefono: '3007654321',

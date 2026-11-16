@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Veritas AI — Script de Verificación de Conexión a Base de Datos (PostgreSQL / Supabase)
+ * Plagelio — Script de Verificación de Conexión a Base de Datos (PostgreSQL / Supabase)
  * Valida la conectividad TLS/SSL y realiza lectura de roles/identidades.
  */
 const path = require('path');
@@ -9,7 +9,7 @@ const { consultar, pool } = require('../src/config/database');
 
 async function probarConexion() {
   console.log('======================================================================');
-  console.log('🔍 Veritas AI: Verificando conectividad con PostgreSQL / Supabase...');
+  console.log('🔍 Plagelio: Verificando conectividad con PostgreSQL / Supabase...');
   console.log('======================================================================');
 
   try {

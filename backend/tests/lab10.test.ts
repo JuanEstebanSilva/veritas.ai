@@ -14,12 +14,12 @@ const citasService = revisionesService;
 
 /**
  * Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/BOLA y Control de Acceso a Recursos
- * Veritas AI — SUITE DE PRUEBAS COMPLETA (BLOQUE 6A, 6B y 6C)
+ * Plagelio — SUITE DE PRUEBAS COMPLETA (BLOQUE 6A, 6B y 6C)
  *
- * Dominio adaptado a Veritas AI (@veritas.com y @veritas.ai).
+ * Dominio adaptado a Plagelio (@veritas.com y @veritas.ai).
  * Verifica los 30 casos obligatorios y los escenarios de la matriz de autorización.
  */
-describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/BOLA (Veritas AI)', () => {
+describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/BOLA (Plagelio)', () => {
   jest.setTimeout(60000);
 
   const apiKeyValida = '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0';
@@ -50,7 +50,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
 
   beforeAll(async () => {
     // 1. Inicializar Administrador Bootstrap (Bloque 6A)
-    process.env.ADMIN_NOMBRE = 'Administrador Veritas';
+    process.env.ADMIN_NOMBRE = 'Administrador Plagelio';
     process.env.ADMIN_EMAIL = 'admin@veritas.com';
     process.env.ADMIN_PASSWORD = 'SANTOTO_2026—2';
 
@@ -91,7 +91,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
 
     // Registro público de Pacientes (rol paciente asignado por servidor)
     const pacienteAUser = await usuariosService.crearUsuario({
-      nombre: 'Paciente Veritas A',
+      nombre: 'Paciente Plagelio A',
       email: `paciente.a_${timestamp}@veritas.com`,
       password: passwordSegura,
     });
@@ -103,7 +103,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
     });
 
     const pacienteBUser = await usuariosService.crearUsuario({
-      nombre: 'Paciente Veritas B',
+      nombre: 'Paciente Plagelio B',
       email: `paciente.b_${timestamp}@veritas.com`,
       password: passwordSegura,
     });
@@ -128,7 +128,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
 
     // 3. Crear perfiles en datos con asociación explícita a usuarioId
     const medA = await medicosService.crearMedico({
-      nombre: 'Médico Veritas A',
+      nombre: 'Médico Plagelio A',
       registroMedico: `RM-A-${timestamp}`,
       email: `medico.a_${timestamp}@veritas.com`,
       telefono: '3101112233',
@@ -138,7 +138,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
     medicoAId = medA.id;
 
     const medB = await medicosService.crearMedico({
-      nombre: 'Médico Veritas B',
+      nombre: 'Médico Plagelio B',
       registroMedico: `RM-B-${timestamp}`,
       email: `medico.b_${timestamp}@veritas.com`,
       telefono: '3104445566',
@@ -148,7 +148,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
     medicoBId = medB.id;
 
     const pacA = await pacientesService.crearPaciente({
-      nombre: 'Paciente Veritas A',
+      nombre: 'Paciente Plagelio A',
       documento: `DOC-A-${timestamp}`,
       email: `paciente.a_${timestamp}@veritas.com`,
       telefono: '3001112233',
@@ -158,7 +158,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
     pacienteAId = pacA.id;
 
     const pacB = await pacientesService.crearPaciente({
-      nombre: 'Paciente Veritas B',
+      nombre: 'Paciente Plagelio B',
       documento: `DOC-B-${timestamp}`,
       email: `paciente.b_${timestamp}@veritas.com`,
       telefono: '3004445566',
@@ -172,7 +172,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
       pacienteId: pacienteAId,
       medicoId: medicoAId,
       fecha: '2026-12-10T10:00:00Z',
-      motivo: 'Control Paciente A Veritas',
+      motivo: 'Control Paciente A Plagelio',
       estado: 'programada',
     });
     citaAId = cA.id;
@@ -181,7 +181,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
       pacienteId: pacienteBId,
       medicoId: medicoBId,
       fecha: '2026-12-11T11:00:00Z',
-      motivo: 'Control Paciente B Veritas',
+      motivo: 'Control Paciente B Plagelio',
       estado: 'programada',
     });
     citaBId = cB.id;
@@ -342,7 +342,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         .post('/api/auth/registro')
         .set('X-API-Key', apiKeyValida)
         .send({
-          nombre: 'Usuario Público Veritas',
+          nombre: 'Usuario Público Plagelio',
           email: emailPublico,
           password: passwordSegura,
         });
@@ -357,7 +357,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         .post('/api/auth/registro')
         .set('X-API-Key', apiKeyValida)
         .send({
-          nombre: 'Atacante Veritas',
+          nombre: 'Atacante Plagelio',
           email: emailAtaque,
           password: passwordSegura,
           rol: 'administrador',
@@ -381,7 +381,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         .set('X-API-Key', apiKeyValida)
         .set('Authorization', `Bearer ${tokenAdmin}`)
         .send({
-          nombre: 'Médico Hospitalario Veritas',
+          nombre: 'Médico Hospitalario Plagelio',
           email: `doc_${timestamp}@veritas.com`,
           password: passwordSegura,
           rol: 'medico',
@@ -399,7 +399,7 @@ describe('Laboratorio No. 10 — Autorización Segura en APIs REST: RBAC, IDOR/B
         .set('X-API-Key', apiKeyValida)
         .set('Authorization', `Bearer ${tokenAdmin}`)
         .send({
-          nombre: 'Segundo Administrador Veritas',
+          nombre: 'Segundo Administrador Plagelio',
           email: `admin2_${timestamp}@veritas.com`,
           password: passwordSegura,
           rol: 'administrador',

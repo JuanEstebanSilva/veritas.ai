@@ -39,7 +39,7 @@ const mapearEstudiante = (row: any): Estudiante => {
 };
 
 /**
- * Veritas AI — Servicio de Estudiantes / Autores Académicos
+ * Plagelio — Servicio de Estudiantes / Autores Académicos
  * Migrado a persistencia PostgreSQL / Supabase
  */
 export const obtenerEstudiantes = async (): Promise<Estudiante[]> => {

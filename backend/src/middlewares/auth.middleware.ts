@@ -4,7 +4,7 @@ import { prisma } from '../config/prisma';
 import usuariosService from '../services/usuarios.service';
 
 /**
- * Laboratorio No. 9 y Bloque 11 — Veritas AI
+ * Laboratorio No. 9 y Bloque 11 — Plagelio
  * Autenticación con JWT, verificación de cuenta activa y version_sesion (vs)
  *
  * Middleware para validar el token Bearer en cabecera Authorization.
@@ -109,7 +109,7 @@ export const autenticarJWT = async (
       versionSesion: vsUsuario,
     };
 
-    // Compatibilidad adicional para endpoints que consumen req.user en Veritas AI
+    // Compatibilidad adicional para endpoints que consumen req.user en Plagelio
     if (subVal) {
       try {
         const user = await prisma.user.findUnique({

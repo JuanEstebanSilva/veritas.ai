@@ -1,5 +1,5 @@
 # GUÍA MAESTRA DE EVIDENCIAS: BLOQUE 7.5.1 Y BLOQUE 8
-## Proyecto: Veritas AI (Plataforma de Integridad Académica y Detección de IA)
+## Proyecto: Plagelio (Plataforma de Integridad Académica y Detección de IA)
 
 Esta guía detalla con total precisión **dónde termina el Bloque 7.5.1** y **dónde comienza el Bloque 8**, qué capturas de pantalla debes tomar, qué herramientas utilizar (Terminal, Postman, Swagger UI, SQL Editor) y qué resultados deben verse en cada una.
 

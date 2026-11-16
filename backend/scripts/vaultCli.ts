@@ -23,7 +23,7 @@ const SENSITIVE_VARS = [
 function printHelp() {
   console.log(`
 ===========================================================
-🔐 Veritas AI — CryptoVault CLI de Ciberseguridad
+🔐 Plagelio — CryptoVault CLI de Ciberseguridad
 ===========================================================
 Uso:
   npx ts-node scripts/vaultCli.ts encrypt "<secreto>"

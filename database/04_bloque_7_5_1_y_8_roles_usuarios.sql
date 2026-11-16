@@ -1,5 +1,5 @@
 -- ============================================================================
--- VERITAS AI — PLATAFORMA DE INTEGRIDAD ACADÉMICA Y DETECCIÓN ANTIPLAGIO
+-- PLAGELIO — PLATAFORMA DE INTEGRIDAD ACADÉMICA Y DETECCIÓN ANTIPLAGIO
 -- SCRIPT: 04_bloque_7_5_1_y_8_roles_usuarios.sql
 -- ============================================================================
 -- 1. Tabla 'roles' y 'usuarios' para dar soporte al Bootstrap (Bloque 7.5.1)
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS public.roles (
 
 INSERT INTO public.roles (id, nombre, descripcion, activo)
 VALUES
-  (1, 'administrador', 'Control total de la plataforma y administración general de Veritas AI', true),
+  (1, 'administrador', 'Control total de la plataforma y administración general de Plagelio', true),
   (2, 'docente', 'Auditor de integridad académica y evaluador de trabajos', true),
   (3, 'estudiante', 'Autor de documentos académicos y solicitante de revisiones', true),
   (4, 'medico', 'Alias para docente/auditor (rúbrica hospitalaria)', true),

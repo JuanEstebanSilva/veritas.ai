@@ -6,9 +6,9 @@ import usuariosService from '../src/services/usuarios.service';
 
 /**
  * Laboratorio No. 8 — Control del rol y prevención de escalada de privilegios
- * Veritas AI — CHECKPOINT COMPLETO (BLOQUE 4B)
+ * Plagelio — CHECKPOINT COMPLETO (BLOQUE 4B)
  */
-describe('Laboratorio No. 8 — Control del rol y prevención de escalada de privilegios (Veritas AI)', () => {
+describe('Laboratorio No. 8 — Control del rol y prevención de escalada de privilegios (Plagelio)', () => {
   const timestamp = Date.now();
   const testPassword = 'ClaveSegura2026!';
   const emailNormal = `estudiante_${timestamp}@veritas.ai`;
@@ -37,7 +37,7 @@ describe('Laboratorio No. 8 — Control del rol y prevención de escalada de pri
     const res = await request(app)
       .post('/api/auth/registro')
       .send({
-        nombre: 'Estudiante Veritas',
+        nombre: 'Estudiante Plagelio',
         email: emailNormal,
         password: testPassword,
       });
@@ -164,7 +164,7 @@ describe('Laboratorio No. 8 — Control del rol y prevención de escalada de pri
   // =========================================================================
   // DEFENSA EN PROFUNDIDAD: Capa 1 (matchedData allowlisting) y Capa 2 (Servicio)
   // =========================================================================
-  describe('Verificación arquitectónica de las Dos Defensas en Veritas AI', () => {
+  describe('Verificación arquitectónica de las Dos Defensas en Plagelio', () => {
     it('Primera defensa: express-validator matchedData() filtra y elimina rol, activo y esSuperAdmin', () => {
       // Simular un request con payload malicioso
       const mockReq: any = {

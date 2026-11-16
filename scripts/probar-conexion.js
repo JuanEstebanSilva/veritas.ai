@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Veritas AI — Script de Verificación de Conexión a Base de Datos (Root Wrapper)
+ * Plagelio — Script de Verificación de Conexión a Base de Datos (Root Wrapper)
  */
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../backend/.env') });
@@ -8,7 +8,7 @@ const { consultar, pool } = require('../backend/src/config/database');
 
 async function probarConexion() {
   console.log('======================================================================');
-  console.log('🔍 Veritas AI: Verificando conectividad con PostgreSQL / Supabase...');
+  console.log('🔍 Plagelio: Verificando conectividad con PostgreSQL / Supabase...');
   console.log('======================================================================');
 
   try {

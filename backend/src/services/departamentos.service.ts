@@ -14,7 +14,7 @@ export interface DatosDepartamento {
 }
 
 /**
- * Veritas AI — Servicio de Departamentos y Facultades Académicas (Especialidades)
+ * Plagelio — Servicio de Departamentos y Facultades Académicas (Especialidades)
  * Migrado a persistencia PostgreSQL / Supabase
  */
 export const obtenerDepartamentos = async (): Promise<Departamento[]> => {

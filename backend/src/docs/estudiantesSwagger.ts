@@ -27,7 +27,7 @@
  *         email:
  *           type: string
  *           format: email
- *           example: laura@veritas.ai
+ *           example: laura@plagelio.com
  *         telefono:
  *           type: string
  *           example: "3123456789"
@@ -53,7 +53,7 @@
  *           example: "1045678901"
  *         email:
  *           type: string
- *           example: laura@veritas.ai
+ *           example: laura@plagelio.com
  *         telefono:
  *           type: string
  *           example: "3123456789"

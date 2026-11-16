@@ -1,11 +1,11 @@
 # Bloque 7.5.1 — Inicialización Segura del Administrador mediante Script Independiente (Bootstrap)
-## Plataforma: Veritas AI (Detección de IA, Integridad Académica y Antiplagio)
+## Plataforma: Plagelio (Detección de IA, Integridad Académica y Antiplagio)
 
 ---
 
 ## 1. Objetivo del Bloque
 
-Separar la creación del **primer usuario administrador** del arranque habitual del servidor HTTP de la **API Veritas AI** (Node.js, Express, TypeScript y PostgreSQL / Supabase). 
+Separar la creación del **primer usuario administrador** del arranque habitual del servidor HTTP de la **API Plagelio** (Node.js, Express, TypeScript y PostgreSQL / Supabase). 
 
 - El bootstrap administrativo se ejecuta de manera explícita y controlada mediante el comando:
   ```bash
@@ -13,7 +13,7 @@ Separar la creación del **primer usuario administrador** del arranque habitual 
   ```
 - El arranque del servicio HTTP (`npm run dev` o `npm start` ejecutando `src/server.ts`) **únicamente** inicializa el servidor web y escucha peticiones, sin crear usuarios administradores automáticamente en cada encendido.
 
-> **Compatibilidad de Dominio:** Veritas AI modela un ecosistema de integridad académica con **Estudiantes (Autores)**, **Docentes (Auditores)**, **Departamentos**, **Laboratorios / Nodos de Cómputo** y **Revisiones**. Para garantizar 100% de cumplimiento con la rúbrica de evaluación académica, el sistema mantiene vistas y alias de compatibilidad equivalentes (`pacientes`, `medicos`, `consultorios`, `citas`, `especialidades`).
+> **Compatibilidad de Dominio:** Plagelio modela un ecosistema de integridad académica con **Estudiantes (Autores)**, **Docentes (Auditores)**, **Departamentos**, **Laboratorios / Nodos de Cómputo** y **Revisiones**. Para garantizar 100% de cumplimiento con la rúbrica de evaluación académica, el sistema mantiene vistas y alias de compatibilidad equivalentes (`pacientes`, `medicos`, `consultorios`, `citas`, `especialidades`).
 
 ---
 
@@ -25,7 +25,7 @@ El bootstrap administrativo equivale a entregar la **primera llave maestra** dur
 
 ```text
 =============================================================================
-ARQUITECTURA DESACOPLADA VERITAS AI
+ARQUITECTURA DESACOPLADA PLAGELIO
 =============================================================================
 
 INICIALIZACIÓN CONTROLADA (Bootstrap)        OPERACIÓN HABITUAL (Servidor HTTP)

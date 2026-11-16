@@ -1,7 +1,7 @@
 import { AuthController } from './AuthController';
 
 /**
- * Laboratorio No. 9 y Bloque 11 — Veritas AI
+ * Laboratorio No. 9 y Bloque 11 — Plagelio
  * Controlador de Autenticación, Recuperación Administrativa y Códigos de Respaldo
  */
 export const registrar = AuthController.register;

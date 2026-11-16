@@ -1,5 +1,5 @@
 -- ============================================================================
--- VERITAS AI — FASE 1: ÍNDICES PARCIALES ANTI-CONFLICTO Y RENDIMIENTO (BLOQUE 11)
+-- PLAGELIO — FASE 1: ÍNDICES PARCIALES ANTI-CONFLICTO Y RENDIMIENTO (BLOQUE 11)
 -- Adaptado al modelo académico: Docentes, Estudiantes, Laboratorios y Revisiones
 -- ============================================================================
 

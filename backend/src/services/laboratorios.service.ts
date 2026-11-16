@@ -33,7 +33,7 @@ const mapearLaboratorio = (row: any): Laboratorio => {
 };
 
 /**
- * Veritas AI — Servicio de Laboratorios y Nodos de Cómputo e Inferencia
+ * Plagelio — Servicio de Laboratorios y Nodos de Cómputo e Inferencia
  * Migrado a persistencia PostgreSQL / Supabase
  */
 export const obtenerLaboratorios = async (): Promise<Laboratorio[]> => {

@@ -3,7 +3,7 @@ import { matchedData } from 'express-validator';
 import departamentosService from '../services/departamentos.service';
 
 /**
- * Veritas AI — Controlador de Departamentos y Facultades Académicas (Especialidades)
+ * Plagelio — Controlador de Departamentos y Facultades Académicas (Especialidades)
  */
 
 export const obtenerDepartamentos = async (

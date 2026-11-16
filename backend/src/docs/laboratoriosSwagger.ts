@@ -2,7 +2,7 @@
  * @swagger
  * tags:
  *   - name: Laboratorios de Cómputo
- *     description: Infraestructura de cómputo y auditoría ética de Veritas AI (Bloque D / Consultorios)
+ *     description: Infraestructura de cómputo y auditoría ética de Plagelio (Bloque D / Consultorios)
  */
 
 /**

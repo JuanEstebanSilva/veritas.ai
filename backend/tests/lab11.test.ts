@@ -4,7 +4,7 @@ import usuariosService from '../src/services/usuarios.service';
 
 const apiKey = '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0';
 
-describe('Laboratorio No. 11 — Veritas AI (Auditoría de Integridad Académica: 22 Tests)', () => {
+describe('Laboratorio No. 11 — Plagelio (Auditoría de Integridad Académica: 22 Tests)', () => {
   let tokenAdmin = '';
   let tokenEstudiante = '';
   let timestamp = Date.now();
@@ -15,7 +15,7 @@ describe('Laboratorio No. 11 — Veritas AI (Auditoría de Integridad Académica
   });
 
   describe('Bloque A: Autenticación y Perfil Académico', () => {
-    it('1. Login Administrador Veritas AI debe responder 200 OK y devolver token', async () => {
+    it('1. Login Administrador Plagelio debe responder 200 OK y devolver token', async () => {
       const res = await request(app)
         .post('/api/auth/login')
         .set('X-API-Key', apiKey)

@@ -350,7 +350,7 @@ export class LiveSearchService {
 
       const res = await fetch(url, {
         signal: controller.signal,
-        headers: { 'User-Agent': 'VeritasAcademicSearch/2.0 (mailto:contact@veritas.ai)' },
+        headers: { 'User-Agent': 'PlagelioAcademicSearch/2.0 (mailto:contact@plagelio.com)' },
       });
       clearTimeout(timer);
 
@@ -403,7 +403,7 @@ export class LiveSearchService {
       const res = await fetch(url, {
         signal: controller.signal,
         headers: {
-          'User-Agent': 'VeritasAcademicSearch/2.0 (academic-plagiarism-checker; contact@veritas.ai)',
+          'User-Agent': 'PlagelioAcademicSearch/2.0 (academic-plagiarism-checker; contact@plagelio.com)',
           Accept: 'application/json',
         },
       });

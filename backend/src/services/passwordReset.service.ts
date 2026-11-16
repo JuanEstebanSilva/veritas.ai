@@ -6,7 +6,7 @@ import usuariosService, { usuariosMemoria } from './usuarios.service';
 
 /**
  * Servicio de Recuperación Administrativa de Contraseñas (Laboratorio / Bloque 11)
- * Veritas AI — Plataforma de Integridad Académica
+ * Plagelio — Plataforma de Integridad Académica
  *
  * Permite que un docente o administrador autorice la emisión de un token temporal
  * de 15 minutos, almacenado de forma segura como hash SHA-256.

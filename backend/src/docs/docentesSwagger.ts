@@ -27,7 +27,7 @@
  *         email:
  *           type: string
  *           format: email
- *           example: carlos.ruiz@veritas.ai
+ *           example: carlos.ruiz@plagelio.com
  *         telefono:
  *           type: string
  *           example: "3101112233"
@@ -51,7 +51,7 @@
  *           example: DOC-7788
  *         email:
  *           type: string
- *           example: carlos.ruiz@veritas.ai
+ *           example: carlos.ruiz@plagelio.com
  *         telefono:
  *           type: string
  *           example: "3101112233"

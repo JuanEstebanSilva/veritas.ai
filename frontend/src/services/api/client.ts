@@ -21,7 +21,7 @@ export async function request<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const token = localStorage.getItem('plagelio_token') || localStorage.getItem('veritas_token');
+  const token = localStorage.getItem('plagelio_token');
 
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),

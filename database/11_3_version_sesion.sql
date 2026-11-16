@@ -1,5 +1,5 @@
 -- ============================================================================
--- VERITAS AI — LAB 11.3: CONTROL DE VERSIÓN DE SESIÓN
+-- PLAGELIO — LAB 11.3: CONTROL DE VERSIÓN DE SESIÓN
 -- ============================================================================
 -- Agrega a public.usuarios la columna version_sesion para invalidar tokens JWT
 -- emitidos antes de un cambio o restablecimiento de contraseña.

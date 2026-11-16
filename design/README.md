@@ -66,7 +66,7 @@ Lo que no, y cómo se resuelve en su lugar:
 | Calificación en insignia  | Cifra grande en serif itálica junto a un filete    |
 | Etiquetas de indicadores  | Una línea con filete de color y separadores medios |
 | Caja de alerta tintada    | Filete arriba y abajo, color solo en el titular    |
-| "AI" en cajita junto a VERITAS | Serif itálica en azure, parte del logotipo    |
+| "AI" en cajita junto al logotipo | Serif itálica en azure, parte de la marca    |
 
 Al pasarlo a React esto se codifica igual: `rounded-full` queda reservado a
 `<button>`, `<input>` y filas interactivas.

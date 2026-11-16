@@ -56,14 +56,16 @@ export interface UsuarioMemoria {
 export const usuariosMemoria: UsuarioMemoria[] = [];
 
 // ========================================
-// Mapeo y Aliases de emails (Dominio Académico Veritas AI <-> Rúbrica Hospitalaria)
+// Mapeo y Aliases de emails (Dominio Académico Plagelio <-> Rúbrica Hospitalaria)
 // ========================================
 export const obtenerAliasesEmail = (email: string): string[] => {
   const norm = email.toLowerCase().trim();
   const list = [norm];
-  if (norm.endsWith('@veritas.com')) list.push(norm.replace('@veritas.com', '@veritas.ai'), norm.replace('@veritas.com', '@hospital.com'));
-  if (norm.endsWith('@hospital.com')) list.push(norm.replace('@hospital.com', '@veritas.com'), norm.replace('@hospital.com', '@veritas.ai'));
-  if (norm.endsWith('@veritas.ai')) list.push(norm.replace('@veritas.ai', '@veritas.com'), norm.replace('@veritas.ai', '@hospital.com'));
+  if (norm.endsWith('@plagelio.com')) list.push(norm.replace('@plagelio.com', '@plagelio.ai'), norm.replace('@plagelio.com', '@veritas.com'), norm.replace('@plagelio.com', '@veritas.ai'), norm.replace('@plagelio.com', '@hospital.com'));
+  if (norm.endsWith('@plagelio.ai')) list.push(norm.replace('@plagelio.ai', '@plagelio.com'), norm.replace('@plagelio.ai', '@veritas.ai'), norm.replace('@plagelio.ai', '@veritas.com'), norm.replace('@plagelio.ai', '@hospital.com'));
+  if (norm.endsWith('@veritas.com')) list.push(norm.replace('@veritas.com', '@plagelio.com'), norm.replace('@veritas.com', '@plagelio.ai'), norm.replace('@veritas.com', '@veritas.ai'), norm.replace('@veritas.com', '@hospital.com'));
+  if (norm.endsWith('@hospital.com')) list.push(norm.replace('@hospital.com', '@plagelio.com'), norm.replace('@hospital.com', '@plagelio.ai'), norm.replace('@hospital.com', '@veritas.com'), norm.replace('@hospital.com', '@veritas.ai'));
+  if (norm.endsWith('@veritas.ai')) list.push(norm.replace('@veritas.ai', '@plagelio.com'), norm.replace('@veritas.ai', '@plagelio.ai'), norm.replace('@veritas.ai', '@veritas.com'), norm.replace('@veritas.ai', '@hospital.com'));
 
   if (norm.includes('estudiante.a@')) list.push(norm.replace('estudiante.a@', 'paciente.a@'));
   if (norm.includes('paciente.a@')) list.push(norm.replace('paciente.a@', 'estudiante.a@'));
@@ -148,7 +150,7 @@ export const obtenerUsuarioPorEmail = async (email: string): Promise<any | null>
           id: user.id,
           nombre: `${user.name} ${user.last_name || ''}`.trim(),
           name: user.name,
-          last_name: user.last_name || 'Veritas',
+          last_name: user.last_name || 'Plagelio',
           email: user.email,
           passwordHash: user.password_hash,
           password_hash: user.password_hash,
@@ -214,7 +216,7 @@ export const obtenerUsuarioPorEmail = async (email: string): Promise<any | null>
             id: row.id,
             nombre: row.nombre,
             name: row.nombre,
-            last_name: 'Veritas',
+            last_name: 'Plagelio',
             email: row.email,
             passwordHash: row.passwordHash,
             password_hash: row.passwordHash,
@@ -289,7 +291,7 @@ export const obtenerUsuarioPorId = async (id: string | number): Promise<any | nu
             id: dbUser.id,
             nombre: `${dbUser.name} ${dbUser.last_name || ''}`.trim(),
             name: dbUser.name,
-            last_name: dbUser.last_name || 'Veritas',
+            last_name: dbUser.last_name || 'Plagelio',
             email: dbUser.email,
             passwordHash: dbUser.password_hash,
             password_hash: dbUser.password_hash,
@@ -313,7 +315,7 @@ export const obtenerUsuarioPorId = async (id: string | number): Promise<any | nu
         id: seed.numId,
         nombre: seed.name,
         name: seed.name,
-        last_name: 'Veritas',
+        last_name: 'Plagelio',
         email: seed.email,
         rol: seed.rol,
         role: seed.role,
@@ -348,7 +350,7 @@ export const obtenerUsuarioPorId = async (id: string | number): Promise<any | nu
         id: user.id,
         nombre: `${user.name} ${user.last_name || ''}`.trim(),
         name: user.name,
-        last_name: user.last_name || 'Veritas',
+        last_name: user.last_name || 'Plagelio',
         email: user.email,
         passwordHash: user.password_hash,
         password_hash: user.password_hash,
@@ -391,7 +393,7 @@ export const obtenerUsuarioPorId = async (id: string | number): Promise<any | nu
             id: row.id,
             nombre: row.nombre,
             name: row.nombre,
-            last_name: 'Veritas',
+            last_name: 'Plagelio',
             email: row.email,
             passwordHash: row.passwordHash,
             password_hash: row.passwordHash,
@@ -435,7 +437,7 @@ export const crearUsuario = async (datos: DatosRegistroUsuario): Promise<any> =>
       finalName = parts[0];
       finalLastName = parts.slice(1).join(' ');
     } else {
-      finalLastName = 'Veritas';
+      finalLastName = 'Plagelio';
     }
   }
 
@@ -547,7 +549,7 @@ export const crearUsuarioAdministrativo = async (datos: DatosRegistroUsuario): P
     adminUserDb = await prisma.user.create({
       data: {
         name: rawNombre,
-        last_name: 'Veritas',
+        last_name: 'Plagelio',
         email: datos.email.toLowerCase().trim(),
         password_hash: passwordHash,
         role: rolAsignado === 'administrador' || rolAsignado === 'admin' ? Role.ADMIN : Role.USER,
@@ -579,7 +581,7 @@ export const crearUsuarioAdministrativo = async (datos: DatosRegistroUsuario): P
     id: finalId,
     nombre: rawNombre,
     name: rawNombre,
-    last_name: 'Veritas',
+    last_name: 'Plagelio',
     email: datos.email.toLowerCase().trim(),
     passwordHash,
     password_hash: passwordHash,
@@ -625,7 +627,7 @@ const sincronizarAdminEnPrismaYMemoria = async (
       },
       create: {
         name: nombre,
-        last_name: 'Veritas',
+        last_name: 'Plagelio',
         email: email.toLowerCase(),
         password_hash: passwordHash,
         role: Role.ADMIN,
@@ -637,10 +639,14 @@ const sincronizarAdminEnPrismaYMemoria = async (
     // Si prisma no está disponible, continuar con memoria
   }
 
-  // Sincronizar también admin@veritas.ai si existe
+  // Sincronizar también admin@plagelio.com, admin@plagelio.ai, admin@veritas.ai si existen
   try {
     await prisma.user.updateMany({
-      where: { email: 'admin@veritas.ai' },
+      where: {
+        email: {
+          in: ['admin@plagelio.com', 'admin@plagelio.ai', 'admin@veritas.ai', 'admin@veritas.com'],
+        },
+      },
       data: { password_hash: passwordHash, role: Role.ADMIN, is_active: activo },
     });
   } catch {}
@@ -649,7 +655,7 @@ const sincronizarAdminEnPrismaYMemoria = async (
     id: numId,
     nombre,
     name: nombre,
-    last_name: 'Veritas',
+    last_name: 'Plagelio',
     email: email.toLowerCase(),
     passwordHash,
     password_hash: passwordHash,

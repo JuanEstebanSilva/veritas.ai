@@ -1,7 +1,7 @@
 -- ============================================================================
--- VERITAS AI — LAB 11.4: RECUPERACIÓN ADMINISTRATIVA
+-- PLAGELIO — LAB 11.4: RECUPERACIÓN ADMINISTRATIVA
 -- ============================================================================
--- Registra recuperaciones autorizadas por un docente o administrador de Veritas AI
+-- Registra recuperaciones autorizadas por un docente o administrador de Plagelio
 -- mediante tokens temporales de un solo uso almacenados como hash SHA-256.
 -- ============================================================================
 

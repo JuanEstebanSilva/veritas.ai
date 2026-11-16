@@ -4,8 +4,8 @@ const path = require('path');
 const collection = {
   info: {
     _postman_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    name: "Lab 11 — Veritas AI (Auditoría de Integridad Académica y Detección de IA)",
-    description: "Colección automatizada del Laboratorio 11 para Veritas AI: Persistencia PostgreSQL en Supabase con TLS, Autenticación JWT, RBAC, Control BOLA/IDOR, e Integridad Referencial.",
+    name: "Lab 11 — Plagelio (Auditoría de Integridad Académica y Detección de IA)",
+    description: "Colección automatizada del Laboratorio 11 para Plagelio: Persistencia PostgreSQL en Supabase con TLS, Autenticación JWT, RBAC, Control BOLA/IDOR, e Integridad Referencial.",
     schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   variable: [
@@ -36,7 +36,7 @@ const collection = {
       name: "Bloque A: Autenticación y Perfil Académico",
       item: [
         {
-          name: "1. Login Administrador Veritas AI (200 OK)",
+          name: "1. Login Administrador Plagelio (200 OK)",
           event: [
             {
               listen: "test",
@@ -825,9 +825,9 @@ const collection = {
 };
 
 const rootHospital = path.resolve(__dirname, '../Postman_Lab11_Hospital.json');
-const rootVeritas = path.resolve(__dirname, '../Postman_Lab11_VeritasAI.json');
+const rootPlagelio = path.resolve(__dirname, '../Postman_Lab11_Plagelio.json');
 
 fs.writeFileSync(rootHospital, JSON.stringify(collection, null, 2), 'utf-8');
-fs.writeFileSync(rootVeritas, JSON.stringify(collection, null, 2), 'utf-8');
+fs.writeFileSync(rootPlagelio, JSON.stringify(collection, null, 2), 'utf-8');
 
-console.log('✅ Archivos Postman_Lab11_Hospital.json y Postman_Lab11_VeritasAI.json generados exitosamente con 22 pruebas 100% Veritas AI.');
+console.log('✅ Archivos Postman_Lab11_Hospital.json y Postman_Lab11_Plagelio.json generados exitosamente con 22 pruebas 100% Plagelio.');

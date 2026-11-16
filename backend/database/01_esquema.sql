@@ -1,5 +1,5 @@
 -- ============================================================================
--- VERITAS AI — PLATAFORMA DE INTEGRIDAD ACADÉMICA Y DETECCIÓN ANTIPLAGIO
+-- PLAGELIO — PLATAFORMA DE INTEGRIDAD ACADÉMICA Y DETECCIÓN ANTIPLAGIO
 -- SCRIPT DDL: 01_esquema.sql
 -- ============================================================================
 -- Define las tablas relacionales con tipos de datos nativos de PostgreSQL,
@@ -11,7 +11,7 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ============================================================================
--- 1. TABLA: users (Usuarios del Sistema Veritas AI)
+-- 1. TABLA: users (Usuarios del Sistema Plagelio)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS users (
   id VARCHAR(100) PRIMARY KEY DEFAULT gen_random_uuid()::text,

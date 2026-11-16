@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import laboratoriosService from '../services/laboratorios.service';
 
 /**
- * Veritas AI — Controlador de Laboratorios y Nodos de Cómputo (Consultorios)
+ * Plagelio — Controlador de Laboratorios y Nodos de Cómputo (Consultorios)
  */
 
 export const obtenerLaboratorios = async (

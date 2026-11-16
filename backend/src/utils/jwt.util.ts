@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 /**
- * Laboratorio No. 9 y Bloque 11 — Veritas AI
+ * Laboratorio No. 9 y Bloque 11 — Plagelio
  * Autenticación con JWT e invalidación de sesión por versionSesion (vs)
  *
  * Utilidad centralizada para configuración, emisión y verificación de tokens JWT.

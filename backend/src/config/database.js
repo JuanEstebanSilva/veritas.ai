@@ -7,7 +7,7 @@ dotenv.config();
 
 const connectionString =
   process.env.DATABASE_URL ||
-  'postgresql://postgres:admin123@localhost:5432/veritas_ai?schema=public';
+  'postgresql://postgres:admin123@localhost:5432/plagelio?schema=public';
 
 const requiresSSL =
   connectionString.includes('supabase.co') ||

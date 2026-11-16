@@ -14,7 +14,7 @@ import { Request, Response, NextFunction } from 'express';
 
 /**
  * Laboratorio No. 9 — Construcción del proyecto — Autenticación con JWT
- * Veritas AI — SUITE DE PRUEBAS COMPLETA (BLOQUE 5: Login + JWT)
+ * Plagelio — SUITE DE PRUEBAS COMPLETA (BLOQUE 5: Login + JWT)
  *
  * Implementa y verifica:
  * - Emisión de JWT con claims mínimas seguras (sub, email, rol, iat, exp).
@@ -24,7 +24,7 @@ import { Request, Response, NextFunction } from 'express';
  * - Especificación OpenAPI/Swagger con ApiKeyAuth y BearerAuth.
  * - Pruebas con dominios y usuarios propios del proyecto (@veritas.ai).
  */
-describe('Laboratorio No. 9 — Autenticación con JWT (Veritas AI)', () => {
+describe('Laboratorio No. 9 — Autenticación con JWT (Plagelio)', () => {
   const timestamp = Date.now();
   const testPassword = 'ClaveSegura2026!';
   const emailEstudiante = `estudiante_${timestamp}@veritas.ai`;
@@ -135,11 +135,11 @@ describe('Laboratorio No. 9 — Autenticación con JWT (Veritas AI)', () => {
   // BLOQUE 2: Flujo de Registro y Login con JWT (Partes 7, 14 y 15)
   // =========================================================================
   describe('PARTE 7, 14 y 15 — Registro y Login con emisión de JWT', () => {
-    it('Checkpoint 5: POST /api/auth/registro debe crear usuario en Veritas AI y devolver respuesta estándar', async () => {
+    it('Checkpoint 5: POST /api/auth/registro debe crear usuario en Plagelio y devolver respuesta estándar', async () => {
       const res = await request(app)
         .post('/api/auth/registro')
         .send({
-          nombre: 'Estudiante Veritas',
+          nombre: 'Estudiante Plagelio',
           email: emailEstudiante,
           password: testPassword,
         });

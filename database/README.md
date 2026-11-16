@@ -1,6 +1,6 @@
-# Veritas AI — Base de Datos Relacional (PostgreSQL / Supabase)
+# Plagelio — Base de Datos Relacional (PostgreSQL / Supabase)
 
-Este directorio contiene los scripts DDL, DML y de verificación para la base de datos relacional de **Veritas AI** (Plataforma de Integridad Académica, Detección de IA y Antiplagio).
+Este directorio contiene los scripts DDL, DML y de verificación para la base de datos relacional de **Plagelio** (Plataforma de Integridad Académica, Detección de IA y Antiplagio).
 
 ---
 
@@ -26,7 +26,7 @@ Para desplegar la base de datos desde la consola web de **Supabase**:
 
 ### Paso 1: `01_esquema.sql`
 - Habilita la extensión `pgcrypto`.
-- Crea las tablas fundamentales adaptadas al dominio académico de Veritas AI:
+- Crea las tablas fundamentales adaptadas al dominio académico de Plagelio:
   - `users`: Cuentas de usuario y metadatos de cuotas de análisis.
   - `departamentos`: Facultades y áreas académicas (Ingeniería, Ciencias Sociales, Salud).
   - `docentes`: Profesores y auditores de integridad académica.

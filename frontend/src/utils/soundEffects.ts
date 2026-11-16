@@ -12,7 +12,7 @@ class SoundEngine {
     // Recuperar preferencia de sonido (habilitado por defecto)
     let stored: string | null = null;
     try {
-      stored = localStorage.getItem('plagelio_sound_enabled') || localStorage.getItem('veritas_sound_enabled');
+      stored = localStorage.getItem('plagelio_sound_enabled');
     } catch { /* almacenamiento no disponible */ }
     this.enabled = stored !== null ? stored === 'true' : true;
   }

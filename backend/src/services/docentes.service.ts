@@ -49,7 +49,7 @@ const mapearDocente = (row: any): Docente => {
 };
 
 /**
- * Veritas AI — Servicio de Docentes / Auditores de Integridad Académica
+ * Plagelio — Servicio de Docentes / Auditores de Integridad Académica
  * Migrado a persistencia PostgreSQL / Supabase
  */
 export const obtenerDocentes = async (): Promise<Docente[]> => {

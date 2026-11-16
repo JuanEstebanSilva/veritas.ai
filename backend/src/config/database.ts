@@ -8,7 +8,7 @@ dotenv.config();
 
 const connectionString =
   process.env.DATABASE_URL ||
-  'postgresql://postgres:admin123@localhost:5432/veritas_ai?schema=public';
+  'postgresql://postgres:admin123@localhost:5432/plagelio?schema=public';
 
 // Detección de necesidad de SSL (Supabase Transaction Pooler, puertos 6543 o parámetros sslmode)
 const requiresSSL =

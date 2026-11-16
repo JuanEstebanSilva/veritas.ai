@@ -4,20 +4,20 @@ const path = require('path');
 const collection = {
   info: {
     _postman_id: 'b8e9f1a2-c3d4-4e5f-6a7b-8c9d0e1f2a3b',
-    name: 'Lab 11 — Veritas AI: Actualización Progresiva de API Segura (Paso 8 y Bloque 11)',
-    description: 'Colección oficial de pruebas automatizadas del Bloque 11 para Veritas AI (Plataforma de Integridad Académica). Incluye los 25 casos de prueba de actualización progresiva de seguridad, version_sesion, recuperación administrativa, códigos de respaldo de un solo uso, desacoplamiento de API Key, RBAC, BOLA/IDOR y CORS.',
+    name: 'Lab 11 — Plagelio: Actualización Progresiva de API Segura (Paso 8 y Bloque 11)',
+    description: 'Colección oficial de pruebas automatizadas del Bloque 11 para Plagelio (Plataforma de Integridad Académica). Incluye los 25 casos de prueba de actualización progresiva de seguridad, version_sesion, recuperación administrativa, códigos de respaldo de un solo uso, desacoplamiento de API Key, RBAC, BOLA/IDOR y CORS.',
     schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json'
   },
   variable: [
     { key: 'baseUrl', value: 'http://localhost:5000', type: 'string' },
     { key: 'apiKey', value: '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0', type: 'string' },
-    { key: 'adminEmail', value: 'admin@veritas.ai', type: 'string' },
+    { key: 'adminEmail', value: 'admin@plagelio.com', type: 'string' },
     { key: 'adminPassword', value: 'SANTOTO_2026--2', type: 'string' },
     { key: 'tokenAdmin', value: '', type: 'string' },
     { key: 'tokenEstudiante', value: '', type: 'string' },
     { key: 'tokenEstudianteAnterior', value: '', type: 'string' },
     { key: 'estudianteId', value: '2', type: 'string' },
-    { key: 'estudianteEmail', value: 'estudiante.a@veritas.com', type: 'string' },
+    { key: 'estudianteEmail', value: 'estudiante.a@plagelio.com', type: 'string' },
     { key: 'claveEstudiante', value: 'Password123*', type: 'string' },
     { key: 'claveNueva', value: 'NuevaClaveSegura2026!', type: 'string' },
     { key: 'tokenRecuperacion', value: '', type: 'string' },
@@ -37,7 +37,7 @@ const collection = {
           mode: 'raw',
           raw: JSON.stringify({
             nombre: 'Estudiante Auditoria Bloque 11',
-            email: 'estudiante.bloque11.postman@veritas.ai',
+            email: 'estudiante.bloque11.postman@plagelio.com',
             password: 'Password123*'
           }, null, 2)
         },
@@ -50,7 +50,7 @@ const collection = {
             exec: [
               'if (pm.response.code === 201 || pm.response.code === 200) {',
               '    var json = pm.response.json();',
-              '    pm.collectionVariables.set("estudianteEmail", "estudiante.bloque11.postman@veritas.ai");',
+              '    pm.collectionVariables.set("estudianteEmail", "estudiante.bloque11.postman@plagelio.com");',
               '    pm.collectionVariables.set("claveEstudiante", "Password123*");',
               '    if (json.usuario && json.usuario.id) {',
               '        pm.collectionVariables.set("estudianteId", String(json.usuario.id));',
@@ -722,7 +722,7 @@ const collection = {
   ]
 };
 
-const destino = path.join(__dirname, '..', '..', 'Postman_Lab11_VeritasAI.json');
+const destino = path.join(__dirname, '..', '..', 'Postman_Lab11_Plagelio.json');
 fs.writeFileSync(destino, JSON.stringify(collection, null, 2), 'utf8');
 console.log('Coleccion escrita en:', destino);
 

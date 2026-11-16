@@ -124,8 +124,17 @@ export const apiKeyMiddleware = (
     return next();
   }
 
-  // 2. Login público controlado: no exige API Key
-  if (req.method === 'POST' && (path === '/auth/login' || path === '/auth/login/')) {
+  // 2. Login y Registro público controlado: no exige API Key
+  const esAuthPublico =
+    req.method === 'POST' &&
+    (path === '/auth/login' ||
+      path === '/auth/login/' ||
+      path === '/auth/registro' ||
+      path === '/auth/registro/' ||
+      path === '/auth/register' ||
+      path === '/auth/register/');
+
+  if (esAuthPublico) {
     const apiKey = req.get('X-API-Key');
     if (apiKey) {
       void validarApiKey(req, res, next);
