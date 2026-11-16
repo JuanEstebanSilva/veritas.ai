@@ -2,8 +2,10 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { sound } from '../utils/soundEffects';
-import { gsap, ScrollTrigger, prefersReducedMotion, useReveal, useScrollGroup, usePointerParallax, useMagnetic, CountUp, Odometer, span, easeOut, refreshScroll } from '../motion';
-import { ReadingField, Sheet, CadenceInstrument, SimilarityInstrument, RewriteInstrument, WordDiff } from '../components/landing';
+import { gsap, ScrollTrigger, prefersReducedMotion, useReveal, useScrollGroup, usePointerParallax, useMagnetic, useSplitEntrance, CountUp, Odometer, span, easeOut, refreshScroll } from '../motion';
+import { createWordFall, type WordFall } from '../motion/wordFall';
+import { HeroScene, Sheet, SimilarityInstrument, RewriteInstrument, WordDiff } from '../components/landing';
+import { CadenceSignal, ParticleVerdict, type Verdict } from '../components/viz';
 import { ArrowRight, ArrowDown, Check, BarChart3, Search, PenLine } from 'lucide-react';
 import './landing.css';
 
@@ -19,11 +21,23 @@ const METRICS = [
 const BEFORE = 'En conclusión, es crucial destacar que la inteligencia artificial desempeña un papel fundamental en la transformación del sector educativo contemporáneo. Asimismo, cabe señalar que su implementación requiere un enfoque integral.';
 const AFTER  = 'En definitiva, conviene reparar en que la inteligencia artificial resulta determinante en la transformación del sector educativo contemporáneo. A su vez, importa advertir que su implementación requiere un enfoque integral.';
 
+/** Estilometría: la cadencia de un texto humano frente a uno generado, en vivo. */
+const CadenceLive: React.FC = () => (
+  <div className="aspect-[320/150]"><CadenceSignal mode="live" label="Dos señales de ejemplo: longitud de oraciones de un texto humano, irregular, y de un texto generado, casi plana" /></div>
+);
+
 const READINGS = [
-  { tone: 'azure', Icon: BarChart3, title: 'Detección de IA', lead: 'Mide cómo está escrito.', body: 'Perplejidad, burstiness, riqueza léxica y uniformidad sintáctica, párrafo a párrafo. Cada sección recibe su puntuación y los indicadores que la justifican.', Instrument: CadenceInstrument },
+  { tone: 'azure', Icon: BarChart3, title: 'Detección de IA', lead: 'Mide cómo está escrito.', body: 'Perplejidad, burstiness, riqueza léxica y uniformidad sintáctica, párrafo a párrafo. Cada sección recibe su puntuación y los indicadores que la justifican.', Instrument: CadenceLive },
   { tone: 'gold', Icon: Search, title: 'Detección de plagio', lead: 'Verifica que no sea copia de otro lugar.', body: 'Compara el documento con repositorios de acceso abierto y muestra los fragmentos coincidentes en paralelo. Separa la cita legítima y la terminología estándar del plagio sin atribución.', Instrument: SimilarityInstrument },
   { tone: 'human', Icon: PenLine, title: 'Humanizador de texto', lead: 'Humaniza la voz, no la idea.', body: 'Rompe la cadencia uniforme y sustituye las fórmulas de IA sin tocar citas, cifras ni referencias. Descarga directa en .docx.', Instrument: RewriteInstrument },
 ] as const;
+
+/** Veredictos de ejemplo para el cierre (no son resultados de un documento real). */
+const SAMPLE_VERDICTS: Verdict[] = [
+  { text: 'Humano 91 %', tone: 'human' },
+  { text: 'IA 84 %', tone: 'ai' },
+  { text: 'Mixto 46 %', tone: 'mixed' },
+];
 
 const useWide = () => {
   const [wide, setWide] = useState(() => typeof window === 'undefined' || window.innerWidth >= 760);
@@ -52,6 +66,7 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
   const hero = useScrollGroup<HTMLElement>({ scrub: 0.4, start: 'top top', end: 'bottom top', staticValue: 0 });
   const heroParallax = usePointerParallax<HTMLDivElement>();
   const ctaMagnet = useMagnetic<HTMLButtonElement>();
+  const heroTitle = useSplitEntrance<HTMLHeadingElement>(80);
   const closeMagnet = useMagnetic<HTMLButtonElement>();
 
   // Cifras del informe: el único texto que escribe el JS mientras se hace scroll.
@@ -65,9 +80,16 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
   const readings = useScrollGroup<HTMLElement>({ pin: true, scrub: 0.6 });
 
   const [score, setScore] = useState(87);
+  // Las fórmulas de IA caen con física cuando su cambio cruza la mitad (ver motion/wordFall.ts)
+  const fall = useRef<{ fx: WordFall; at: number[] } | null>(null);
   const onBaProgress = useCallback((p: number) => {
     const v = Math.round(87 - 78 * easeOut(span(p, 0.18, 0.74)));
     setScore((prev) => (prev === v ? prev : v));
+    const f = fall.current;
+    if (f) {
+      const pk = span(p, 0.18, 0.74);
+      f.fx.update(f.at.map((at) => Math.min(1, Math.max(0, (pk - at * 0.82) * 5))));
+    }
   }, []);
   const ba = useScrollGroup<HTMLElement>({ pin: true, scrub: 0.6, onProgress: onBaProgress });
 
@@ -75,6 +97,10 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
     const el = root.current;
     if (!el) return;
     counters.current = Array.from(el.querySelectorAll<HTMLElement>('[data-count]')).map((c) => ({ el: c, target: Number(c.dataset.count), dec: Number(c.dataset.decimals || 0), at: Number(c.dataset.at || 0) }));
+    const cells = Array.from(el.querySelectorAll<HTMLElement>('.ba .diff-cell'));
+    if (!staticLayout && cells.length) {
+      fall.current = { fx: createWordFall(cells), at: cells.map((c) => Number(c.style.getPropertyValue('--at')) || 0) };
+    }
     if (staticLayout) {
       counters.current.forEach((c) => { c.el.textContent = c.target.toFixed(c.dec); });
       if (humanCount.current) humanCount.current.textContent = '96.4';
@@ -93,7 +119,10 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
     document.fonts?.ready.then(refresh);
     window.addEventListener('load', refresh);
     const t = window.setTimeout(refresh, 400);
-    return () => { ctx.revert(); window.removeEventListener('load', refresh); window.clearTimeout(t); delete el.dataset.chapter; };
+    return () => {
+      ctx.revert(); window.removeEventListener('load', refresh); window.clearTimeout(t); delete el.dataset.chapter;
+      fall.current?.fx.dispose(); fall.current = null;
+    };
   }, [staticLayout]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStart = () => { sound.playClick(); navigate(isAuthenticated ? '/analyzer' : '/register'); };
@@ -117,7 +146,7 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
           <div className="grain" aria-hidden="true" />
           <div ref={heroParallax} className="hero-inner wrap !max-w-[1320px] w-full py-14 sm:py-16 grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-12 lg:gap-6 items-center">
             <div className="hero-copy relative z-[2] flex flex-col items-start gap-8 max-w-[720px]">
-              <h1 className="text-d-hero font-light animate-rise" style={{ animationDelay: '.05s', textWrap: 'initial' }}>
+              <h1 ref={heroTitle} className="text-d-hero font-light" style={{ textWrap: 'initial' }}>
                 Distingue lo escrito<br />
                 <span className="serif text-azure">de lo generado.</span>
               </h1>
@@ -134,10 +163,10 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
               </div>
             </div>
 
-            <div className="relative h-[52vw] max-h-[420px] min-h-[280px] lg:h-[min(72vh,640px)] lg:max-h-none">
+            <div className="relative h-[min(118vw,560px)] lg:h-[min(76vh,680px)]">
               <div className="hero-field-glow glow" style={{ width: '120%', height: '120%', top: '-10%', left: '-10%', ['--glow-color' as string]: 'rgb(var(--azure) / .18)' }} aria-hidden="true" />
               <div className="hero-field absolute inset-0">
-                <ReadingField className="w-full h-full block" />
+                <HeroScene className="w-full h-full" />
               </div>
             </div>
           </div>
@@ -390,6 +419,12 @@ const PricingAndClose: React.FC<{ onStart: () => void; onPremium: () => void; cl
       <section data-chapter-name="ground" className="wrap py-28 sm:py-40 flex flex-col items-center text-center gap-9">
         <h2 data-reveal className="text-d-1 font-light max-w-[900px]">Pon a prueba<br /><span className="serif text-azure">tu propio texto.</span></h2>
         <p data-reveal className="text-[17px] leading-[1.65] text-mid max-w-[480px]">Cinco análisis al día, sin tarjeta y sin período de prueba que caduque.</p>
+        <figure data-reveal className="w-full max-w-[860px] flex flex-col items-center gap-3">
+          <div className="w-full aspect-[2.6/1]">
+            <ParticleVerdict verdicts={SAMPLE_VERDICTS} label="Veredictos de ejemplo formados por partículas: Humano 91 %, IA 84 %, Mixto 46 %" />
+          </div>
+          <figcaption className="text-[12.5px] text-low">Veredictos de ejemplo. Pasa el cursor: cada partícula vuelve a su sitio.</figcaption>
+        </figure>
         <div data-reveal>
           <button ref={closeMagnet} type="button" onClick={onStart} className="btn btn-primary h-[58px] px-9 text-[16px]">
             Crear cuenta gratis <ArrowRight className="w-4 h-4" strokeWidth={2} />

@@ -3,5 +3,6 @@ export { useReveal } from './useReveal';
 export { useScrollGroup, refreshScroll } from './useScrollGroup';
 export type { ScrollGroupOptions } from './useScrollGroup';
 export { usePointerParallax, useMagnetic } from './usePointer';
+export { useSplitEntrance } from './useSplitEntrance';
 export { CountUp } from './CountUp';
 export { Odometer } from './Odometer';
