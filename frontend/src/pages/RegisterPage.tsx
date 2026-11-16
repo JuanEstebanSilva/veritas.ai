@@ -61,11 +61,11 @@ export const RegisterPage: React.FC = () => {
   return (
     <AuthShell
       tone="human"
-      headline={<>Cinco análisis<br /><span className="serif text-human">al día, gratis.</span></>}
-      lede="Sin tarjeta y sin período de prueba que caduque. Informe completo de perplejidad, burstiness y similitud para texto y documentos .docx."
+      headline={<>Análisis ilimitados<br /><span className="serif text-human">100% gratis.</span></>}
+      lede="Sin pagos, sin suscripciones y sin límites. Informe completo de plagio con cotejo en repositorio institucional, perplejidad y similitud web."
       aside={
         <ul className="flex flex-col gap-4 max-w-[520px]">
-          {['Tus documentos no se usan para entrenar nada', 'Reescritura editorial que respeta citas y referencias', 'La licencia vitalicia quita la cuota diaria por un solo pago de $2'].map((t) => (
+          {['Acceso completo y gratuito para toda la comunidad académica', 'Cotejo contra repositorio interno de documentos (Turnitin Open Source)', 'Soporte multiformato: Word (.docx, .doc), PDF, ODT, RTF, TXT y MD', 'Reescritura y humanización ética integrada con Google Gemini'].map((t) => (
             <li key={t} className="flex items-start gap-3.5 text-[15px] leading-[1.55] text-mid">
               <Check className="w-[18px] h-[18px] text-human shrink-0 mt-0.5" strokeWidth={2.1} /><span>{t}</span>
             </li>

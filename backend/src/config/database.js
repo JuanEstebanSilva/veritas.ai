@@ -27,17 +27,9 @@ const possibleCertPaths = [
 let sslConfig = undefined;
 
 if (requiresSSL) {
-  const foundCertPath = possibleCertPaths.find((p) => fs.existsSync(p));
-  if (foundCertPath) {
-    sslConfig = {
-      ca: fs.readFileSync(foundCertPath, 'utf8'),
-      rejectUnauthorized: true,
-    };
-  } else {
-    sslConfig = {
-      rejectUnauthorized: false,
-    };
-  }
+  sslConfig = {
+    rejectUnauthorized: false,
+  };
 }
 
 const poolConfig = {

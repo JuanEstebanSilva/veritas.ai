@@ -117,7 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login, register, logout, refreshProfile,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'ADMIN',
-    isPremium: !!user?.is_premium,
+    isPremium: !!user, // En la versión Open Source de Plagelio, todos los usuarios tienen acceso completo e ilimitado
   }), [user, token, loading, authError, loggedOut, isPremiumModalOpen, openPremiumModal, closePremiumModal, login, register, logout, refreshProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

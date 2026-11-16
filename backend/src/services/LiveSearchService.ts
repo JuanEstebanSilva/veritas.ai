@@ -88,9 +88,16 @@ export class LiveSearchService {
    */
   public static generateSearchQueries(text: string, maxQueries: number = 3): string[] {
     const queries: string[] = [];
+    const cleanText = (text || '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+
+    // 0. Si la primera línea tiene un encabezado o artículo legal ("ARTÍCULO 13...")
+    const firstLine = cleanText.split('\n')[0]?.trim();
+    if (firstLine && firstLine.length >= 20 && firstLine.length <= 100) {
+      queries.push(firstLine.replace(/[#*]/g, '').trim());
+    }
 
     // 1. Extraer citas textuales directas si existen (la mayor sospecha de plagio)
-    const quoteMatches = text.match(/["«“]([^"»”]{18,120})["»”]/g);
+    const quoteMatches = cleanText.match(/["«“]([^"»”]{18,120})["»”]/g);
     if (quoteMatches) {
       for (const q of quoteMatches.slice(0, 2)) {
         const cleanedQuote = q.replace(/["«“»”]/g, '').trim();
@@ -101,7 +108,7 @@ export class LiveSearchService {
     }
 
     // 2. Extraer oraciones de alta informatividad (proposiciones salientes)
-    const sentences = text
+    const sentences = cleanText
       .split(/[.!?\n]+/)
       .map((s) => s.trim())
       .filter((s) => s.length >= 35 && s.length <= 140);
@@ -126,7 +133,7 @@ export class LiveSearchService {
 
     // 3. Si aún no alcanzamos el límite, generar consulta por n-gramas distintivos
     if (queries.length < maxQueries) {
-      const tokens = TextSimilarity.tokenize(text);
+      const tokens = TextSimilarity.tokenize(cleanText);
       const contentTokens = TextSimilarity.filterStopWords(tokens);
       const uniqueWords = Array.from(new Set(contentTokens));
 
@@ -513,6 +520,58 @@ export class LiveSearchService {
     }
   }
 
+  /**
+   * Búsqueda en Wikipedia en vivo (API pública abierta, sin API Key, 100% gratuita y en tiempo real)
+   */
+  public static async searchWikipedia(query: string, timeoutMs: number = 3500): Promise<RawWebSearchResult[]> {
+    if (!query || query.trim().length < 3) return [];
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+      const endpoint = `https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
+        query
+      )}&utf8=&format=json&origin=*&srlimit=4`;
+      const res = await fetch(endpoint, {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'PlagelioOpenSourcePlagiarismDetector/2.0 (educativo@plagelio.com)' },
+      });
+      clearTimeout(timer);
+
+      if (!res.ok) return [];
+      const data = (await res.json()) as any;
+      const searchItems = data?.query?.search || [];
+      if (!Array.isArray(searchItems) || searchItems.length === 0) return [];
+
+      const results: RawWebSearchResult[] = [];
+
+      for (const item of searchItems.slice(0, 3)) {
+        const title = this.cleanHtml(item.title);
+        const snippet = this.cleanHtml(item.snippet);
+        const url = `https://es.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/\s+/g, '_'))}`;
+
+        let year: number | undefined;
+        if (item.timestamp) {
+          const match = /(\d{4})/.exec(item.timestamp);
+          if (match) year = parseInt(match[1], 10);
+        }
+
+        results.push({
+          url,
+          title: `Wikipedia: ${title}`,
+          snippet: snippet || `Artículo enciclopédico de acceso abierto sobre ${title}.`,
+          year: year || new Date().getFullYear(),
+          publisher: 'Wikipedia, La enciclopedia libre',
+          author: 'Colaboradores de Wikipedia',
+        });
+      }
+
+      return results;
+    } catch {
+      return [];
+    }
+  }
+
   // Caché en memoria para evitar repetir búsquedas idénticas y ahorrar cuota / créditos
   private static QUERY_CACHE = new Map<string, { timestamp: number; results: RawWebSearchResult[] }>();
   private static CACHE_TTL_MS = 2 * 60 * 60 * 1000; // 2 horas de persistencia en caché
@@ -548,9 +607,23 @@ export class LiveSearchService {
       hits = await this.searchTavily(query);
     }
 
-    // 5. Fallback de catálogos académicos y web abierta
+    // 5. DuckDuckGo búsqueda web abierta en vivo (Encuentra leyes, PDFs, blogs, sitios web reales)
     if (hits.length === 0) {
       hits = await this.searchDuckDuckGo(query);
+    }
+
+    // 6. Wikipedia en vivo (API abierta, sin API Key y 100% gratuita)
+    if (hits.length < 3) {
+      const wikiHits = await this.searchWikipedia(query);
+      hits.push(...wikiHits);
+    }
+
+    // 7. Fallback catálogos científicos abiertos (OpenAlex)
+    if (hits.length === 0) {
+      const tokens = TextSimilarity.filterStopWords(TextSimilarity.tokenize(query));
+      if (tokens.length >= 2) {
+        hits = await this.searchOpenAlex(tokens.slice(0, 5));
+      }
     }
 
     // Almacenar en caché si devolvió resultados
@@ -573,7 +646,7 @@ export class LiveSearchService {
    */
   public static async fetchRawWebResults(userText: string): Promise<RawWebSearchResult[]> {
     const wordCount = userText.split(/\s+/).filter(Boolean).length;
-    const maxQueriesAllowed = wordCount > 300 ? 2 : 1;
+    const maxQueriesAllowed = Math.min(3, Math.max(2, Math.ceil(wordCount / 80)));
 
     const queries = this.generateSearchQueries(userText, maxQueriesAllowed);
     if (queries.length === 0) {
@@ -690,7 +763,7 @@ export class LiveSearchService {
     // Ordenar fuentes por porcentaje de similitud descendente
     scoredSources.sort((a, b) => b.similarityPercentage - a.similarityPercentage);
 
-    return scoredSources.slice(0, 4);
+    return scoredSources.slice(0, 8);
   }
 
   /**

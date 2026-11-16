@@ -11,6 +11,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:push": "prisma db push",
     "prisma:seed": "ts-node prisma/seed.ts",
+    "seed": "ts-node prisma/seed.ts",
     "seed:admin": "node src/scripts/crearAdmin.js",
     "db:test": "node scripts/probar-conexion.js",
     "test:db": "node scripts/probar-conexion.js",

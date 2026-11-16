@@ -343,45 +343,38 @@ const PricingAndClose: React.FC<{ onStart: () => void; onPremium: () => void; cl
   const ref = useReveal<HTMLDivElement>();
   return (
     <div ref={ref} className="relative z-[2]">
-      {/* ═══════════ PRECIOS ═══════════ */}
+      {/* ═══════════ ACCESO ABIERTO Y GRATUITO ═══════════ */}
       <section data-chapter-name="base" className="wrap py-24 sm:py-32 flex flex-col gap-14">
         <div data-reveal className="flex flex-col items-center text-center gap-5">
-          <h2 className="text-d-3 font-light">Se paga una vez.<br /><span className="serif">Y ya.</span></h2>
-          <p className="text-[16px] leading-[1.65] text-mid max-w-[480px]">Sin suscripciones, sin cobros recurrentes, sin plan empresarial oculto.</p>
+          <h2 className="text-d-3 font-light">100% Abierto y Gratuito.<br /><span className="serif">Para toda la comunidad académica.</span></h2>
+          <p className="text-[16px] leading-[1.65] text-mid max-w-[560px]">Una alternativa abierta a Turnitin: sin métodos de pago, sin suscripciones y sin límites artificiales.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-[920px] w-full mx-auto">
-          <div data-reveal data-reveal-group="plans" className="card card-hover p-8 sm:p-9 flex flex-col gap-8">
-            <div className="flex flex-col gap-3">
-              <span className="eyebrow">Uso estándar</span>
-              <div className="flex items-baseline gap-2"><span className="num text-[56px] leading-none">$0</span><span className="text-sm text-low">permanente</span></div>
-              <p className="text-[13.5px] text-low">Para consultas puntuales y textos académicos cortos.</p>
-            </div>
-            <ul className="flex flex-col gap-3 text-[14px] text-mid">
-              {['5 análisis diarios, con reinicio automático', 'Texto plano y archivos .docx hasta 10 MB', 'Informe completo de perplejidad y similitud', 'Desglose y reescritura párrafo por párrafo'].map((t) => (
-                <li key={t} className="flex items-start gap-3"><Check className="w-4 h-4 text-human shrink-0 mt-0.5" strokeWidth={2.2} /><span>{t}</span></li>
-              ))}
-            </ul>
-            <Link to="/register" onClick={() => sound.playClick()} className="btn btn-ghost w-full">Comenzar sin costo</Link>
-          </div>
-
-          <div data-reveal data-reveal-group="plans" className="halo relative overflow-hidden p-8 sm:p-9 rounded-[20px] border border-azure/30 flex flex-col gap-8"
+        <div className="max-w-[720px] w-full mx-auto">
+          <div data-reveal data-reveal-group="plans" className="halo relative overflow-hidden p-8 sm:p-10 rounded-[24px] border border-azure/30 flex flex-col gap-8"
             style={{ background: 'linear-gradient(165deg, rgb(var(--azure) / .10), rgb(var(--azure) / .015) 55%)', boxShadow: '0 40px 110px -50px rgb(var(--azure) / .5)' }}>
             <div className="glow animate-breathe" style={{ width: 420, height: 420, top: -200, right: -180, ['--glow-color' as string]: 'rgb(var(--azure) / .22)' }} aria-hidden="true" />
             <div className="relative flex flex-col gap-3">
               <div className="flex items-center justify-between gap-4">
-                <span className="eyebrow text-azure">Licencia vitalicia</span>
-                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-azure">Pago único</span>
+                <span className="eyebrow text-azure">Licencia de Código Abierto</span>
+                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-human bg-human/15 px-3 py-1 rounded-full border border-human/30">Totalmente Libre</span>
               </div>
-              <div className="flex items-baseline gap-2"><span className="num text-[56px] leading-none">$2</span><span className="text-sm text-mid">USD, de por vida</span></div>
-              <p className="text-[13.5px] text-mid">Desbloqueo permanente. Sin renovaciones.</p>
+              <div className="flex items-baseline gap-2"><span className="num text-[56px] leading-none">$0</span><span className="text-sm text-mid">gratis para siempre</span></div>
+              <p className="text-[13.5px] text-mid">Acceso completo e ilimitado para estudiantes, docentes e investigadores.</p>
             </div>
-            <ul className="relative flex flex-col gap-3 text-[14px] text-mid">
-              {['Análisis ilimitados, sin cuota diaria', 'Prioridad en tesis y documentos extensos', 'Descargas ilimitadas del documento mejorado', 'Historial permanente de verificaciones'].map((t) => (
+            <ul className="relative grid grid-cols-1 sm:grid-cols-2 gap-3 text-[14px] text-mid">
+              {[
+                'Cotejo contra repositorio interno (Turnitin)',
+                'Cotejo web en vivo con Wikipedia y fuentes académicas',
+                'Detección de IA por perplejidad y burstiness',
+                'Humanizador y reescritura ética con Google Gemini',
+                'Soporte multiformato: Word (.docx, .doc), PDF, ODT, RTF, TXT y MD',
+                'Panel administrativo con gestión de archivos y usuarios',
+              ].map((t) => (
                 <li key={t} className="flex items-start gap-3"><Check className="w-4 h-4 text-azure shrink-0 mt-0.5" strokeWidth={2.2} /><span>{t}</span></li>
               ))}
             </ul>
-            <button type="button" onClick={onPremium} className="btn btn-primary w-full relative">Adquirir licencia vitalicia</button>
+            <Link to="/register" onClick={() => sound.playClick()} className="btn btn-primary w-full relative text-center">Crear cuenta gratuita y empezar</Link>
           </div>
         </div>
       </section>
@@ -389,7 +382,7 @@ const PricingAndClose: React.FC<{ onStart: () => void; onPremium: () => void; cl
       {/* ═══════════ CIERRE ═══════════ */}
       <section data-chapter-name="ground" className="wrap py-28 sm:py-40 flex flex-col items-center text-center gap-9">
         <h2 data-reveal className="text-d-1 font-light max-w-[900px]">Pon a prueba<br /><span className="serif text-azure">tu propio texto.</span></h2>
-        <p data-reveal className="text-[17px] leading-[1.65] text-mid max-w-[480px]">Cinco análisis al día, sin tarjeta y sin período de prueba que caduque.</p>
+        <p data-reveal className="text-[17px] leading-[1.65] text-mid max-w-[480px]">Análisis ilimitados, sin tarjeta de crédito y 100% gratuito.</p>
         <div data-reveal>
           <button ref={closeMagnet} type="button" onClick={onStart} className="btn btn-primary h-[58px] px-9 text-[16px]">
             Crear cuenta gratis <ArrowRight className="w-4 h-4" strokeWidth={2} />
@@ -402,8 +395,8 @@ const PricingAndClose: React.FC<{ onStart: () => void; onPremium: () => void; cl
         <div className="wrap py-12 flex flex-wrap justify-between gap-10">
           <div className="flex flex-col gap-4 max-w-[340px]">
             <span className="text-[14px] font-extrabold tracking-[0.14em] text-mid">PLAGELIO</span>
-            <p className="text-[12.5px] leading-[1.65] text-low">Análisis estilométrico, cotejo de similitud y reescritura editorial para trabajo académico.</p>
-            <span className="text-xs text-low">© {new Date().getFullYear()} Plagelio</span>
+            <p className="text-[12.5px] leading-[1.65] text-low">Alternativa open-source a Turnitin: Detección de plagio, análisis estilométrico y reescritura ética.</p>
+            <span className="text-xs text-low">© {new Date().getFullYear()} Plagelio · Open Source</span>
           </div>
           <div className="flex gap-12 sm:gap-20">
             <div className="flex flex-col gap-3 text-[13px] text-mid">
@@ -415,7 +408,7 @@ const PricingAndClose: React.FC<{ onStart: () => void; onPremium: () => void; cl
             <div className="flex flex-col gap-3 text-[13px] text-mid">
               <span className="eyebrow">Acceso</span>
               <Link to="/login" className="hover:text-hi transition-colors">Iniciar sesión</Link>
-              <button type="button" onClick={onPremium} className="text-left hover:text-hi transition-colors">Licencia vitalicia</button>
+              <Link to="/register" className="hover:text-hi transition-colors">Registro Gratuito</Link>
             </div>
           </div>
         </div>

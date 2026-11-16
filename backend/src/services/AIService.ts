@@ -5,8 +5,10 @@ import {
   AiDetectionReport,
 } from '../utils/linguisticEngine';
 import { SimilarityEngine, SimilarityReport } from '../utils/similarityCorpus';
-import { LiveSearchService, RawWebSearchResult } from './LiveSearchService';
+import { LiveSearchService, RawWebSearchResult, MatchedSource } from './LiveSearchService';
 import { CitationService } from './CitationService';
+import { TextSimilarity } from '../utils/TextSimilarity';
+import { prisma } from '../config/prisma';
 
 export interface FullAnalysisPayload {
   aiReport: AiDetectionReport;
@@ -67,30 +69,126 @@ export class AIService {
   }
 
   /**
-   * Analiza índice de similitud con fuentes públicas cotejadas en tiempo real.
-   * Flujo arquitectónico:
-   * 1. Consulta web explícita mediante peticiones HTTP (Serper API, Google Custom Search o repositorios).
-   * 2. Pasa el texto extraído y los fragmentos reales de internet al LLM (Gemini con Grounding o OpenAI)
-   *    para calcular el porcentaje real y generar las citas formales en APA 7ma edición e IEEE.
-   * 3. Fallback algorítmico local determinista cuando no hay clave externa de LLM o en modo local.
+   * Cotejo contra el repositorio institucional de documentos internos (Núcleo Turnitin)
    */
-  public static async analyzeSimilarity(text: string): Promise<SimilarityReport> {
+  public static async compareAgainstInternalRepository(
+    text: string,
+    excludeAnalysisId?: string
+  ): Promise<MatchedSource[]> {
+    try {
+      const previousDocs = await prisma.analysis.findMany({
+        where: excludeAnalysisId ? { id: { not: excludeAnalysisId } } : undefined,
+        select: {
+          id: true,
+          title_or_filename: true,
+          original_text: true,
+          created_at: true,
+          user: {
+            select: {
+              name: true,
+              last_name: true,
+            },
+          },
+        },
+        take: 150,
+        orderBy: { created_at: 'desc' },
+      });
+
+      const matchedInternalSources: MatchedSource[] = [];
+
+      for (const doc of previousDocs) {
+        if (!doc.original_text || doc.original_text.trim().length < 15) continue;
+
+        const match = TextSimilarity.scoreMatch(text, doc.original_text, doc.title_or_filename);
+        if (match.similarityPercentage >= 8) {
+          const authorLast = doc.user?.last_name || 'Estudiante';
+          const authorInitial = doc.user?.name?.[0] ? `${doc.user.name[0]}.` : 'A.';
+          const year = new Date(doc.created_at).getFullYear();
+
+          matchedInternalSources.push({
+            sourceUrl: `repositorio://plagelio/documentos/${doc.id}`,
+            sourceTitle: `Repositorio Institucional: "${doc.title_or_filename}" (${doc.user?.name || 'Estudiante'} ${doc.user?.last_name || ''})`,
+            matchedText: match.matchedText,
+            userSnippet: match.userSnippet,
+            similarityPercentage: match.similarityPercentage,
+            apaCitation: {
+              inText: `(${authorLast}, ${year})`,
+              reference: `${authorLast}, ${authorInitial} (${year}). ${doc.title_or_filename} [Trabajo académico en archivo digital]. Repositorio Institucional Plagelio.`,
+            },
+            ieeeCitation: {
+              inText: `[Rep-${doc.id.slice(0, 4)}]`,
+              reference: `${doc.user?.name || ''} ${doc.user?.last_name || 'Autor'}, "${doc.title_or_filename}", Repositorio Digital Plagelio, ${year}.`,
+            },
+          });
+        }
+      }
+
+      return matchedInternalSources.sort((a, b) => b.similarityPercentage - a.similarityPercentage);
+    } catch (err) {
+      console.warn('[AIService] Aviso: Base de datos no disponible para cotejo interno en este momento:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Analiza índice de similitud con el repositorio institucional (Turnitin) y fuentes web en tiempo real.
+   */
+  public static async analyzeSimilarity(text: string, excludeAnalysisId?: string): Promise<SimilarityReport> {
     if (!text || text.trim().length < 15) {
       return SimilarityEngine.analyzeSimilarity(text);
     }
 
     try {
-      // 1. Petición HTTP explícita a la API de búsqueda web
-      const rawWebResults = await LiveSearchService.fetchRawWebResults(text);
+      // 1. Cotejo contra el repositorio de documentos ya subidos (Turnitin institucional)
+      const internalSourcesPromise = this.compareAgainstInternalRepository(text, excludeAnalysisId);
 
-      // 2. Si hay LLM configurado (Gemini con Grounding o OpenAI), evaluar similitud y citas con el LLM
-      const llmReport = await this.evaluateSimilarityWithLLM(text, rawWebResults);
-      if (llmReport && Array.isArray(llmReport.sources)) {
-        return llmReport;
+      // 2. Consulta web en tiempo real (Wikipedia API, OpenAlex y búsqueda abierta)
+      const rawWebResultsPromise = LiveSearchService.fetchRawWebResults(text);
+
+      const [internalSources, rawWebResults] = await Promise.all([
+        internalSourcesPromise,
+        rawWebResultsPromise,
+      ]);
+
+      // 3. Fuentes reales cotejadas algorítmicamente desde los candidatos web indexados
+      const algorithmicWebReport = SimilarityEngine.analyzeFromRawCandidates(text, rawWebResults);
+      const algorithmicSources = algorithmicWebReport.sources || [];
+
+      // Si Gemini / LLM está activo y no se hallaron suficientes fuentes, intentar complementar
+      let llmSources: MatchedSource[] = [];
+      if (rawWebResults.length > 0 && algorithmicSources.length < 2) {
+        try {
+          const llmReport = await this.evaluateSimilarityWithLLM(text, rawWebResults);
+          if (llmReport && Array.isArray(llmReport.sources)) {
+            llmSources = llmReport.sources.filter(
+              (s) => s.sourceUrl && s.sourceUrl.startsWith('http') && !s.sourceUrl.includes('example.com') && s.sourceUrl !== 'https://...'
+            );
+          }
+        } catch (err) {
+          console.warn('[AIService] Aviso: LLM evaluation skip:', err);
+        }
       }
 
-      // 3. Fallback algorítmico local determinista
-      return SimilarityEngine.analyzeFromRawCandidates(text, rawWebResults);
+      // 4. Fusionar fuentes internas del repositorio y fuentes externas de la web
+      const allSources: MatchedSource[] = [
+        ...internalSources,
+        ...algorithmicSources,
+        ...llmSources,
+      ];
+
+      // Deduplicar fuentes idénticas
+      const uniqueSourcesMap = new Map<string, MatchedSource>();
+      for (const s of allSources) {
+        if (!uniqueSourcesMap.has(s.sourceUrl)) {
+          uniqueSourcesMap.set(s.sourceUrl, s);
+        }
+      }
+
+      const combinedSources = Array.from(uniqueSourcesMap.values()).sort(
+        (a, b) => b.similarityPercentage - a.similarityPercentage
+      );
+
+      return SimilarityEngine.buildReportFromSources(combinedSources);
     } catch (err) {
       console.warn('[AIService] Error en analyzeSimilarity:', err);
       return SimilarityEngine.analyzeSimilarity(text);
@@ -100,10 +198,10 @@ export class AIService {
   /**
    * Ejecuta ambos análisis en conjunto de forma óptima
    */
-  public static async runFullAnalysis(text: string): Promise<FullAnalysisPayload> {
+  public static async runFullAnalysis(text: string, excludeAnalysisId?: string): Promise<FullAnalysisPayload> {
     const [aiReport, similarityReport] = await Promise.all([
       this.analyzeAI(text),
-      this.analyzeSimilarity(text),
+      this.analyzeSimilarity(text, excludeAnalysisId),
     ]);
 
     return {
@@ -154,7 +252,7 @@ export class AIService {
     // 2. Intentar proveedor Google Gemini
     if (!result && (provider === 'gemini' || geminiKey) && geminiKey) {
       try {
-        const model = ENV.AI_MODEL || 'gemini-1.5-flash';
+        const model = ENV.AI_MODEL || 'gemini-3.8-flash';
         result = await this.humanizeWithGemini(text, geminiKey, model, ENV.AI_TEMPERATURE);
       } catch (err) {
         console.warn('[AIService] Gemini falló, recurriendo a motor lingüístico:', err);
@@ -312,7 +410,7 @@ ${text}`;
     // 1. Prioridad: Gemini con Google Search Grounding si está configurado
     if ((provider === 'gemini' || geminiKey) && geminiKey) {
       try {
-        const model = ENV.AI_MODEL || 'gemini-1.5-flash';
+        const model = ENV.AI_MODEL || 'gemini-3.8-flash';
         const report = await this.evaluateSimilarityWithGemini(text, webSources, geminiKey, model);
         if (report) return report;
       } catch (err) {
