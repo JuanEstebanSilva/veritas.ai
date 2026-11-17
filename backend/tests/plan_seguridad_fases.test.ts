@@ -3,7 +3,7 @@ import app from '../src/app';
 import { generarLoteCodigos, generarTokenAleatorio, sha256Hex } from '../src/utils/crypto.util';
 import usuariosService from '../src/services/usuarios.service';
 
-const apiKey = '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0';
+const apiKey = process.env.API_KEY_POSTMAN || '';
 
 describe('Plan de Implementación de Seguridad Backend — Plagelio (Nuevas Fases y Soporte Frontend)', () => {
   jest.setTimeout(35000);

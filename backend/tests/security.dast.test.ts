@@ -233,7 +233,7 @@ describe('Suite DAST — Dynamic Application Security Testing (Plagelio)', () =>
     it('DAST-ERR-01: Responder 404 estándar en rutas inexistentes sin volcado de rutas internas', async () => {
       const res = await request(app)
         .get('/api/admin_secret_non_existent_route')
-        .set('X-API-Key', '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0');
+        .set('X-API-Key', process.env.API_KEY_POSTMAN || '');
       expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('no encontrado');

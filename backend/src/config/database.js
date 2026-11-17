@@ -5,9 +5,10 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-const connectionString =
-  process.env.DATABASE_URL ||
-  'postgresql://postgres:admin123@localhost:5432/plagelio?schema=public';
+const connectionString = process.env.DATABASE_URL || '';
+if (!connectionString) {
+  throw new Error('Falta DATABASE_URL en el entorno (backend/.env).');
+}
 
 const requiresSSL =
   connectionString.includes('supabase.co') ||
@@ -27,9 +28,19 @@ const possibleCertPaths = [
 let sslConfig = undefined;
 
 if (requiresSSL) {
-  sslConfig = {
-    rejectUnauthorized: false,
-  };
+  // Por defecto se verifica el certificado del servidor con la CA de Supabase. Desactivar la
+  // verificación exige declararlo de forma explícita (PGSSL_REJECT_UNAUTHORIZED=false): sin ella,
+  // la conexión va cifrada pero no autenticada y admite un intermediario.
+  const verificar = process.env.PGSSL_REJECT_UNAUTHORIZED !== 'false';
+  const foundCertPath = possibleCertPaths.find((p) => fs.existsSync(p));
+  if (verificar && foundCertPath) {
+    sslConfig = { ca: fs.readFileSync(foundCertPath, 'utf8'), rejectUnauthorized: true };
+  } else if (verificar) {
+    sslConfig = { rejectUnauthorized: true };
+  } else {
+    console.warn('[database] Aviso: verificación TLS desactivada por PGSSL_REJECT_UNAUTHORIZED=false.');
+    sslConfig = { rejectUnauthorized: false };
+  }
 }
 
 const poolConfig = {

@@ -12,7 +12,7 @@ import usuariosService from '../src/services/usuarios.service';
 describe('Laboratorio 8 — Validación Integral de la API (Plagelio)', () => {
   jest.setTimeout(60000);
 
-  const apiKeyValida = '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0';
+  const apiKeyValida = process.env.API_KEY_POSTMAN || '';
   const timestamp = Date.now();
   const passwordSegura = 'ClaveSegura2026!';
 

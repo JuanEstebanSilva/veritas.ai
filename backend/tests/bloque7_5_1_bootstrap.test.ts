@@ -8,7 +8,7 @@ import usuariosService, { crearAdministradorInicial } from '../src/services/usua
  * Casos BA01 - BA09 adaptados al dominio de Plagelio
  */
 describe('Bloque 7.5.1 — Inicialización segura del administrador (Bootstrap)', () => {
-  const apiKeyValida = '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0';
+  const apiKeyValida = process.env.API_KEY_POSTMAN || '';
   const adminNombre = 'Administrador Plagelio';
   const adminEmail = 'admin@veritas.com';
   const adminPassword = 'SANTOTO_2026—2';

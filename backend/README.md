@@ -76,24 +76,33 @@ PORT=5000
 NODE_ENV=development
 
 # Base de Datos Relacional (PostgreSQL / Supabase)
-DATABASE_URL="postgresql://postgres:admin123@localhost:5432/plagelio?schema=public"
+DATABASE_URL="postgresql://postgres:<contraseña>@localhost:5432/plagelio?schema=public"
 
 # Seguridad y Criptografía JWT
-JWT_SECRET="plagelio_super_secure_jwt_secret_2026_production_key_santoto_token"
+JWT_SECRET="<cadena aleatoria de al menos 32 caracteres: openssl rand -hex 32>"
 JWT_EXPIRES_IN="24h"
 
 # Control de Orígenes CORS (Frontend Vite)
 ALLOWED_ORIGIN="http://localhost:5173"
 
 # Identificación de Clientes Privados (API Keys SHA-256)
-API_KEY_POSTMAN="61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0"
-API_KEY_WEB="61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0"
-API_KEY_MOVIL="61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0"
+# Una clave distinta por cliente (openssl rand -hex 32). Nunca se publican.
+API_KEY_POSTMAN="<clave aleatoria 1>"
+API_KEY_WEB="<clave aleatoria 2>"
+API_KEY_MOVIL="<clave aleatoria 3>"
 
 # Administrador Inicial (Bootstrap Idempotente)
 ADMIN_NOMBRE="Administrador Plagelio"
 ADMIN_EMAIL="admin@plagelio.com"
-ADMIN_PASSWORD="SANTOTO_2026--2"
+ADMIN_PASSWORD="<contraseña propia, mínimo 12 caracteres>"
+
+# Opcionales
+# DEMO_PASSWORD="<contraseña del usuario demo; si falta, el seed genera una>"
+# DIRECT_URL="<igual que DATABASE_URL salvo que uses un pooler>"
+# PGSSL_REJECT_UNAUTHORIZED=false   # solo en local con certificados autofirmados
+# LOGIN_MAX_ATTEMPTS=10
+# LOGIN_WINDOW_MINUTES=15
+# PAYMENTS_SANDBOX=false            # apaga el pago simulado (ya está apagado en producción)
 ```
 
 ---

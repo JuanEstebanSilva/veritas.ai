@@ -10,9 +10,9 @@ const collection = {
   },
   variable: [
     { key: "baseUrl", value: "http://localhost:5000", type: "string" },
-    { key: "apiKey", value: "61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0", type: "string" },
+    { key: "apiKey", value: process.env.API_KEY_POSTMAN || "<API_KEY_POSTMAN de tu .env>", type: "string" },
     { key: "adminEmail", value: "admin@veritas.ai", type: "string" },
-    { key: "adminPassword", value: "SANTOTO_2026--2", type: "string" },
+    { key: "adminPassword", value: process.env.ADMIN_PASSWORD || "<ADMIN_PASSWORD de tu .env>", type: "string" },
     { key: "tokenAdmin", value: "", type: "string" },
     { key: "tokenEstudiante", value: "", type: "string" },
     { key: "timestamp", value: "1", type: "string" },

@@ -22,7 +22,7 @@
  *         password:
  *           type: string
  *           format: password
- *           example: SANTOTO_2026--2
+ *           example: Ejemplo-Clave-Segura-2026
  *
  *     RegistroEstudianteEntrada:
  *       type: object

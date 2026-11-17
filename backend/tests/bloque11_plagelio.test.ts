@@ -2,7 +2,7 @@ import request from 'supertest';
 import app from '../src/app';
 import usuariosService from '../src/services/usuarios.service';
 
-const apiKey = '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0';
+const apiKey = process.env.API_KEY_POSTMAN || '';
 
 describe('Bloque 11 — Plagelio: Actualización Progresiva de API Segura (25 Pruebas)', () => {
   let tokenAdmin = '';
