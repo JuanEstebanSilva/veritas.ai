@@ -109,7 +109,9 @@ export class PaymentController {
       });
 
       if (!result.success) {
-        res.status(402).json({
+        // 409 cuando la peticion es valida pero choca con el estado actual del
+        // pago (transicion invalida); 402 cuando el cobro simplemente se rechaza.
+        res.status(result.conflict ? 409 : 402).json({
           success: false,
           message: result.message,
         });

@@ -33,3 +33,18 @@ export interface AdminUserListItem {
   lastAccess: string;
   createdAt: string;
 }
+
+export interface AdminAnalysisListItem {
+  id: string;
+  title: string;
+  type: 'TEXT' | 'DOCX';
+  aiScore: number;
+  similarityScore: number;
+  textSnippet: string;
+  originalText?: string;
+  createdAt: string;
+  userName: string;
+  userEmail: string;
+  sourcesCount: number;
+  paragraphsCount: number;
+}

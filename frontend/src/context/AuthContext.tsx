@@ -25,11 +25,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const TOKEN_KEY = 'plagelio_token';
-const LEGACY_TOKEN_KEY = 'veritas_token';
 
 const readToken = (): string | null => {
   try {
-    return localStorage.getItem(TOKEN_KEY) || localStorage.getItem(LEGACY_TOKEN_KEY);
+    return localStorage.getItem(TOKEN_KEY);
   } catch {
     return null;
   }
@@ -50,7 +49,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     requestId.current += 1;
     try {
       localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(LEGACY_TOKEN_KEY);
     } catch { /* sin almacenamiento */ }
     setToken(null);
     setUser(null);
@@ -119,7 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login, register, logout, refreshProfile,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'ADMIN',
-    isPremium: !!user?.is_premium,
+    isPremium: !!user, // En la versión Open Source de Plagelio, todos los usuarios tienen acceso completo e ilimitado
   }), [user, token, loading, authError, loggedOut, isPremiumModalOpen, openPremiumModal, closePremiumModal, login, register, logout, refreshProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { PlagelioLogo } from '../brand';
 import { sound } from '../../utils/soundEffects';
+import { Fingerprint } from '../viz';
 
 interface AuthShellProps {
   tone: 'azure' | 'human';
@@ -11,20 +12,6 @@ interface AuthShellProps {
   aside?: React.ReactNode;
   children: React.ReactNode;
 }
-
-/** Hoja pequeña con un haz que la recorre despacio: la marca, sin palabras. */
-const QuietSheet: React.FC<{ tone: 'azure' | 'human' }> = ({ tone }) => {
-  const lines = [100, 92, 97, 58, 0, 96, 100, 71, 0, 100, 94, 99, 100, 47, 0, 98, 88, 62];
-  return (
-    <div className="sheet relative w-[188px] h-[236px] overflow-hidden px-6 pt-7" aria-hidden="true">
-      <div className="absolute inset-x-0 top-0 h-[24%] animate-beam" style={{ animationDelay: '0s', animationDuration: '6.5s', background: `linear-gradient(180deg, rgb(var(--${tone}) / 0) 0%, rgb(var(--${tone}) / .10) 60%, rgb(var(--${tone}) / .45) 100%)` }} />
-      <div className="h-[6px] w-[40%] rounded-sm mb-5" style={{ background: 'rgb(var(--ink) / .3)' }} />
-      <div className="flex flex-col gap-[5px]">
-        {lines.map((w, i) => (w === 0 ? <div key={i} className="h-[6px]" /> : <div key={i} className="h-[5px] rounded-sm sheet-line" style={{ width: `${w}%` }} />))}
-      </div>
-    </div>
-  );
-};
 
 /**
  * Marco de las pantallas de acceso: panel editorial a la izquierda con la
@@ -51,7 +38,7 @@ export const AuthShell: React.FC<AuthShellProps> = ({ tone, headline, lede, asid
             <h1 className="text-d-3 font-light">{headline}</h1>
             <p className="text-[16.5px] leading-[1.7] text-mid max-w-[460px]">{lede}</p>
           </div>
-          <div className="animate-rise hidden xl:block" style={{ animationDelay: '.3s', transform: 'rotate(-4deg)' }}><QuietSheet tone={tone} /></div>
+          <div className="hidden xl:block w-[200px]" aria-hidden="false"><Fingerprint className="w-full h-auto" /></div>
         </div>
 
         <div className="relative animate-rise" style={{ animationDelay: '.26s' }}>{aside}</div>

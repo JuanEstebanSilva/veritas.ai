@@ -25,10 +25,14 @@ export const authenticateJWT = async (
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, ENV.JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || ENV.JWT_SECRET, {
+      algorithms: ['HS256'],
+    }) as any;
+
+    const targetUserId = decoded.userId || decoded.sub;
 
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: String(targetUserId) },
     });
 
     if (!user) {
@@ -49,10 +53,20 @@ export const authenticateJWT = async (
 
     req.user = user;
     next();
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.name === 'TokenExpiredError') {
+      res.status(401).json({
+        success: false,
+        message: 'Token expirado',
+        mensaje: 'Token expirado',
+      });
+      return;
+    }
+
     res.status(401).json({
       success: false,
       message: 'Tu sesión ha expirado o el token es inválido. Inicia sesión nuevamente.',
+      mensaje: 'Token inválido',
     });
   }
 };

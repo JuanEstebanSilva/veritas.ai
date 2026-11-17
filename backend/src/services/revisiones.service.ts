@@ -1,0 +1,468 @@
+import { consultar } from '../config/database';
+
+export interface Revision {
+  id: number;
+  estudianteId: number;
+  docenteId: number;
+  laboratorioId?: number;
+  fecha: string;
+  hora?: string;
+  motivo: string;
+  estado: 'programada' | 'confirmada' | 'atendida' | 'cancelada';
+  // Aliases de compatibilidad para contratos legacy
+  pacienteId?: number;
+  medicoId?: number;
+  consultorioId?: number;
+}
+
+export interface DatosRevision {
+  estudianteId?: number;
+  pacienteId?: number;
+  docenteId?: number;
+  medicoId?: number;
+  laboratorioId?: number;
+  consultorioId?: number;
+  fecha: string;
+  hora?: string;
+  motivo: string;
+  estado?: 'programada' | 'confirmada' | 'atendida' | 'cancelada';
+}
+
+const transicionesValidas: Record<string, string[]> = {
+  programada: ['confirmada', 'cancelada'],
+  confirmada: ['atendida', 'cancelada'],
+  atendida: [],
+  cancelada: [],
+};
+
+export const extraerFechaYHora = (fechaInput: string, horaInput?: string): { fecha: string; hora: string } => {
+  let fecha = fechaInput.trim();
+  let hora = horaInput ? horaInput.trim() : '10:00:00';
+
+  if (fecha.includes('T')) {
+    const partes = fecha.split('T');
+    fecha = partes[0];
+    const tiempo = partes[1].replace('Z', '').trim();
+    if (tiempo.length >= 5) {
+      hora = tiempo.length === 5 ? `${tiempo}:00` : tiempo.substring(0, 8);
+    }
+  }
+
+  return { fecha, hora };
+};
+
+export const verificarDisponibilidadLaboratorio = async (
+  laboratorioId: number | string,
+  fecha: string,
+  hora: string
+): Promise<boolean> => {
+  const { fecha: f, hora: h } = extraerFechaYHora(fecha, hora);
+  const query = `
+    SELECT id FROM revisiones
+    WHERE laboratorio_id = $1 AND fecha = $2 AND hora = $3
+    LIMIT 1
+  `;
+  const res = await consultar(query, [Number(laboratorioId), f, h]);
+  return res.rows.length === 0;
+};
+
+const mapearRevision = (row: any): Revision => {
+  return {
+    id: Number(row.id),
+    estudianteId: Number(row.estudianteId),
+    pacienteId: Number(row.estudianteId),
+    docenteId: Number(row.docenteId),
+    medicoId: Number(row.docenteId),
+    laboratorioId: row.laboratorioId ? Number(row.laboratorioId) : 1,
+    consultorioId: row.laboratorioId ? Number(row.laboratorioId) : 1,
+    fecha: row.fecha,
+    hora: row.hora,
+    motivo: row.motivo,
+    estado: row.estado,
+  };
+};
+
+/**
+ * Plagelio — Servicio de Revisiones y Escaneos de Integridad Académica
+ * Migrado a persistencia PostgreSQL / Supabase
+ */
+export const obtenerTodasLasRevisiones = async (): Promise<Revision[]> => {
+  const query = `
+    SELECT
+      id,
+      estudiante_id AS "estudianteId",
+      docente_id AS "docenteId",
+      TO_CHAR(fecha, 'YYYY-MM-DD') AS "fecha",
+      SUBSTRING(hora::text FROM 1 FOR 5) AS "hora",
+      motivo,
+      estado
+    FROM revisiones
+    ORDER BY id ASC
+  `;
+  const res = await consultar(query);
+  return res.rows.map(mapearRevision);
+};
+
+export const obtenerRevisionPorId = async (
+  id: number | string
+): Promise<Revision | undefined> => {
+  const query = `
+    SELECT
+      id,
+      estudiante_id AS "estudianteId",
+      docente_id AS "docenteId",
+      TO_CHAR(fecha, 'YYYY-MM-DD') AS "fecha",
+      SUBSTRING(hora::text FROM 1 FOR 5) AS "hora",
+      motivo,
+      estado
+    FROM revisiones
+    WHERE id = $1
+    LIMIT 1
+  `;
+  const res = await consultar(query, [Number(id)]);
+  if (res.rows.length === 0) return undefined;
+  return mapearRevision(res.rows[0]);
+};
+
+export const obtenerRevisionesPorEstudiante = async (
+  estudianteId: number | string
+): Promise<Revision[]> => {
+  const query = `
+    SELECT
+      id,
+      estudiante_id AS "estudianteId",
+      docente_id AS "docenteId",
+      TO_CHAR(fecha, 'YYYY-MM-DD') AS "fecha",
+      SUBSTRING(hora::text FROM 1 FOR 5) AS "hora",
+      motivo,
+      estado
+    FROM revisiones
+    WHERE estudiante_id = $1
+    ORDER BY fecha ASC, hora ASC
+  `;
+  const res = await consultar(query, [Number(estudianteId)]);
+  return res.rows.map(mapearRevision);
+};
+
+export const obtenerRevisionesPorDocente = async (
+  docenteId: number | string
+): Promise<Revision[]> => {
+  const query = `
+    SELECT
+      id,
+      estudiante_id AS "estudianteId",
+      docente_id AS "docenteId",
+      TO_CHAR(fecha, 'YYYY-MM-DD') AS "fecha",
+      SUBSTRING(hora::text FROM 1 FOR 5) AS "hora",
+      motivo,
+      estado
+    FROM revisiones
+    WHERE docente_id = $1
+    ORDER BY fecha ASC, hora ASC
+  `;
+  const res = await consultar(query, [Number(docenteId)]);
+  return res.rows.map(mapearRevision);
+};
+
+export const crearRevision = async (datos: DatosRevision): Promise<Revision> => {
+  const anyDatos = datos as any;
+  const estId = Number(datos.estudianteId || datos.pacienteId || anyDatos.estudiante_id || anyDatos.paciente_id || 1);
+  const docId = Number(datos.docenteId || datos.medicoId || anyDatos.docente_id || anyDatos.medico_id || 1);
+  const labId = Number(datos.laboratorioId || datos.consultorioId || anyDatos.laboratorio_id || anyDatos.consultorio_id || 1);
+  const { fecha, hora } = extraerFechaYHora(datos.fecha, datos.hora);
+  const estado = datos.estado || 'programada';
+
+  const query = `
+    INSERT INTO revisiones (
+      estudiante_id,
+      docente_id,
+      laboratorio_id,
+      fecha,
+      hora,
+      motivo,
+      estado
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING
+      id,
+      estudiante_id AS "estudianteId",
+      docente_id AS "docenteId",
+      laboratorio_id AS "laboratorioId",
+      TO_CHAR(fecha, 'YYYY-MM-DD') AS "fecha",
+      SUBSTRING(hora::text FROM 1 FOR 5) AS "hora",
+      motivo,
+      estado
+  `;
+  const res = await consultar(query, [estId, docId, labId, fecha, hora, datos.motivo.trim(), estado]);
+  return mapearRevision(res.rows[0]);
+};
+
+export const actualizarRevision = async (
+  id: number | string,
+  datos: DatosRevision
+): Promise<Revision | null> => {
+  const actual = await obtenerRevisionPorId(id);
+  if (!actual) return null;
+
+  const estId = Number(datos.estudianteId || datos.pacienteId || actual.estudianteId);
+  const docId = Number(datos.docenteId || datos.medicoId || actual.docenteId);
+  const { fecha, hora } = extraerFechaYHora(datos.fecha || actual.fecha, datos.hora || actual.hora);
+  const estado = datos.estado || actual.estado;
+  const motivo = datos.motivo !== undefined ? datos.motivo.trim() : actual.motivo;
+
+  const query = `
+    UPDATE revisiones
+    SET
+      estudiante_id = $2,
+      docente_id = $3,
+      fecha = $4,
+      hora = $5,
+      motivo = $6,
+      estado = $7
+    WHERE id = $1
+    RETURNING
+      id,
+      estudiante_id AS "estudianteId",
+      docente_id AS "docenteId",
+      TO_CHAR(fecha, 'YYYY-MM-DD') AS "fecha",
+      SUBSTRING(hora::text FROM 1 FOR 5) AS "hora",
+      motivo,
+      estado
+  `;
+  const res = await consultar(query, [Number(id), estId, docId, fecha, hora, motivo, estado]);
+  return mapearRevision(res.rows[0]);
+};
+
+export const actualizarRevisionParcial = async (
+  id: number | string,
+  datos: Partial<DatosRevision>
+): Promise<Revision | null> => {
+  const actual = await obtenerRevisionPorId(id);
+  if (!actual) return null;
+
+  const estId = Number(datos.estudianteId || datos.pacienteId || actual.estudianteId);
+  const docId = Number(datos.docenteId || datos.medicoId || actual.docenteId);
+  const fechaStr = datos.fecha || actual.fecha;
+  const horaStr = datos.hora || actual.hora;
+  const { fecha, hora } = extraerFechaYHora(fechaStr, horaStr);
+  const motivo = datos.motivo !== undefined ? datos.motivo.trim() : actual.motivo;
+  const estado = datos.estado || actual.estado;
+
+  const query = `
+    UPDATE revisiones
+    SET
+      estudiante_id = $2,
+      docente_id = $3,
+      fecha = $4,
+      hora = $5,
+      motivo = $6,
+      estado = $7
+    WHERE id = $1
+    RETURNING
+      id,
+      estudiante_id AS "estudianteId",
+      docente_id AS "docenteId",
+      TO_CHAR(fecha, 'YYYY-MM-DD') AS "fecha",
+      SUBSTRING(hora::text FROM 1 FOR 5) AS "hora",
+      motivo,
+      estado
+  `;
+  const res = await consultar(query, [Number(id), estId, docId, fecha, hora, motivo, estado]);
+  return mapearRevision(res.rows[0]);
+};
+
+export const cambiarEstadoRevision = async (
+  id: number | string,
+  nuevoEstado: string
+): Promise<{ exito: boolean; error?: string; revision?: Revision }> => {
+  const actual = await obtenerRevisionPorId(id);
+  if (!actual) {
+    return { exito: false, error: 'NO_ENCONTRADA' };
+  }
+
+  const permitidos = transicionesValidas[actual.estado] || [];
+  if (!permitidos.includes(nuevoEstado)) {
+    return { exito: false, error: 'TRANSICION_INVALIDA' };
+  }
+
+  const query = `
+    UPDATE revisiones
+    SET estado = $2
+    WHERE id = $1
+    RETURNING
+      id,
+      estudiante_id AS "estudianteId",
+      docente_id AS "docenteId",
+      TO_CHAR(fecha, 'YYYY-MM-DD') AS "fecha",
+      SUBSTRING(hora::text FROM 1 FOR 5) AS "hora",
+      motivo,
+      estado
+  `;
+  const res = await consultar(query, [Number(id), nuevoEstado]);
+  return { exito: true, revision: mapearRevision(res.rows[0]) };
+};
+
+export const confirmarRevision = async (
+  id: number | string
+): Promise<{ exito: boolean; error?: string; revision?: Revision }> => {
+  return cambiarEstadoRevision(id, 'confirmada');
+};
+
+export const atenderRevision = async (
+  id: number | string
+): Promise<{ exito: boolean; error?: string; revision?: Revision }> => {
+  return cambiarEstadoRevision(id, 'atendida');
+};
+
+export const cancelarRevision = async (
+  id: number | string
+): Promise<{ exito: boolean; error?: string; revision?: Revision }> => {
+  return cambiarEstadoRevision(id, 'cancelada');
+};
+
+export const obtenerContextoUsuario = async (
+  usuario: any
+): Promise<{ usuario: any; ficha: any }> => {
+  const rawRol = String(usuario.rol || usuario.role || '').toLowerCase().trim();
+  const usuarioInfo = {
+    id: usuario.id,
+    email: usuario.email,
+    rol: rawRol,
+    versionSesion: usuario.versionSesion ?? usuario.version_sesion ?? 0,
+  };
+
+  if (rawRol === 'administrador' || rawRol === 'admin') {
+    return {
+      usuario: usuarioInfo,
+      ficha: null,
+    };
+  }
+
+  if (
+    rawRol === 'estudiante' ||
+    rawRol === 'paciente' ||
+    rawRol === 'user' ||
+    rawRol === 'usuario'
+  ) {
+    const q = `
+      SELECT id, nombre, documento, email, telefono, TO_CHAR(fecha_nacimiento, 'YYYY-MM-DD') AS "fechaNacimiento"
+      FROM estudiantes
+      WHERE usuario_id = $1::text OR usuario_id = $1::varchar OR email = $2
+      LIMIT 1
+    `;
+    const res = await consultar(q, [String(usuario.id), usuario.email || '']);
+    return {
+      usuario: usuarioInfo,
+      ficha: res.rows[0] || null,
+    };
+  }
+
+  if (
+    rawRol === 'docente' ||
+    rawRol === 'profesor' ||
+    rawRol === 'auditor' ||
+    rawRol === 'medico' ||
+    rawRol === 'doctor'
+  ) {
+    const q = `
+      SELECT id, nombre, registro_academico AS "registroAcademico", email, telefono, departamento_id AS "departamentoId", activo
+      FROM docentes
+      WHERE usuario_id = $1::text OR usuario_id = $1::varchar OR email = $2
+      LIMIT 1
+    `;
+    const res = await consultar(q, [String(usuario.id), usuario.email || '']);
+    return {
+      usuario: usuarioInfo,
+      ficha: res.rows[0] || null,
+    };
+  }
+
+  return {
+    usuario: usuarioInfo,
+    ficha: null,
+  };
+};
+
+export const obtenerEstadisticasResumen = async (): Promise<any> => {
+  const [
+    resUsuarios,
+    resEstudiantes,
+    resDocentes,
+    resDepartamentos,
+    resLaboratorios,
+    resRevisiones,
+    resRevisionesEstados,
+    resAnalisis,
+  ] = await Promise.all([
+    consultar('SELECT COUNT(*)::int AS total FROM usuarios'),
+    consultar('SELECT COUNT(*)::int AS total FROM estudiantes'),
+    consultar('SELECT COUNT(*)::int AS total FROM docentes WHERE activo = true'),
+    consultar('SELECT COUNT(*)::int AS total FROM departamentos WHERE activo = true'),
+    consultar('SELECT COUNT(*)::int AS total FROM laboratorios WHERE activo = true'),
+    consultar('SELECT COUNT(*)::int AS total FROM revisiones'),
+    consultar(`
+      SELECT estado, COUNT(*)::int AS cantidad
+      FROM revisiones
+      GROUP BY estado
+    `),
+    consultar('SELECT COUNT(*)::int AS total FROM analyses').catch(() => ({ rows: [{ total: 0 }] })),
+  ]);
+
+  const desgloseEstados: Record<string, number> = {
+    programada: 0,
+    confirmada: 0,
+    atendida: 0,
+    cancelada: 0,
+  };
+  resRevisionesEstados.rows.forEach((r: any) => {
+    desgloseEstados[r.estado] = Number(r.cantidad);
+  });
+
+  return {
+    usuarios: Number(resUsuarios.rows[0]?.total || 0),
+    estudiantes: Number(resEstudiantes.rows[0]?.total || 0),
+    docentes: Number(resDocentes.rows[0]?.total || 0),
+    departamentos: Number(resDepartamentos.rows[0]?.total || 0),
+    laboratorios: Number(resLaboratorios.rows[0]?.total || 0),
+    revisiones: {
+      total: Number(resRevisiones.rows[0]?.total || 0),
+      ...desgloseEstados,
+    },
+    analisis: Number(resAnalisis.rows[0]?.total || 0),
+  };
+};
+
+export const eliminarRevision = async (id: number | string): Promise<boolean> => {
+  const query = `DELETE FROM revisiones WHERE id = $1 RETURNING id`;
+  const res = await consultar(query, [Number(id)]);
+  return (res.rowCount ?? 0) > 0;
+};
+
+export default {
+  obtenerTodasLasRevisiones,
+  obtenerRevisionPorId,
+  obtenerRevisionesPorEstudiante,
+  obtenerRevisionesPorDocente,
+  crearRevision,
+  actualizarRevision,
+  actualizarRevisionParcial,
+  cambiarEstadoRevision,
+  confirmarRevision,
+  atenderRevision,
+  cancelarRevision,
+  obtenerContextoUsuario,
+  obtenerEstadisticasResumen,
+  eliminarRevision,
+  extraerFechaYHora,
+  verificarDisponibilidadLaboratorio,
+  // Alias de compatibilidad
+  obtenerTodasLasCitas: obtenerTodasLasRevisiones,
+  obtenerCitaPorId: obtenerRevisionPorId,
+  obtenerCitasPorPaciente: obtenerRevisionesPorEstudiante,
+  obtenerCitasPorMedico: obtenerRevisionesPorDocente,
+  crearCita: crearRevision,
+  actualizarCita: actualizarRevision,
+  actualizarCitaParcial: actualizarRevisionParcial,
+  cambiarEstadoCita: cambiarEstadoRevision,
+  eliminarCita: eliminarRevision,
+};

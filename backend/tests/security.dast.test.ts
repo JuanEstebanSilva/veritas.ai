@@ -155,8 +155,8 @@ describe('Suite DAST — Dynamic Application Security Testing (Plagelio)', () =>
           email: "' OR '1'='1' --",
           password: "' OR '1'='1' --",
         });
-      // Debe retornar 401 sin ejecutar SQL ni filtrar información interna
-      expect(res.status).toBe(401);
+      // Debe retornar 400 (rechazado por validación de email) o 401 sin ejecutar SQL ni filtrar información interna
+      expect([400, 401]).toContain(res.status);
       expect(res.body.success).toBe(false);
     });
 
@@ -231,7 +231,9 @@ describe('Suite DAST — Dynamic Application Security Testing (Plagelio)', () =>
 
   describe('6. DAST - Endpoints No Encontrados y Manejo de Errores', () => {
     it('DAST-ERR-01: Responder 404 estándar en rutas inexistentes sin volcado de rutas internas', async () => {
-      const res = await request(app).get('/api/admin_secret_non_existent_route');
+      const res = await request(app)
+        .get('/api/admin_secret_non_existent_route')
+        .set('X-API-Key', '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0');
       expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('no encontrado');

@@ -1,9 +1,10 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/authMiddleware';
 import { prisma } from '../config/prisma';
-import bcrypt from 'bcryptjs';
 import { Role } from '@prisma/client';
 import { isSameCalendarDay } from '../middleware/dailyLimitGuard';
+import { contarDependenciasUsuario } from '../services/referentialIntegrity.service';
+import { validarPassword, generarPasswordHash } from '../utils/passwordPolicy';
 
 export class UserController {
   /**
@@ -188,6 +189,12 @@ export class UserController {
         return;
       }
 
+      const errorPassword = validarPassword(password);
+      if (errorPassword) {
+        res.status(400).json({ success: false, message: errorPassword });
+        return;
+      }
+
       const normalizedEmail = email.toLowerCase().trim();
 
       const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
@@ -196,7 +203,7 @@ export class UserController {
         return;
       }
 
-      const passwordHash = await bcrypt.hash(password, 12);
+      const passwordHash = await generarPasswordHash(password);
 
       const user = await prisma.user.create({
         data: {
@@ -235,7 +242,7 @@ export class UserController {
   public static async updateUser(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const id = req.params.id as string;
-      const { name, last_name, email, is_active, is_premium, password } = req.body;
+      const { name, last_name, email, role, is_active, is_premium, password } = req.body;
 
       const existing = await prisma.user.findUnique({ where: { id } });
       if (!existing) {
@@ -244,9 +251,17 @@ export class UserController {
       }
 
       // Si se desea actualizar contraseña
+      // Contraseña opcional al editar. Antes una contraseña corta se ignoraba en
+      // silencio y se recortaba con trim(); ahora se valida y se guarda tal cual,
+      // igual que en el registro.
       let passwordHash = undefined;
-      if (password && password.trim().length >= 8) {
-        passwordHash = await bcrypt.hash(password.trim(), 12);
+      if (password !== undefined && password !== null && password !== '') {
+        const errorPassword = validarPassword(password);
+        if (errorPassword) {
+          res.status(400).json({ success: false, message: errorPassword });
+          return;
+        }
+        passwordHash = await generarPasswordHash(password);
       }
 
       const updated = await prisma.user.update({
@@ -255,6 +270,7 @@ export class UserController {
           ...(name && { name: name.trim() }),
           ...(last_name && { last_name: last_name.trim() }),
           ...(email && { email: email.toLowerCase().trim() }),
+          ...(role && (role === Role.ADMIN || role === Role.USER) && { role }),
           ...(is_active !== undefined && { is_active: Boolean(is_active) }),
           ...(is_premium !== undefined && {
             is_premium: Boolean(is_premium),
@@ -389,14 +405,133 @@ export class UserController {
         return;
       }
 
+      // Integridad Referencial (Lab 5 - BLOQUE 1)
+      // Equivalente lógico de ON DELETE RESTRICT: la petición es válida y el
+      // recurso existe, pero choca con el estado actual del sistema -> 409.
+      const dependencias = await contarDependenciasUsuario(id);
+
+      if (dependencias.tieneDependencias) {
+        res.status(409).json({
+          success: false,
+          message: 'No se puede eliminar el usuario porque tiene análisis o pagos asociados',
+          dependencias: { analisis: dependencias.analisis, pagos: dependencias.pagos },
+        });
+        return;
+      }
+
       await prisma.user.delete({ where: { id } });
 
       res.status(200).json({
         success: true,
-        message: 'Usuario y todos sus análisis asociados eliminados correctamente.',
+        message: 'Usuario eliminado correctamente.',
       });
     } catch (error: any) {
+      // Red de seguridad: si la restricción ON DELETE RESTRICT de PostgreSQL
+      // rechaza el borrado, se traduce a 409 y no a un 500 genérico.
+      if (error?.code === 'P2003') {
+        res.status(409).json({
+          success: false,
+          message: 'No se puede eliminar el usuario porque tiene registros dependientes asociados',
+        });
+        return;
+      }
       res.status(500).json({ success: false, message: 'Error al eliminar usuario.' });
+    }
+  }
+
+  /**
+   * Cambiar rol de usuario (USER <-> ADMIN)
+   */
+  public static async toggleRole(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const id = req.params.id as string;
+
+      if (req.user?.id === id) {
+        res.status(400).json({
+          success: false,
+          message: 'No puedes cambiar tu propio rol de administrador.',
+        });
+        return;
+      }
+
+      const user = await prisma.user.findUnique({ where: { id } });
+      if (!user) {
+        res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
+        return;
+      }
+
+      const newRole = user.role === Role.ADMIN ? Role.USER : Role.ADMIN;
+      const updated = await prisma.user.update({
+        where: { id },
+        data: { role: newRole },
+      });
+
+      res.status(200).json({
+        success: true,
+        message: `Rol cambiado a ${newRole} correctamente.`,
+        user: {
+          id: updated.id,
+          role: updated.role,
+        },
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: 'Error al cambiar rol del usuario.' });
+    }
+  }
+
+  /**
+   * Listar todos los análisis y documentos cargados por usuarios (Panel Admin CRUD Archivos)
+   */
+  public static async getAllAnalyses(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const analyses = await prisma.analysis.findMany({
+        orderBy: { created_at: 'desc' },
+        select: {
+          id: true,
+          title_or_filename: true,
+          type: true,
+          ai_score: true,
+          similarity_score: true,
+          original_text: true,
+          created_at: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              last_name: true,
+              email: true,
+            },
+          },
+          _count: {
+            select: {
+              sources: true,
+              results: true,
+            },
+          },
+        },
+      });
+
+      const formatted = analyses.map((a) => ({
+        id: a.id,
+        title: a.title_or_filename,
+        type: a.type,
+        aiScore: a.ai_score,
+        similarityScore: a.similarity_score,
+        textSnippet: a.original_text ? a.original_text.slice(0, 160) + (a.original_text.length > 160 ? '...' : '') : '',
+        originalText: a.original_text,
+        createdAt: a.created_at,
+        userName: `${a.user.name} ${a.user.last_name}`,
+        userEmail: a.user.email,
+        sourcesCount: a._count.sources,
+        paragraphsCount: a._count.results,
+      }));
+
+      res.status(200).json({
+        success: true,
+        analyses: formatted,
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: 'Error al listar análisis del sistema.' });
     }
   }
 }

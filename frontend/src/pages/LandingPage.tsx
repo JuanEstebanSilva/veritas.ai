@@ -2,8 +2,10 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { sound } from '../utils/soundEffects';
-import { gsap, ScrollTrigger, prefersReducedMotion, useReveal, useScrollGroup, usePointerParallax, useMagnetic, CountUp, Odometer, span, easeOut, refreshScroll } from '../motion';
-import { ReadingField, Sheet, CadenceInstrument, SimilarityInstrument, RewriteInstrument, WordDiff } from '../components/landing';
+import { gsap, ScrollTrigger, prefersReducedMotion, useReveal, useScrollGroup, usePointerParallax, Magnetic, useSplitEntrance, CountUp, Odometer, span, easeOut, refreshScroll } from '../motion';
+import { createWordFall, type WordFall } from '../motion/wordFall';
+import { HeroScene, Sheet, SimilarityInstrument, RewriteInstrument, WordDiff } from '../components/landing';
+import { CadenceSignal, ParticleVerdict, type Verdict } from '../components/viz';
 import { ArrowRight, ArrowDown, Check, BarChart3, Search, PenLine } from 'lucide-react';
 import './landing.css';
 
@@ -19,11 +21,23 @@ const METRICS = [
 const BEFORE = 'En conclusión, es crucial destacar que la inteligencia artificial desempeña un papel fundamental en la transformación del sector educativo contemporáneo. Asimismo, cabe señalar que su implementación requiere un enfoque integral.';
 const AFTER  = 'En definitiva, conviene reparar en que la inteligencia artificial resulta determinante en la transformación del sector educativo contemporáneo. A su vez, importa advertir que su implementación requiere un enfoque integral.';
 
+/** Estilometría: la cadencia de un texto humano frente a uno generado, en vivo. */
+const CadenceLive: React.FC = () => (
+  <div className="aspect-[320/150]"><CadenceSignal mode="live" label="Dos señales de ejemplo: longitud de oraciones de un texto humano, irregular, y de un texto generado, casi plana" /></div>
+);
+
 const READINGS = [
-  { tone: 'azure', Icon: BarChart3, title: 'Análisis estilométrico', lead: 'Mide cómo está escrito.', body: 'Perplejidad, burstiness, riqueza léxica y uniformidad sintáctica, párrafo a párrafo. Cada sección recibe su puntuación y los indicadores que la justifican.', Instrument: CadenceInstrument },
-  { tone: 'gold', Icon: Search, title: 'Cotejo de similitud', lead: 'Busca de dónde viene.', body: 'Compara el documento con repositorios de acceso abierto y muestra los fragmentos coincidentes en paralelo. Separa la cita legítima y la terminología estándar del plagio sin atribución.', Instrument: SimilarityInstrument },
-  { tone: 'human', Icon: PenLine, title: 'Reescritura editorial', lead: 'Cambia la voz, no la idea.', body: 'Rompe la cadencia uniforme y sustituye las fórmulas de IA sin tocar citas, cifras ni referencias. Descarga directa en .docx.', Instrument: RewriteInstrument },
+  { tone: 'azure', Icon: BarChart3, title: 'Detección de IA', lead: 'Mide cómo está escrito.', body: 'Perplejidad, burstiness, riqueza léxica y uniformidad sintáctica, párrafo a párrafo. Cada sección recibe su puntuación y los indicadores que la justifican.', Instrument: CadenceLive },
+  { tone: 'gold', Icon: Search, title: 'Detección de plagio', lead: 'Verifica que no sea copia de otro lugar.', body: 'Compara el documento con repositorios de acceso abierto y muestra los fragmentos coincidentes en paralelo. Separa la cita legítima y la terminología estándar del plagio sin atribución.', Instrument: SimilarityInstrument },
+  { tone: 'human', Icon: PenLine, title: 'Humanizador de texto', lead: 'Humaniza la voz, no la idea.', body: 'Rompe la cadencia uniforme y sustituye las fórmulas de IA sin tocar citas, cifras ni referencias. Descarga directa en .docx.', Instrument: RewriteInstrument },
 ] as const;
+
+/** Veredictos de ejemplo para el cierre (no son resultados de un documento real). */
+const SAMPLE_VERDICTS: Verdict[] = [
+  { text: 'Humano 91 %', tone: 'human' },
+  { text: 'IA 84 %', tone: 'ai' },
+  { text: 'Mixto 46 %', tone: 'mixed' },
+];
 
 const useWide = () => {
   const [wide, setWide] = useState(() => typeof window === 'undefined' || window.innerWidth >= 760);
@@ -51,8 +65,7 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
   const reveal = useReveal<HTMLDivElement>();
   const hero = useScrollGroup<HTMLElement>({ scrub: 0.4, start: 'top top', end: 'bottom top', staticValue: 0 });
   const heroParallax = usePointerParallax<HTMLDivElement>();
-  const ctaMagnet = useMagnetic<HTMLButtonElement>();
-  const closeMagnet = useMagnetic<HTMLButtonElement>();
+  const heroTitle = useSplitEntrance<HTMLHeadingElement>(80);
 
   // Cifras del informe: el único texto que escribe el JS mientras se hace scroll.
   const counters = useRef<{ el: HTMLElement; target: number; dec: number; at: number }[]>([]);
@@ -65,9 +78,16 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
   const readings = useScrollGroup<HTMLElement>({ pin: true, scrub: 0.6 });
 
   const [score, setScore] = useState(87);
+  // Las fórmulas de IA caen con física cuando su cambio cruza la mitad (ver motion/wordFall.ts)
+  const fall = useRef<{ fx: WordFall; at: number[] } | null>(null);
   const onBaProgress = useCallback((p: number) => {
     const v = Math.round(87 - 78 * easeOut(span(p, 0.18, 0.74)));
     setScore((prev) => (prev === v ? prev : v));
+    const f = fall.current;
+    if (f) {
+      const pk = span(p, 0.18, 0.74);
+      f.fx.update(f.at.map((at) => Math.min(1, Math.max(0, (pk - at * 0.82) * 5))));
+    }
   }, []);
   const ba = useScrollGroup<HTMLElement>({ pin: true, scrub: 0.6, onProgress: onBaProgress });
 
@@ -75,6 +95,10 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
     const el = root.current;
     if (!el) return;
     counters.current = Array.from(el.querySelectorAll<HTMLElement>('[data-count]')).map((c) => ({ el: c, target: Number(c.dataset.count), dec: Number(c.dataset.decimals || 0), at: Number(c.dataset.at || 0) }));
+    const cells = Array.from(el.querySelectorAll<HTMLElement>('.ba .diff-cell'));
+    if (!staticLayout && cells.length) {
+      fall.current = { fx: createWordFall(cells), at: cells.map((c) => Number(c.style.getPropertyValue('--at')) || 0) };
+    }
     if (staticLayout) {
       counters.current.forEach((c) => { c.el.textContent = c.target.toFixed(c.dec); });
       if (humanCount.current) humanCount.current.textContent = '96.4';
@@ -93,7 +117,10 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
     document.fonts?.ready.then(refresh);
     window.addEventListener('load', refresh);
     const t = window.setTimeout(refresh, 400);
-    return () => { ctx.revert(); window.removeEventListener('load', refresh); window.clearTimeout(t); delete el.dataset.chapter; };
+    return () => {
+      ctx.revert(); window.removeEventListener('load', refresh); window.clearTimeout(t); delete el.dataset.chapter;
+      fall.current?.fx.dispose(); fall.current = null;
+    };
   }, [staticLayout]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStart = () => { sound.playClick(); navigate(isAuthenticated ? '/analyzer' : '/register'); };
@@ -117,27 +144,29 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
           <div className="grain" aria-hidden="true" />
           <div ref={heroParallax} className="hero-inner wrap !max-w-[1320px] w-full py-14 sm:py-16 grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-12 lg:gap-6 items-center">
             <div className="hero-copy relative z-[2] flex flex-col items-start gap-8 max-w-[720px]">
-              <h1 className="text-d-hero font-light animate-rise" style={{ animationDelay: '.05s', textWrap: 'initial' }}>
+              <h1 ref={heroTitle} className="text-d-hero font-light" style={{ textWrap: 'initial' }}>
                 Distingue lo escrito<br />
                 <span className="serif text-azure">de lo generado.</span>
               </h1>
               <p className="text-lede text-mid max-w-[520px] animate-rise" style={{ animationDelay: '.18s' }}>
-                <span className="lead-in">Un documento, tres lecturas.</span> Plagelio mide la perplejidad y el burstiness de cada párrafo, coteja su similitud contra fuentes abiertas y reescribe el estilo sin tocar tus citas.
+                <span className="lead-in">Un documento, tres lecturas.</span> Plagelio detecta plagio cotejando similitud con fuentes abiertas, analiza probabilidad de IA y humaniza el texto eliminando fórmulas sintéticas sin tocar tus citas.
               </p>
               <div className="flex flex-wrap items-center gap-3 animate-rise" style={{ animationDelay: '.3s' }}>
-                <button ref={ctaMagnet} type="button" onClick={handleStart} className="btn btn-primary">
-                  Iniciar verificación <ArrowRight className="w-4 h-4" strokeWidth={2} />
-                </button>
+                <Magnetic>
+                  <button type="button" onClick={handleStart} className="btn btn-primary">
+                    Iniciar verificación <ArrowRight className="w-4 h-4" strokeWidth={2} />
+                  </button>
+                </Magnetic>
                 <button type="button" onClick={scrollToScanner} className="btn btn-ghost">
                   Ver cómo lee <ArrowDown className="w-4 h-4" strokeWidth={2} />
                 </button>
               </div>
             </div>
 
-            <div className="relative h-[52vw] max-h-[420px] min-h-[280px] lg:h-[min(72vh,640px)] lg:max-h-none">
+            <div className="relative h-[min(118vw,560px)] lg:h-[min(76vh,680px)]">
               <div className="hero-field-glow glow" style={{ width: '120%', height: '120%', top: '-10%', left: '-10%', ['--glow-color' as string]: 'rgb(var(--azure) / .18)' }} aria-hidden="true" />
               <div className="hero-field absolute inset-0">
-                <ReadingField className="w-full h-full block" />
+                <HeroScene className="w-full h-full" />
               </div>
             </div>
           </div>
@@ -279,8 +308,8 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
           <div className="wrap w-full flex flex-col gap-10">
             <div className="flex flex-wrap items-end justify-between gap-6">
               <div className="flex flex-col gap-5 max-w-[620px]">
-                <h2 className="text-d-3 font-light">Misma idea.<br /><span className="serif">Otra voz.</span></h2>
-                <p className="text-[15.5px] leading-[1.7] text-mid max-w-[460px]"><span className="lead-in">La reescritura no inventa.</span> Sustituye las fórmulas de IA por giros propios y rompe la cadencia simétrica, con las citas y las cifras intactas.</p>
+                <h2 className="text-d-3 font-light">Misma idea.<br /><span className="serif">Voz humana.</span></h2>
+                <p className="text-[15.5px] leading-[1.7] text-mid max-w-[460px]"><span className="lead-in">El humanizador no inventa.</span> Sustituye las fórmulas de IA por giros orgánicos y rompe la cadencia simétrica, manteniendo citas, datos y cifras intactas.</p>
               </div>
               <div className="flex items-end gap-4">
                 <span className="relative num text-[72px] sm:text-[96px] leading-none">
@@ -321,7 +350,7 @@ const Landing: React.FC<{ staticLayout: boolean }> = ({ staticLayout }) => {
         </div>
       </section>
 
-      <PricingAndClose onStart={handleStart} onPremium={handlePremium} closeMagnet={closeMagnet} />
+      <PricingAndClose onStart={handleStart} onPremium={handlePremium} />
     </div>
   );
 };
@@ -339,49 +368,42 @@ const HonestyStatement: React.FC = () => {
   );
 };
 
-const PricingAndClose: React.FC<{ onStart: () => void; onPremium: () => void; closeMagnet: React.RefObject<HTMLButtonElement> }> = ({ onStart, onPremium, closeMagnet }) => {
+const PricingAndClose: React.FC<{ onStart: () => void; onPremium: () => void }> = ({ onStart, onPremium }) => {
   const ref = useReveal<HTMLDivElement>();
   return (
     <div ref={ref} className="relative z-[2]">
-      {/* ═══════════ PRECIOS ═══════════ */}
+      {/* ═══════════ ACCESO ABIERTO Y GRATUITO ═══════════ */}
       <section data-chapter-name="base" className="wrap py-24 sm:py-32 flex flex-col gap-14">
         <div data-reveal className="flex flex-col items-center text-center gap-5">
-          <h2 className="text-d-3 font-light">Se paga una vez.<br /><span className="serif">Y ya.</span></h2>
-          <p className="text-[16px] leading-[1.65] text-mid max-w-[480px]">Sin suscripciones, sin cobros recurrentes, sin plan empresarial oculto.</p>
+          <h2 className="text-d-3 font-light">100% Abierto y Gratuito.<br /><span className="serif">Para toda la comunidad académica.</span></h2>
+          <p className="text-[16px] leading-[1.65] text-mid max-w-[560px]">Una alternativa abierta a Turnitin: sin métodos de pago, sin suscripciones y sin límites artificiales.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-[920px] w-full mx-auto">
-          <div data-reveal data-reveal-group="plans" className="card card-hover p-8 sm:p-9 flex flex-col gap-8">
-            <div className="flex flex-col gap-3">
-              <span className="eyebrow">Uso estándar</span>
-              <div className="flex items-baseline gap-2"><span className="num text-[56px] leading-none">$0</span><span className="text-sm text-low">permanente</span></div>
-              <p className="text-[13.5px] text-low">Para consultas puntuales y textos académicos cortos.</p>
-            </div>
-            <ul className="flex flex-col gap-3 text-[14px] text-mid">
-              {['5 análisis diarios, con reinicio automático', 'Texto plano y archivos .docx hasta 10 MB', 'Informe completo de perplejidad y similitud', 'Desglose y reescritura párrafo por párrafo'].map((t) => (
-                <li key={t} className="flex items-start gap-3"><Check className="w-4 h-4 text-human shrink-0 mt-0.5" strokeWidth={2.2} /><span>{t}</span></li>
-              ))}
-            </ul>
-            <Link to="/register" onClick={() => sound.playClick()} className="btn btn-ghost w-full">Comenzar sin costo</Link>
-          </div>
-
-          <div data-reveal data-reveal-group="plans" className="halo relative overflow-hidden p-8 sm:p-9 rounded-[20px] border border-azure/30 flex flex-col gap-8"
+        <div className="max-w-[720px] w-full mx-auto">
+          <div data-reveal data-reveal-group="plans" className="halo relative overflow-hidden p-8 sm:p-10 rounded-[24px] border border-azure/30 flex flex-col gap-8"
             style={{ background: 'linear-gradient(165deg, rgb(var(--azure) / .10), rgb(var(--azure) / .015) 55%)', boxShadow: '0 40px 110px -50px rgb(var(--azure) / .5)' }}>
             <div className="glow animate-breathe" style={{ width: 420, height: 420, top: -200, right: -180, ['--glow-color' as string]: 'rgb(var(--azure) / .22)' }} aria-hidden="true" />
             <div className="relative flex flex-col gap-3">
               <div className="flex items-center justify-between gap-4">
-                <span className="eyebrow text-azure">Licencia vitalicia</span>
-                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-azure">Pago único</span>
+                <span className="eyebrow text-azure">Licencia de Código Abierto</span>
+                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-human bg-human/15 px-3 py-1 rounded-full border border-human/30">Totalmente Libre</span>
               </div>
-              <div className="flex items-baseline gap-2"><span className="num text-[56px] leading-none">$2</span><span className="text-sm text-mid">USD, de por vida</span></div>
-              <p className="text-[13.5px] text-mid">Desbloqueo permanente. Sin renovaciones.</p>
+              <div className="flex items-baseline gap-2"><span className="num text-[56px] leading-none">$0</span><span className="text-sm text-mid">gratis para siempre</span></div>
+              <p className="text-[13.5px] text-mid">Acceso completo e ilimitado para estudiantes, docentes e investigadores.</p>
             </div>
-            <ul className="relative flex flex-col gap-3 text-[14px] text-mid">
-              {['Análisis ilimitados, sin cuota diaria', 'Prioridad en tesis y documentos extensos', 'Descargas ilimitadas del documento mejorado', 'Historial permanente de verificaciones'].map((t) => (
+            <ul className="relative grid grid-cols-1 sm:grid-cols-2 gap-3 text-[14px] text-mid">
+              {[
+                'Cotejo contra repositorio interno (Turnitin)',
+                'Cotejo web en vivo con Wikipedia y fuentes académicas',
+                'Detección de IA por perplejidad y burstiness',
+                'Humanizador y reescritura ética con Google Gemini',
+                'Soporte multiformato: Word (.docx, .doc), PDF, ODT, RTF, TXT y MD',
+                'Panel administrativo con gestión de archivos y usuarios',
+              ].map((t) => (
                 <li key={t} className="flex items-start gap-3"><Check className="w-4 h-4 text-azure shrink-0 mt-0.5" strokeWidth={2.2} /><span>{t}</span></li>
               ))}
             </ul>
-            <button type="button" onClick={onPremium} className="btn btn-primary w-full relative">Adquirir licencia vitalicia</button>
+            <Link to="/register" onClick={() => sound.playClick()} className="btn btn-primary w-full relative text-center">Crear cuenta gratuita y empezar</Link>
           </div>
         </div>
       </section>
@@ -389,11 +411,19 @@ const PricingAndClose: React.FC<{ onStart: () => void; onPremium: () => void; cl
       {/* ═══════════ CIERRE ═══════════ */}
       <section data-chapter-name="ground" className="wrap py-28 sm:py-40 flex flex-col items-center text-center gap-9">
         <h2 data-reveal className="text-d-1 font-light max-w-[900px]">Pon a prueba<br /><span className="serif text-azure">tu propio texto.</span></h2>
-        <p data-reveal className="text-[17px] leading-[1.65] text-mid max-w-[480px]">Cinco análisis al día, sin tarjeta y sin período de prueba que caduque.</p>
+        <p data-reveal className="text-[17px] leading-[1.65] text-mid max-w-[480px]">Análisis ilimitados, sin tarjeta de crédito y 100% gratuito.</p>
+        <figure data-reveal className="w-full max-w-[860px] flex flex-col items-center gap-3">
+          <div className="w-full aspect-[2.6/1]">
+            <ParticleVerdict verdicts={SAMPLE_VERDICTS} label="Veredictos de ejemplo formados por partículas: Humano 91 %, IA 84 %, Mixto 46 %" />
+          </div>
+          <figcaption className="text-[12.5px] text-low">Veredictos de ejemplo. Pasa el cursor: cada partícula vuelve a su sitio.</figcaption>
+        </figure>
         <div data-reveal>
-          <button ref={closeMagnet} type="button" onClick={onStart} className="btn btn-primary h-[58px] px-9 text-[16px]">
-            Crear cuenta gratis <ArrowRight className="w-4 h-4" strokeWidth={2} />
-          </button>
+          <Magnetic>
+            <button type="button" onClick={onStart} className="btn btn-primary h-[58px] px-9 text-[16px]">
+              Crear cuenta gratis <ArrowRight className="w-4 h-4" strokeWidth={2} />
+            </button>
+          </Magnetic>
         </div>
       </section>
 
@@ -402,8 +432,8 @@ const PricingAndClose: React.FC<{ onStart: () => void; onPremium: () => void; cl
         <div className="wrap py-12 flex flex-wrap justify-between gap-10">
           <div className="flex flex-col gap-4 max-w-[340px]">
             <span className="text-[14px] font-extrabold tracking-[0.14em] text-mid">PLAGELIO</span>
-            <p className="text-[12.5px] leading-[1.65] text-low">Análisis estilométrico, cotejo de similitud y reescritura editorial para trabajo académico.</p>
-            <span className="text-xs text-low">© {new Date().getFullYear()} Plagelio</span>
+            <p className="text-[12.5px] leading-[1.65] text-low">Alternativa open-source a Turnitin: Detección de plagio, análisis estilométrico y reescritura ética.</p>
+            <span className="text-xs text-low">© {new Date().getFullYear()} Plagelio · Open Source</span>
           </div>
           <div className="flex gap-12 sm:gap-20">
             <div className="flex flex-col gap-3 text-[13px] text-mid">
@@ -415,7 +445,7 @@ const PricingAndClose: React.FC<{ onStart: () => void; onPremium: () => void; cl
             <div className="flex flex-col gap-3 text-[13px] text-mid">
               <span className="eyebrow">Acceso</span>
               <Link to="/login" className="hover:text-hi transition-colors">Iniciar sesión</Link>
-              <button type="button" onClick={onPremium} className="text-left hover:text-hi transition-colors">Licencia vitalicia</button>
+              <Link to="/register" className="hover:text-hi transition-colors">Registro Gratuito</Link>
             </div>
           </div>
         </div>

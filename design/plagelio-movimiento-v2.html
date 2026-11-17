@@ -1,0 +1,1492 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Prototipo de movimiento v2 (referencia de diseño). Las librerías se cargan desde CDN. -->
+<title>Plagelio en movimiento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@300..800&display=swap">
+<style>
+/* Concepto: un solo scroll largo; cada propuesta es un capítulo con su ficha (técnica, librería, destino en Plagelio) y su escenario en vivo. Tokens tomados del sistema real de Plagelio (oscuro primero). */
+:root {
+  --ground: #06070a; --base: #0d0f13; --surface: #17191f; --line: #32353c;
+  --hi: #f4f5f8; --mid: #afb2b8; --low: #898c93;
+  --azure: #40befd; --human: #4cc680; --mixed: #db9e16; --ai: #fb827a; --gold: #dda733;
+  --hair: rgba(255,255,255,.075); --hair-2: rgba(255,255,255,.13);
+  --card: rgba(255,255,255,.025); --on-accent: #05202e;
+  --paper: #faf9f6; --ink: #1c1b19; --ink-low: #6b6862;
+  --shadow: 0 30px 80px -30px rgba(0,0,0,.75);
+  --f-display: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --f-sans: Manrope, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ease: cubic-bezier(.16, 1, .3, 1);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --ground: #f7f7f9; --base: #ffffff; --surface: #ffffff; --line: #e2e4e8;
+  --hi: #0d0f13; --mid: #4e525a; --low: #6a6e76;
+  --azure: #0b79be; --human: #16844a; --mixed: #9c6800; --ai: #c43c34; --gold: #966900;
+  --hair: rgba(0,0,0,.08); --hair-2: rgba(0,0,0,.14);
+  --card: rgba(255,255,255,1); --on-accent: #ffffff;
+  --shadow: 0 30px 70px -34px rgba(13,15,19,.35);
+  color-scheme: light; } }
+:root[data-theme="light"] {
+  --ground: #f7f7f9; --base: #ffffff; --surface: #ffffff; --line: #e2e4e8;
+  --hi: #0d0f13; --mid: #4e525a; --low: #6a6e76;
+  --azure: #0b79be; --human: #16844a; --mixed: #9c6800; --ai: #c43c34; --gold: #966900;
+  --hair: rgba(0,0,0,.08); --hair-2: rgba(0,0,0,.14);
+  --card: rgba(255,255,255,1); --on-accent: #ffffff;
+  --shadow: 0 30px 70px -34px rgba(13,15,19,.35);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { background: var(--ground); color: var(--hi); font-family: var(--f-sans); font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased; overflow-x: clip; }
+.wrap { width: 100%; max-width: 1180px; margin-inline: auto; padding-inline: clamp(16px, 4vw, 40px); }
+h1, h2, h3 { text-wrap: balance; margin: 0; font-weight: 600; letter-spacing: -.02em; }
+p { margin: 0; text-wrap: pretty; }
+em.serif, .serif { font-family: var(--f-display); font-style: italic; font-weight: 400; letter-spacing: -.01em; }
+.eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--low); }
+.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+:focus-visible { outline: 2px solid var(--azure); outline-offset: 3px; border-radius: 6px; }
+button { font: inherit; color: inherit; }
+
+/* Barra superior */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--ground) 82%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--hair); }
+.top-in { display: flex; align-items: center; gap: 18px; min-height: 56px; flex-wrap: wrap; padding-block: 8px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .22em; font-size: 13px; }
+.brand svg { width: 20px; height: 20px; color: var(--azure); }
+.toc { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
+.toc a { color: var(--mid); text-decoration: none; font-size: 13px; padding: 6px 10px; border-radius: 999px; }
+.toc a:hover { color: var(--hi); background: var(--hair); }
+
+/* Botones (cápsula, como en Plagelio) */
+.btn { display: inline-flex; align-items: center; gap: 10px; height: 46px; padding-inline: 22px; border-radius: 999px;
+  border: 1px solid transparent; cursor: pointer; font-size: 14.5px; font-weight: 600; white-space: nowrap;
+  transition: background-color .24s var(--ease), border-color .24s var(--ease), color .24s var(--ease); }
+.btn-primary { background: var(--azure); color: var(--on-accent); }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-ghost { background: transparent; border-color: var(--hair-2); color: var(--hi); }
+.btn-ghost:hover { background: var(--hair); }
+.btn svg { width: 16px; height: 16px; }
+.seg { display: inline-flex; padding: 4px; gap: 4px; border-radius: 999px; border: 1px solid var(--hair-2); background: var(--card); flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--mid); }
+.seg button[aria-pressed="true"] { background: var(--hi); color: var(--ground); }
+
+/* Héroe */
+.hero { padding-block: clamp(40px, 7vw, 88px) clamp(32px, 5vw, 56px); }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: center; }
+.hero .lede { margin-top: 24px; color: var(--mid); font-size: clamp(16px, 1.6vw, 19px); max-width: 34ch; }
+.hero .lede b { color: var(--hi); font-weight: 600; }
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
+.print-stage { position: relative; aspect-ratio: 400 / 470; max-width: 460px; width: 100%; justify-self: center; perspective: 900px; }
+.print-tilt { position: absolute; inset: 0; transform-style: preserve-3d; }
+.print-stage svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.ridge { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+#ridges-base .ridge { stroke: var(--hair-2); }
+.scanline { stroke: var(--azure); stroke-width: 1.5; }
+.print-chip { position: absolute; display: inline-flex; gap: 8px; align-items: center; padding: 7px 12px; border-radius: 999px;
+  background: color-mix(in srgb, var(--base) 88%, transparent); border: 1px solid var(--hair-2); font-size: 12.5px; font-weight: 600;
+  box-shadow: var(--shadow); white-space: nowrap; }
+.print-chip i { width: 8px; height: 8px; border-radius: 99px; display: inline-block; }
+.libs { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--hair); color: var(--low); font-size: 13px; }
+.libs b { color: var(--hi); font-weight: 600; }
+
+/* Capítulos */
+.cap { padding-block: clamp(56px, 9vw, 120px); border-top: 1px solid var(--hair); }
+.cap-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px 48px; align-items: end; margin-bottom: clamp(28px, 4vw, 48px); }
+.cap-head h2 { font-size: clamp(30px, 4.2vw, 54px); line-height: 1.02; letter-spacing: -.035em; font-weight: 500; }
+.cap-head h2 em { color: var(--azure); }
+.cap-head .eyebrow { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.tag { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--hair-2); color: var(--mid); letter-spacing: .08em; }
+.ficha { display: grid; gap: 10px; font-size: 14px; color: var(--mid); max-width: 52ch; }
+.ficha b { color: var(--hi); font-weight: 600; }
+
+/* Escáner fijado */
+.scan-pin { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: clamp(20px, 4vw, 56px); align-items: center; }
+.sheet { position: relative; background: var(--paper); color: var(--ink); border-radius: 6px; padding: clamp(18px, 3vw, 34px); box-shadow: var(--shadow); overflow: hidden; }
+.sheet h3 { font-family: var(--f-display); font-weight: 400; font-size: clamp(22px, 2.4vw, 28px); letter-spacing: -.01em; margin-bottom: 4px; }
+.sheet .meta { font-family: var(--f-mono); font-size: 11px; color: var(--ink-low); margin-bottom: 16px; }
+.par { --tint: 0; --c: var(--human); position: relative; font-size: clamp(12.5px, 1.15vw, 14px); line-height: 1.62; padding: 7px 10px; margin-inline: -10px; border-radius: 6px;
+  background: color-mix(in srgb, var(--c) calc(var(--tint) * 16%), transparent); }
+.par + .par { margin-top: 4px; }
+.par .ptag { position: absolute; right: 8px; top: -9px; font-family: var(--f-mono); font-size: 10.5px; font-weight: 500; padding: 2px 7px; border-radius: 99px;
+  background: var(--c); color: #fff; opacity: 0; }
+.beam { position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--azure); box-shadow: 0 0 18px 4px color-mix(in srgb, var(--azure) 55%, transparent); opacity: .9; }
+.panel { display: grid; gap: 18px; }
+.big { display: flex; align-items: flex-end; gap: 22px; padding-block: 18px; border-block: 1px solid var(--hair); flex-wrap: wrap; }
+.big .num { font-size: clamp(44px, 5vw, 60px); line-height: .9; }
+.rows { display: grid; gap: 8px; }
+.row { display: grid; grid-template-columns: 30px minmax(0, 1fr) 64px; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--hair); background: var(--card); opacity: .35; }
+.row .bar { height: 3px; border-radius: 3px; background: var(--hair-2); overflow: hidden; }
+.row .bar i { display: block; height: 100%; width: var(--w); background: var(--c); border-radius: 3px; transform-origin: left; transform: scaleX(0); }
+.row .num { text-align: right; font-size: 13px; color: var(--mid); }
+.hint { font-size: 13px; color: var(--low); display: inline-flex; align-items: center; gap: 8px; }
+
+/* Ciudad de párrafos */
+.city-wrap { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(20px, 3vw, 40px); align-items: center; }
+.city-stage { position: relative; aspect-ratio: 640 / 440; width: 100%; max-width: 100%; }
+#city { width: 100%; height: 100%; display: block; touch-action: pan-y; }
+.tip { position: absolute; pointer-events: none; padding: 8px 12px; border-radius: 10px; background: var(--base); border: 1px solid var(--hair-2); font-size: 12.5px;
+  box-shadow: var(--shadow); white-space: nowrap; transform: translate(-50%, calc(-100% - 14px)); opacity: 0; transition: opacity .15s; }
+.tip b { font-family: var(--f-mono); font-weight: 500; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--mid); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.city-side { display: grid; gap: 20px; }
+
+/* Humanizador */
+.hum { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(20px, 4vw, 48px); align-items: start; }
+.doc-stage { position: relative; padding: clamp(20px, 3vw, 36px); border-radius: 18px; border: 1px solid var(--hair); background: var(--card); min-height: 260px; }
+.doc { font-family: var(--f-display); font-size: clamp(21px, 2.3vw, 29px); line-height: 1.42; letter-spacing: -.005em; }
+.w { display: inline-block; white-space: pre; border-radius: 4px; }
+.w.cliche { color: var(--hi); }
+.w.flag { color: var(--ai); background: color-mix(in srgb, var(--ai) 16%, transparent); }
+.w.new { color: var(--human); }
+.fall-layer { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 3; }
+.fall { position: absolute; font-family: var(--f-display); white-space: pre; color: var(--ai); background: color-mix(in srgb, var(--ai) 16%, transparent); border-radius: 4px; }
+.meter { display: grid; gap: 14px; padding: 22px; border-radius: 18px; border: 1px solid var(--hair); background: var(--card); }
+.meter .num { font-size: clamp(46px, 5vw, 64px); line-height: .9; }
+.meter-bar { height: 6px; border-radius: 6px; background: var(--hair-2); overflow: hidden; }
+.meter-bar i { display: block; height: 100%; width: 68%; border-radius: 6px; background: var(--ai); }
+.swaps { display: grid; gap: 6px; font-size: 13.5px; color: var(--mid); min-height: 120px; }
+.swaps li { list-style: none; display: flex; gap: 8px; flex-wrap: wrap; opacity: 0; }
+.swaps s { color: var(--ai); text-decoration-thickness: 1px; }
+.swaps b { color: var(--human); font-weight: 600; }
+.swaps ul { margin: 0; padding: 0; display: grid; gap: 6px; }
+.btns { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* Tarjetas con resorte */
+.deck-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(20px, 4vw, 48px); align-items: center; }
+.deck { position: relative; height: 340px; display: grid; place-items: center; }
+.rcard { position: absolute; width: min(300px, 82vw); padding: 22px; border-radius: 22px; background: var(--surface); border: 1px solid var(--hair-2);
+  box-shadow: var(--shadow); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; display: grid; gap: 14px; will-change: transform; }
+.rcard:active { cursor: grabbing; }
+.rcard .num { font-size: 46px; line-height: .9; }
+.rcard p { font-size: 13.5px; color: var(--mid); }
+.rcard .k { display: flex; justify-content: space-between; align-items: center; }
+.spark { height: 34px; display: flex; align-items: flex-end; gap: 3px; }
+.spark i { flex: 1; border-radius: 2px; background: currentColor; opacity: .75; }
+.magnet-zone { display: grid; place-items: center; padding: 36px 20px; border-radius: 18px; border: 1px dashed var(--hair-2); }
+
+/* Bloques */
+.blocks-wrap { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: clamp(20px, 4vw, 48px); align-items: center; }
+.grid-b { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: clamp(3px, .6vw, 7px); }
+.blk { aspect-ratio: 1; border-radius: 4px; background: var(--hair-2); border: 0; padding: 0; cursor: pointer; }
+.badge-row { display: flex; align-items: center; gap: 16px; }
+.badge { width: 64px; height: 64px; flex: none; }
+.badge path#badge-shape { transition: fill .5s var(--ease); }
+.badge-txt .num { font-size: 34px; line-height: 1; }
+
+/* Reparto */
+.table-box { overflow-x: auto; border: 1px solid var(--hair); border-radius: 16px; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 14px; }
+th, td { text-align: left; padding: 14px 18px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+th { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--low); font-weight: 700; }
+td b { font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+.plan { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 28px; }
+.plan > div { padding: 20px; border-radius: 16px; border: 1px solid var(--hair); background: var(--card); display: grid; gap: 8px; align-content: start; }
+.plan h3 { font-size: 17px; }
+.plan p { font-size: 14px; color: var(--mid); }
+.foot { padding-block: 48px 64px; color: var(--low); font-size: 13px; border-top: 1px solid var(--hair); }
+
+
+/* ── v2 ── */
+.new { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; background: var(--azure); color: var(--on-accent); letter-spacing: .1em; }
+.v2 { border-bottom: 1px solid var(--hair); background: color-mix(in srgb, var(--azure) 8%, var(--ground)); font-size: 13px; color: var(--mid); }
+.v2 .wrap { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding-block: 10px; }
+.v2 a { color: var(--hi); text-decoration: underline; text-decoration-color: var(--hair-2); text-underline-offset: 3px; }
+.v2 a:hover { text-decoration-color: var(--azure); }
+.hero-h { font-size: clamp(44px, 7vw, 96px); line-height: .96; letter-spacing: -.042em; font-weight: 300; }
+.hero-h em { color: var(--azure); }
+.studio { padding-block: clamp(32px, 5vw, 64px) clamp(28px, 4vw, 48px); }
+.studio-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(16px, 3vw, 40px); align-items: center; }
+.studio .lede { margin-top: 24px; color: var(--mid); font-size: clamp(16px, 1.6vw, 19px); max-width: 38ch; }
+.studio .lede b { color: var(--hi); font-weight: 600; }
+.char, .word { display: inline-block; }
+.rot-wrap { white-space: nowrap; }
+.rot { font-family: var(--f-display); font-style: italic; color: var(--azure); display: inline-block; letter-spacing: -.01em; }
+.rot-dot { display: inline-block; color: var(--azure); transform-origin: 0 0; }
+.studio-stage { position: relative; aspect-ratio: 1 / .9; width: 100%; max-width: 100%; touch-action: pan-y; }
+#studio-canvas { width: 100%; height: 100%; display: block; }
+#cd-stage { aspect-ratio: 3 / 1; }
+@media (max-width: 600px) { #cd-stage { aspect-ratio: 1.5 / 1; } }
+.chapters { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 28px; }
+.chapters button { border: 1px solid var(--hair-2); background: var(--card); border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--mid); cursor: pointer; }
+.chapters button[aria-pressed="true"] { color: var(--ground); background: var(--hi); border-color: var(--hi); }
+.chap-bar { height: 2px; background: var(--hair); margin-top: 14px; border-radius: 2px; overflow: hidden; max-width: 420px; }
+.chap-bar i { display: block; height: 100%; width: 100%; background: var(--azure); transform-origin: left; transform: scaleX(0); }
+.anat { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(20px, 4vw, 52px); align-items: start; }
+.anat-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 20px; }
+.anat-list li { display: grid; gap: 6px; font-size: 14.5px; color: var(--mid); padding-bottom: 18px; border-bottom: 1px solid var(--hair); }
+.anat-list li:last-child { border-bottom: 0; }
+.anat-list b { color: var(--hi); }
+.anat-list .eyebrow { color: var(--azure); }
+code { font-family: var(--f-mono); font-size: .88em; background: var(--hair); padding: 1px 5px; border-radius: 5px; color: var(--hi); }
+.mini { display: grid; gap: 14px; min-width: 0; }
+.mini-stage { aspect-ratio: 1; width: 100%; max-width: 440px; border-radius: 18px; border: 1px solid var(--hair); background: var(--card); justify-self: center; }
+.mini-stage canvas { width: 100%; height: 100%; display: block; }
+pre.code { margin: 0; padding: 16px 18px; border-radius: 14px; border: 1px solid var(--hair); background: var(--base); overflow-x: auto; font-family: var(--f-mono); font-size: 12.5px; line-height: 1.6; color: var(--mid); }
+pre.code b { color: var(--azure); font-weight: 500; }
+pre.code i { color: var(--low); font-style: normal; }
+.cv-stage { position: relative; width: 100%; max-width: 100%; border-radius: 18px; border: 1px solid var(--hair); background: var(--card); overflow: hidden; }
+.cv-stage canvas { width: 100%; height: 100%; display: block; }
+.cv-row { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(20px, 3vw, 40px); align-items: center; }
+
+@media (max-width: 860px) {
+  .hero-grid, .cap-head, .scan-pin, .city-wrap, .hum, .deck-wrap, .blocks-wrap, .plan, .studio-grid, .anat, .cv-row { grid-template-columns: minmax(0, 1fr); }
+  .print-stage { max-width: 360px; }
+  .toc { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .tip { transition: none; } }
+</style>
+
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <span class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.8 4.5 5.6v5.9c0 4.6 3.2 8.4 7.5 9.7 4.3-1.3 7.5-5.1 7.5-9.7V5.6L12 2.8Z"/><path d="M12 8.2v6.2" stroke-linecap="round"/></svg>PLAGELIO</span>
+    <nav class="toc" aria-label="Propuestas">
+      <a href="#estudio">Héroe 3D</a><a href="#huella">Vectores</a><a href="#anatomia">animejs.com</a><a href="#escaner">Scroll</a><a href="#ciudad">Ciudad</a><a href="#particulas">Canvas</a><a href="#humanizador">Física</a><a href="#resortes">Resortes</a><a href="#bloques">Bloques</a><a href="#reparto">Plan</a>
+    </nav>
+  </div>
+</header>
+<div class="v2"><div class="wrap"><b style="color:var(--hi)">Versión 2</b><span>Nuevo:</span><a href="#estudio">héroe 3D al estilo animejs.com</a><a href="#anatomia">cómo está hecha animejs.com</a><a href="#particulas">partículas</a><a href="#constelacion">grafo de fuentes</a><a href="#cadencia">cadencia</a></div></div>
+
+<main>
+  <!-- ═══ NUEVO · HÉROE 3D al estilo animejs.com ═══ -->
+  <section class="studio" id="estudio">
+    <div class="wrap">
+      <div class="studio-grid">
+        <div>
+          <p class="eyebrow" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><span class="new">Nuevo</span>Héroe 3D <span class="tag">three.js + anime.js · como animejs.com</span></p>
+          <h1 class="hero-h" style="margin-top:18px"><span id="studio-static">Plagelio lee<br>cada</span><br><span class="rot-wrap"><span class="rot" id="rot">párrafo</span><span class="rot-dot" id="rot-dot">.</span></span></h1>
+          <p class="lede"><b>Detección de IA, similitud y humanizador en un solo análisis.</b> El documento se arma en 3D, se escanea, se convierte en ciudad de párrafos y termina en sello.</p>
+          <div class="chapters" role="group" aria-label="Escenas del héroe">
+            <button type="button" data-chap="0" aria-pressed="true">Documento</button>
+            <button type="button" data-chap="1" aria-pressed="false">Escaneo</button>
+            <button type="button" data-chap="2" aria-pressed="false">Ciudad</button>
+            <button type="button" data-chap="3" aria-pressed="false">Sello</button>
+          </div>
+          <div class="chap-bar" aria-hidden="true"><i id="chap-progress"></i></div>
+        </div>
+        <div class="studio-stage" id="studio-stage">
+          <canvas id="studio-canvas" aria-label="Escena 3D: 192 bloques que forman un documento, lo escanean, lo convierten en ciudad y terminan en el sello de Plagelio"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ HÉROE · vectores + texto en bloques ═══ -->
+  <section class="hero cap" id="huella">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div>
+          <p class="eyebrow">Vectores <span class="tag">GSAP SplitText + DrawSVG</span></p>
+          <h2 id="hero-title" class="hero-h" style="margin-top:18px">Cada texto<br><em class="serif">deja una huella.</em></h2>
+          <p class="lede"><b>Plagelio la lee línea a línea.</b> La huella se dibuja, el escáner la recorre y cada surco toma el color de su lectura: humano, mixto o IA.</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" id="hero-replay" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+              Volver a leer
+            </button>
+            <a class="btn btn-ghost" href="#escaner">Ver las propuestas</a>
+          </div>
+        </div>
+        <div class="print-stage" id="print-stage">
+          <div class="print-tilt" id="print-tilt">
+            <svg viewBox="0 0 400 470" role="img" aria-label="Huella dactilar formada por líneas de texto que el escáner colorea">
+              <defs><clipPath id="read-clip"><rect id="read-rect" x="0" y="0" width="400" height="0"></rect></clipPath></defs>
+              <g id="ridges-base"></g>
+              <g id="ridges-read" clip-path="url(#read-clip)"></g>
+              <line id="scanline" class="scanline" x1="10" x2="390" y1="0" y2="0" opacity="0"></line>
+            </svg>
+          </div>
+          <span class="print-chip" id="chip-h" style="left:-4%;top:14%"><i style="background:var(--human)"></i>Humano <span class="num">91,4 %</span></span>
+          <span class="print-chip" id="chip-m" style="right:-6%;top:44%"><i style="background:var(--mixed)"></i>Mixto <span class="num">6,1 %</span></span>
+          <span class="print-chip" id="chip-a" style="left:6%;bottom:8%"><i style="background:var(--ai)"></i>IA <span class="num">2,5 %</span></span>
+        </div>
+      </div>
+      <div class="libs">
+        <span><b>GSAP</b> SplitText + DrawSVG en esta sección</span>
+        <span><b>Motion</b> resortes y gestos</span>
+        <span><b>anime.js</b> bloques y morph SVG</span>
+        <span><b>Canvas</b> isométrico sin librería</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ NUEVO · cómo está hecha animejs.com ═══ -->
+  <section class="cap" id="anatomia">
+    <div class="wrap">
+      <div class="cap-head">
+        <p class="eyebrow"><span class="new">Nuevo</span>Anatomía de animejs.com <span class="tag">Réplica en Canvas 2D + anime.js</span></p>
+        <h2>Así está hecha <em class="serif">la web que te gustó.</em></h2>
+        <div class="ficha">
+          <p>Revisé su código publicado. No hay magia: anime.js mueve números y otra pieza los dibuja. Al lado, una réplica funcional de su sección de stagger con 169 círculos.</p>
+        </div>
+      </div>
+      <div class="anat">
+        <ul class="anat-list">
+          <li><span class="eyebrow">Escenas por capítulos</span><p>La página se divide en capítulos (<code>intro</code>, <code>toolbox</code>, <code>staggering</code>, <code>clockwork</code>, <code>svgUtils</code>, <code>draggable</code>, <code>scroll</code>…). Cada uno tiene su timeline, que arranca al entrar en pantalla y se pausa al salir.</p></li>
+          <li><span class="eyebrow">El 3D es three.js</span><p>Cámara ortográfica, <code>InstancedMesh</code> y shaders propios. anime.js no dibuja nada: anima las propiedades <code>x</code>, <code>y</code>, <code>z</code>, <code>rotateZ</code> y escala de objetos JS normales, y en cada <code>onUpdate</code> la escena se vuelve a renderizar.</p></li>
+          <li><span class="eyebrow">Los demos 2D son canvas</span><p>Una clase pinta círculos y líneas a doble densidad. anime.js reparte los retardos con <code>stagger(…, { grid: [13, 13], from: 'center' })</code>: de ahí la onda que sale del centro.</p></li>
+          <li><span class="eyebrow">El texto, letra a letra</span><p><code>splitText</code> separa palabras y letras. La palabra que rota («HTML, WebGL, CSS, Canvas 2D, SVG, anything») sale y entra con un timeline y el punto rojo se desliza. Arriba, en el héroe 3D, está la misma técnica con las palabras de Plagelio.</p></li>
+          <li><span class="eyebrow">¿anime.js permite hacerlo?</span><p><b>Sí.</b> anime.js 4 trae todo lo anterior. Lo único que no incluye es el motor 3D: para eso se suma three.js, como hacen ellos.</p></li>
+        </ul>
+        <div class="mini">
+          <div class="mini-stage" id="mini-stage"><canvas id="mini" aria-label="Cuadrícula de 13 por 13 círculos animada en onda desde el centro"></canvas></div>
+<pre class="code"><i>// anime.js anima objetos normales; el canvas los pinta</i>
+const puntos = cuadricula(13, 13);      <i>// [{ x, y, scale }]</i>
+anime.<b>animate</b>(puntos, {
+  scale: [{ to: anime.<b>stagger</b>([2.6, .4], { grid: [13, 13], from: 'center' }) },
+          { to: 1 }],
+  delay: anime.<b>stagger</b>(60, { grid: [13, 13], from: 'center' }),
+  loop: true,
+  <b>onUpdate</b>: () =&gt; dibujar(puntos),   <i>// redibujar en cada frame</i>
+});</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SCROLL · escáner fijado ═══ -->
+  <section class="cap" id="escaner">
+    <div class="wrap">
+      <div class="cap-head">
+        <p class="eyebrow">Animación basada en scroll <span class="tag">GSAP ScrollTrigger · pin + scrub</span></p>
+        <h2>El informe se escribe <em class="serif">mientras bajas.</em></h2>
+        <div class="ficha">
+          <p><b>Dónde va:</b> landing, en lugar del escáner actual.</p>
+          <p><b>Qué cambia:</b> la sección se fija y el scroll mueve el haz: cada párrafo recibe su veredicto en el momento exacto en que el haz lo cruza, y el índice se recalcula con lo leído.</p>
+        </div>
+      </div>
+      <div class="scan-pin" id="scan-pin">
+        <article class="sheet" id="sheet" aria-label="Documento de ejemplo analizado">
+          <div class="beam" id="beam" aria-hidden="true"></div>
+          <h3>Metodología de la investigación cualitativa</h3>
+          <p class="meta">Ensayo_Metodologia_Investigacion_2026.docx · 6 párrafos</p>
+          <p class="par" data-ai="9" data-tone="human">La entrevista semiestructurada nos dejó margen para seguir lo que cada docente quería contar, aunque no estuviera en el guion. Dos de ellas terminaron hablando de su primer año de trabajo.<span class="ptag">IA 9 %</span></p>
+          <p class="par" data-ai="84" data-tone="ai">En conclusión, es crucial destacar que la metodología desempeña un papel fundamental en la validez de los resultados. Asimismo, cabe señalar que requiere un enfoque integral y holístico.<span class="ptag">IA 84 %</span></p>
+          <p class="par" data-ai="12" data-tone="human">Codificamos las transcripciones a mano, en dos rondas. En la segunda descartamos la categoría «motivación» porque se solapaba con casi todo.<span class="ptag">IA 12 %</span></p>
+          <p class="par" data-ai="46" data-tone="mixed">La triangulación de fuentes permite contrastar la información obtenida mediante distintos instrumentos, lo que fortalece la credibilidad del estudio.<span class="ptag">IA 46 %</span></p>
+          <p class="par" data-ai="7" data-tone="human">Nos faltó tiempo para volver con los resultados a las escuelas; es lo primero que haríamos distinto.<span class="ptag">IA 7 %</span></p>
+          <p class="par" data-ai="78" data-tone="ai">Por otra parte, resulta imprescindible subrayar que la investigación cualitativa constituye una herramienta clave en el panorama educativo actual.<span class="ptag">IA 78 %</span></p>
+        </article>
+        <div class="panel">
+          <p class="eyebrow" style="color:var(--azure)">Informe de originalidad</p>
+          <div class="big">
+            <div><div class="num"><span id="human-idx">—</span><span style="font-size:.45em;color:var(--low)"> %</span></div><p class="eyebrow" style="margin-top:8px">Índice humano</p></div>
+            <div><div class="num" style="font-size:clamp(26px,3vw,34px)"><span id="par-k">0</span><span style="color:var(--low)">/6</span></div><p class="eyebrow" style="margin-top:8px">Párrafos leídos</p></div>
+          </div>
+          <div class="rows" id="rows"></div>
+          <p class="hint"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg>Sigue bajando: el haz avanza con tu scroll.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 3D · ciudad isométrica ═══ -->
+  <section class="cap" id="ciudad">
+    <div class="wrap">
+      <div class="cap-head">
+        <p class="eyebrow">Ejemplo en 3D <span class="tag">Canvas isométrico · resortes · Motion scroll()</span></p>
+        <h2>El documento, como <em class="serif">una ciudad.</em></h2>
+        <div class="ficha">
+          <p><b>Dónde va:</b> resultado del analizador, como vista alternativa al listado de párrafos.</p>
+          <p><b>Qué cambia:</b> cada edificio es un párrafo y su altura es la puntuación. Crecen en ola cuando entran en pantalla, con un resorte que rebota un poco; el scroll inclina la cámara.</p>
+        </div>
+      </div>
+      <div class="city-wrap">
+        <div class="city-stage" id="city-stage">
+          <canvas id="city" aria-label="Vista isométrica de 36 párrafos: la altura de cada edificio es su puntuación"></canvas>
+          <div class="tip" id="city-tip" role="status" aria-live="polite"></div>
+        </div>
+        <div class="city-side">
+          <div class="seg" role="group" aria-label="Lectura del documento">
+            <button type="button" id="mode-ia" aria-pressed="true">Probabilidad de IA</button>
+            <button type="button" id="mode-sim" aria-pressed="false">Similitud con fuentes</button>
+          </div>
+          <div class="legend" id="city-legend"></div>
+          <p class="ficha" id="city-sum" style="font-size:14px"></p>
+          <p class="hint">Pasa el cursor por un edificio para ver su párrafo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ NUEVO · más ejemplos con canvas ═══ -->
+  <section class="cap" id="particulas">
+    <div class="wrap">
+      <div class="cap-head">
+        <p class="eyebrow"><span class="new">Nuevo</span>Canvas · partículas <span class="tag">Canvas 2D · física de resortes</span></p>
+        <h2>El veredicto, <em class="serif">hecho de partículas.</em></h2>
+        <div class="ficha">
+          <p><b>Dónde va:</b> transición entre «Analizar» y el resultado, o cierre de la landing.</p>
+          <p><b>Qué cambia:</b> unas 2 000 partículas forman el veredicto y se reorganizan en el siguiente. Cada una tiene su resorte: pasa el cursor y se apartan, al irte vuelven a su sitio.</p>
+        </div>
+      </div>
+      <div class="cv-stage" id="pt-stage" style="aspect-ratio: 2.6 / 1">
+        <canvas id="pt" aria-label="Partículas que forman los textos IA 84 por ciento y Humano 91 por ciento"></canvas>
+      </div>
+      <div class="btns" style="margin-top:16px">
+        <button class="btn btn-ghost" type="button" id="pt-next">Siguiente veredicto</button>
+        <button class="btn btn-ghost" type="button" id="pt-burst">Dispersar</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="cap" id="constelacion">
+    <div class="wrap">
+      <div class="cap-head">
+        <p class="eyebrow"><span class="new">Nuevo</span>Canvas · grafo con física <span class="tag">Canvas 2D · fuerzas y resortes</span></p>
+        <h2>Las fuentes, <em class="serif">en órbita.</em></h2>
+        <div class="ficha">
+          <p><b>Dónde va:</b> pestaña de similitud del informe.</p>
+          <p><b>Qué cambia:</b> cada fuente coincidente es un nodo; cuanto más se parece al texto, más cerca orbita y más pulsos envía. Arrastra cualquier nodo y suéltalo: la red se reequilibra sola.</p>
+        </div>
+      </div>
+      <div class="cv-row">
+        <div class="cv-stage" id="gr-stage" style="aspect-ratio: 1.45 / 1">
+          <canvas id="gr" aria-label="Grafo: el documento al centro y nueve fuentes alrededor; la distancia indica la similitud"></canvas>
+        </div>
+        <div style="display:grid;gap:16px">
+          <div class="legend"><span><i style="background:var(--azure)"></i>Tu documento</span><span><i style="background:var(--gold)"></i>Cita atribuida</span><span><i style="background:var(--ai)"></i>Sin cita</span></div>
+          <p class="ficha" style="font-size:14px"><b>Ejemplo:</b> 11 % de similitud repartida en nueve fuentes abiertas. La única sin cita (3,2 %) queda en rojo y es la que más tira del documento.</p>
+          <p class="hint">Arrastra los nodos. En móvil, con el dedo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cap" id="cadencia">
+    <div class="wrap">
+      <div class="cap-head">
+        <p class="eyebrow"><span class="new">Nuevo</span>Canvas · señal en vivo <span class="tag">Canvas 2D · datos en movimiento</span></p>
+        <h2>La cadencia <em class="serif">se ve.</em></h2>
+        <div class="ficha">
+          <p><b>Dónde va:</b> métrica «Burstiness · cadencia» del informe y sección «Tres lecturas».</p>
+          <p><b>Qué cambia:</b> cada barra es una oración y su altura, el número de palabras. La escritura humana alterna frases largas y cortas; la generada mantiene un ritmo plano. La desviación σ se recalcula con lo que está en pantalla.</p>
+        </div>
+      </div>
+      <div class="cv-stage" id="cd-stage">
+        <canvas id="cd" aria-label="Dos señales: longitud de oraciones de un texto humano, irregular, y de un texto generado, uniforme"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FÍSICA · humanizador ═══ -->
+  <section class="cap" id="humanizador">
+    <div class="wrap">
+      <div class="cap-head">
+        <p class="eyebrow">Física realista <span class="tag">GSAP Physics2D + Flip · resortes de Motion</span></p>
+        <h2>Las fórmulas de IA <em class="serif">se caen solas.</em></h2>
+        <div class="ficha">
+          <p><b>Dónde va:</b> landing («Misma idea, otra voz») y el botón Humanizar del analizador.</p>
+          <p><b>Qué cambia:</b> las muletillas se marcan, caen con gravedad y giro reales; el resto del texto se reacomoda sin saltos y la frase nueva entra con un resorte.</p>
+        </div>
+      </div>
+      <div class="hum">
+        <div class="doc-stage" id="doc-stage">
+          <p class="doc" id="doc" aria-live="polite"></p>
+          <div class="fall-layer" id="fall-layer" aria-hidden="true"></div>
+        </div>
+        <div class="meter">
+          <p class="eyebrow">Probabilidad de IA del párrafo</p>
+          <div class="num"><span id="ia-num">68</span><span style="font-size:.45em;color:var(--low)"> %</span></div>
+          <div class="meter-bar"><i id="ia-bar"></i></div>
+          <div class="swaps"><ul id="swaps"></ul></div>
+          <div class="btns">
+            <button class="btn btn-primary" type="button" id="hum-go">Humanizar</button>
+            <button class="btn btn-ghost" type="button" id="hum-reset">Restaurar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ RESORTES · tarjetas y gestos ═══ -->
+  <section class="cap" id="resortes">
+    <div class="wrap">
+      <div class="cap-head">
+        <p class="eyebrow">Física con resortes <span class="tag">Motion · motionValue + spring</span></p>
+        <h2>Resultados que <em class="serif">se pueden lanzar.</em></h2>
+        <div class="ficha">
+          <p><b>Dónde va:</b> panel e historial (en React con <code>motion/react</code>: <code>drag</code>, <code>layout</code> y <code>AnimatePresence</code>).</p>
+          <p><b>Qué cambia:</b> arrastra una tarjeta y suéltala. Si la lanzas con fuerza, se va al fondo del mazo; si no, vuelve a su sitio con la velocidad que le diste.</p>
+        </div>
+      </div>
+      <div class="deck-wrap">
+        <div class="deck" id="deck">
+          <div class="rcard" data-tone="human" tabindex="0" aria-label="Tarjeta Índice humano 91,4 por ciento">
+            <div class="k"><span class="eyebrow">Índice humano</span><span class="tag" style="color:var(--human)">A+</span></div>
+            <div class="num" style="color:var(--human)">91,4 %</div>
+            <div class="spark" style="color:var(--human)"><i style="height:40%"></i><i style="height:62%"></i><i style="height:48%"></i><i style="height:80%"></i><i style="height:70%"></i><i style="height:92%"></i><i style="height:86%"></i></div>
+            <p>Ensayo_Metodologia_Investigacion_2026.docx</p>
+          </div>
+          <div class="rcard" data-tone="gold" tabindex="0" aria-label="Tarjeta Similitud 11 por ciento">
+            <div class="k"><span class="eyebrow">Similitud cotejada</span><span class="tag" style="color:var(--gold)">14 citas</span></div>
+            <div class="num" style="color:var(--gold)">11 %</div>
+            <div class="spark" style="color:var(--gold)"><i style="height:20%"></i><i style="height:14%"></i><i style="height:30%"></i><i style="height:12%"></i><i style="height:22%"></i><i style="height:10%"></i><i style="height:16%"></i></div>
+            <p>Todas atribuidas en formato APA 7.</p>
+          </div>
+          <div class="rcard" data-tone="azure" tabindex="0" aria-label="Tarjeta Perplejidad 82,4 sobre 100">
+            <div class="k"><span class="eyebrow">Perplejidad léxica</span><span class="tag" style="color:var(--azure)">/ 100</span></div>
+            <div class="num" style="color:var(--azure)">82,4</div>
+            <div class="spark" style="color:var(--azure)"><i style="height:55%"></i><i style="height:70%"></i><i style="height:62%"></i><i style="height:84%"></i><i style="height:76%"></i><i style="height:82%"></i><i style="height:90%"></i></div>
+            <p>Vocabulario variado y poco predecible.</p>
+          </div>
+        </div>
+        <div style="display:grid;gap:18px">
+          <div class="magnet-zone" id="magnet-zone">
+            <button class="btn btn-primary" type="button" id="magnet">Iniciar verificación
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+          <p class="ficha" style="font-size:14px">El botón principal es magnético: sigue al cursor con un resorte y vuelve al centro al salir. En móvil no se activa.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ BLOQUES · tres lecturas ═══ -->
+  <section class="cap" id="bloques">
+    <div class="wrap">
+      <div class="cap-head">
+        <p class="eyebrow">Animación por bloques <span class="tag">anime.js · stagger en cuadrícula + morphTo</span></p>
+        <h2>Tres lecturas, <em class="serif">una misma cuadrícula.</em></h2>
+        <div class="ficha">
+          <p><b>Dónde va:</b> landing («Tres lecturas») y la cabecera del informe.</p>
+          <p><b>Qué cambia:</b> cada bloque es una oración del documento. Al cambiar de lectura, la onda nace donde pulsas y el sello cambia de forma.</p>
+        </div>
+      </div>
+      <div class="blocks-wrap">
+        <div class="grid-b" id="grid-b" aria-label="72 oraciones del documento; pulsa una para lanzar la onda desde ahí"></div>
+        <div style="display:grid;gap:22px">
+          <div class="seg" role="group" aria-label="Lectura">
+            <button type="button" data-r="sim" aria-pressed="true">Plagio</button>
+            <button type="button" data-r="ia" aria-pressed="false">IA</button>
+            <button type="button" data-r="hum" aria-pressed="false">Humanizado</button>
+          </div>
+          <div class="badge-row">
+            <svg class="badge" viewBox="0 0 64 64" aria-hidden="true">
+              <path id="badge-shape" d="M32 6 L54 15 L54 31 C54 45 44 54 32 58 C20 54 10 45 10 31 L10 15 Z"></path>
+              <path id="shape-sim" d="M32 6 L54 15 L54 31 C54 45 44 54 32 58 C20 54 10 45 10 31 L10 15 Z" visibility="hidden"></path>
+              <path id="shape-ia" d="M32 6 L59 54 L5 54 Z" visibility="hidden"></path>
+              <path id="shape-hum" d="M32 6 C46 6 58 18 58 32 C58 46 46 58 32 58 C18 58 6 46 6 32 C6 18 18 6 32 6 Z" visibility="hidden"></path>
+            </svg>
+            <div class="badge-txt"><div class="num" id="blk-num">11 %</div><p class="eyebrow" id="blk-lbl" style="margin-top:6px">Similitud cotejada</p></div>
+          </div>
+          <p class="ficha" id="blk-note" style="font-size:14px"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ REPARTO Y PLAN ═══ -->
+  <section class="cap" id="reparto">
+    <div class="wrap">
+      <div class="cap-head">
+        <p class="eyebrow">Propuesta de implementación</p>
+        <h2>Cada librería, <em class="serif">en su sitio.</em></h2>
+        <div class="ficha">
+          <p>Tres librerías que hacen cosas parecidas pesan y chocan si animan el mismo elemento. La propuesta les da territorios separados.</p>
+        </div>
+      </div>
+      <div class="table-box">
+        <table>
+          <thead><tr><th>Librería</th><th>Territorio en Plagelio</th><th>Qué aporta</th><th>Bundle completo (gzip)</th></tr></thead>
+          <tbody>
+            <tr><td><b>GSAP</b> 3.15 <span style="color:var(--low)">· ya instalada</span></td><td>Landing: todo lo coreografiado con el scroll</td><td>ScrollTrigger (pin, scrub), SplitText, DrawSVG, Flip, Physics2D</td><td class="num">28 KB + 18 KB ScrollTrigger + 17 KB plugins</td></tr>
+            <tr><td><b>Motion</b> 14 <span style="color:var(--low)">· instalada en local</span></td><td>App en React: panel, analizador, historial, modales</td><td>Resortes con velocidad real, <code>drag</code>, <code>layout</code>, <code>AnimatePresence</code></td><td class="num">48 KB UMD; en React con tree-shaking, solo lo usado</td></tr>
+            <tr><td><b>anime.js</b> 4.5 <span style="color:var(--low)">· ya instalada</span></td><td>Bloques y sellos SVG del informe</td><td>Stagger en cuadrícula, <code>morphTo</code>, <code>createDrawable</code></td><td class="num">41 KB UMD; importable por partes</td></tr>
+            <tr><td><b>three.js</b> 0.170 <span style="color:var(--low)">· opcional</span></td><td>Solo el héroe 3D de la landing, cargado después de pintar la página</td><td>WebGL: <code>InstancedMesh</code>, cámara ortográfica y luces, como animejs.com</td><td class="num">171 KB, fuera del bundle inicial</td></tr>
+            <tr><td><b>Canvas</b> <span style="color:var(--low)">· sin librería</span></td><td>Ciudad de párrafos, partículas, grafo de fuentes y cadencia</td><td>Proyección isométrica, física propia y dibujo a doble densidad</td><td class="num">≈ 12 KB de código propio</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="plan">
+        <div><p class="eyebrow">Fase 1 · landing</p><h3>Héroe 3D, escáner y humanizador</h3><p>Héroe en three.js con anime.js, huella con DrawSVG, escáner fijado con haz y caída física de las muletillas. Sustituye piezas actuales sin cambiar el contenido.</p></div>
+        <div><p class="eyebrow">Fase 2 · app</p><h3>Motion en React</h3><p><code>motion</code> ya está instalada en local. Tarjetas de resultado arrastrables, transiciones de layout en historial y modales con <code>AnimatePresence</code>.</p></div>
+        <div><p class="eyebrow">Fase 3 · informe</p><h3>Ciudad, grafo, cadencia y bloques</h3><p>Vista isométrica de párrafos, grafo de fuentes con física, señal de cadencia y la cuadrícula de oraciones con anime.js.</p></div>
+      </div>
+      <p class="ficha" style="margin-top:24px;font-size:14px;max-width:none"><b>En todas las fases:</b> con «reducir movimiento» activo se muestran los estados finales sin animar; solo se animan <code>transform</code> y <code>opacity</code>; el canvas se detiene fuera de pantalla; en móvil no hay secciones fijadas.</p>
+    </div>
+  </section>
+</main>
+<footer class="foot"><div class="wrap">Prototipo para revisión. Nada de esto está en la rama todavía: se integra en el front de Plagelio por fases, y cada cambio se ve aquí antes de tocar el código.</div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/DrawSVGPlugin.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/Flip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/Physics2DPlugin.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/motion@14.0.0/dist/motion.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/animejs@4.5.0/dist/bundles/anime.umd.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const hexRgb = (h) => { const m = h.replace('#', ''); const n = parseInt(m.length === 3 ? m.replace(/./g, (c) => c + c) : m, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const fmt = (v, d) => v.toFixed(d).replace('.', ',');
+  const safe = (name, fn) => { try { fn(); } catch (e) { console.error('[' + name + ']', e); } };
+  const hasGsap = typeof window.gsap !== 'undefined';
+  if (hasGsap) gsap.registerPlugin(ScrollTrigger, SplitText, DrawSVGPlugin, Flip, Physics2DPlugin);
+
+  /* ───────── Héroe: huella generada + SplitText + DrawSVG ───────── */
+  safe('huella', () => {
+    const NS = 'http://www.w3.org/2000/svg';
+    let seed = 11;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+    const base = $('#ridges-base'), read = $('#ridges-read');
+    const cx = 200, cy = 236;
+    const tones = [];
+    for (let i = 0; i < 17; i++) {
+      const rx = 12 + i * 10.6, ry = rx * 1.27;
+      const arcs = i < 2 ? 1 : 2 + Math.floor(rnd() * 2);
+      const a0 = rnd() * Math.PI * 2;
+      for (let g = 0; g < arcs; g++) {
+        const span = (Math.PI * 2) / arcs;
+        const start = a0 + g * span, end = start + span - (0.22 + rnd() * 0.42);
+        const pts = [];
+        for (let t = start; t <= end; t += 0.05) {
+          const wob = 1 + 0.035 * Math.sin(5 * t + i) + 0.02 * Math.cos(3 * t - i * 0.7);
+          pts.push((cx + rx * Math.cos(t) * wob).toFixed(1) + ' ' + (cy + ry * Math.sin(t) * wob + i * 0.9).toFixed(1));
+        }
+        const d = 'M' + pts.join(' L');
+        const r = rnd();
+        const tone = r < 0.12 ? '--ai' : r < 0.27 ? '--mixed' : '--human';
+        const p1 = document.createElementNS(NS, 'path'); p1.setAttribute('d', d); p1.setAttribute('class', 'ridge'); base.appendChild(p1);
+        const p2 = document.createElementNS(NS, 'path'); p2.setAttribute('d', d); p2.setAttribute('class', 'ridge'); p2.style.stroke = 'var(' + tone + ')'; read.appendChild(p2);
+        tones.push(tone);
+      }
+    }
+    const rect = $('#read-rect'), scan = $('#scanline');
+    const chips = ['#chip-h', '#chip-m', '#chip-a'].map((s) => $(s));
+    if (!hasGsap || RM) { rect.setAttribute('height', '470'); return; }
+
+    const split = SplitText.create('#hero-title', { type: 'lines,words', mask: 'lines' });
+    const ridges = $$('.ridge');
+    let tl;
+    const play = () => {
+      if (tl) tl.kill();
+      gsap.set(rect, { attr: { height: 0 } });
+      gsap.set(scan, { attr: { y1: 0, y2: 0 }, opacity: 0 });
+      gsap.set(chips, { autoAlpha: 0, y: 10, scale: 0.94 });
+      tl = gsap.timeline({ defaults: { ease: 'power4.out' } })
+        .from(split.words, { yPercent: 110, duration: 1.1, stagger: 0.07 }, 0)
+        .fromTo(ridges, { drawSVG: '50% 50%' }, { drawSVG: '0% 100%', duration: 1.5, ease: 'power2.inOut', stagger: { each: 0.025, from: 'center' } }, 0.1)
+        .to(scan, { opacity: 1, duration: 0.2 }, 1.4)
+        .to(scan, { attr: { y1: 470, y2: 470 }, duration: 2.2, ease: 'power1.inOut' }, 1.4)
+        .to(rect, { attr: { height: 470 }, duration: 2.2, ease: 'power1.inOut' }, 1.4)
+        .to(scan, { opacity: 0, duration: 0.3 }, 3.5)
+        .to(chips, { autoAlpha: 1, y: 0, scale: 1, duration: 0.8, stagger: 0.12, ease: 'back.out(1.6)' }, 2.1);
+    };
+    play();
+    $('#hero-replay').addEventListener('click', play);
+
+    // Inclinación 3D con el puntero (solo con ratón)
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      const tilt = $('#print-tilt'), stage = $('#print-stage');
+      const rx = gsap.quickTo(tilt, 'rotationX', { duration: 0.8, ease: 'power3' });
+      const ry = gsap.quickTo(tilt, 'rotationY', { duration: 0.8, ease: 'power3' });
+      stage.addEventListener('pointermove', (e) => {
+        const b = stage.getBoundingClientRect();
+        ry(((e.clientX - b.left) / b.width - 0.5) * 16); rx(-((e.clientY - b.top) / b.height - 0.5) * 12);
+      });
+      stage.addEventListener('pointerleave', () => { rx(0); ry(0); });
+    }
+  });
+
+  /* ───────── Escáner: pin + scrub ───────── */
+  safe('escaner', () => {
+    const pars = $$('#sheet .par');
+    const rows = $('#rows');
+    pars.forEach((p, i) => {
+      const tone = p.dataset.tone, ai = +p.dataset.ai;
+      p.style.setProperty('--c', 'var(--' + tone + ')');
+      const r = document.createElement('div');
+      r.className = 'row'; r.style.setProperty('--c', 'var(--' + tone + ')'); r.style.setProperty('--w', ai + '%');
+      r.innerHTML = '<span class="num" style="color:var(--low)">P' + (i + 1) + '</span><div class="bar"><i></i></div><span class="num">IA ' + ai + ' %</span>';
+      rows.appendChild(r);
+    });
+    const rowEls = $$('.row', rows);
+    const idx = $('#human-idx'), kEl = $('#par-k');
+    const finalState = () => {
+      pars.forEach((p) => { p.style.setProperty('--tint', 1); $('.ptag', p).style.opacity = 1; });
+      rowEls.forEach((r) => { r.style.opacity = 1; $('i', r).style.transform = 'scaleX(1)'; });
+      const mean = pars.reduce((s, p) => s + +p.dataset.ai, 0) / pars.length;
+      idx.textContent = fmt(100 - mean, 1); kEl.textContent = String(pars.length);
+      $('#beam').style.opacity = 0;
+    };
+    if (!hasGsap || RM) { finalState(); return; }
+    const mm = gsap.matchMedia();
+    mm.add('(min-width: 861px)', () => {
+      const sheet = $('#sheet'), beam = $('#beam');
+      const H = sheet.offsetHeight;
+      const at = pars.map((p) => (p.offsetTop + p.offsetHeight * 0.5) / H);
+      const tl = gsap.timeline({
+        defaults: { ease: 'none' },
+        scrollTrigger: { trigger: '#scan-pin', pin: true, start: 'center center', end: '+=1500', scrub: 0.6,
+          onUpdate: (st) => {
+            const p = st.progress;
+            const done = pars.filter((_, i) => at[i] <= p + 0.001);
+            kEl.textContent = String(done.length);
+            idx.textContent = done.length ? fmt(100 - done.reduce((s, x) => s + +x.dataset.ai, 0) / done.length, 1) : '—';
+          } },
+      });
+      tl.fromTo(beam, { y: 0 }, { y: H - 2, duration: 1 }, 0);
+      pars.forEach((p, i) => {
+        tl.to(p, { '--tint': 1, duration: 0.06 }, at[i])
+          .fromTo($('.ptag', p), { autoAlpha: 0, y: 6 }, { autoAlpha: 1, y: 0, duration: 0.05 }, at[i])
+          .to(rowEls[i], { opacity: 1, duration: 0.05 }, at[i])
+          .to($('i', rowEls[i]), { scaleX: 1, duration: 0.08 }, at[i]);
+      });
+      return () => { gsap.set([beam, ...pars, ...rowEls], { clearProps: 'all' }); };
+    });
+    mm.add('(max-width: 860px)', () => { finalState(); });
+  });
+
+  /* ───────── Ciudad isométrica (Canvas + resortes + Motion.scroll) ───────── */
+  safe('ciudad', () => {
+    const cv = $('#city'), ctx = cv.getContext('2d'), stage = $('#city-stage'), tip = $('#city-tip');
+    const W = 640, Hh = 440;
+    let dpr = 1;
+    const resize = () => {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const b = stage.getBoundingClientRect();
+      cv.width = Math.round(b.width * dpr); cv.height = Math.round(b.width * (Hh / W) * dpr);
+      kick();
+    };
+    const N = 6, CELL = 42;
+    let elev = 0.5;
+    const CX = CELL * 0.866;
+    // El centro del solar queda fijo en y = 272 aunque cambie la inclinación de la cámara
+    const P = (x, y, z) => [W / 2 + (x - y) * CX, 272 + (x + y - N) * CELL * elev - z];
+    const buildings = [];
+    for (let x = 0; x < N; x++) for (let y = 0; y < N; y++) {
+      const ia = 6 + ((x * 7 + y * 13 + x * y * 3) % 17) * 5.4;
+      const sim = 2 + ((x * 11 + y * 5 + (x ^ y) * 7) % 13) * 3.6;
+      buildings.push({ x, y, ia: Math.min(94, ia), sim: Math.min(58, sim), h: 0, v: 0, t: 0, delay: (x + y) * 90, n: x * N + y + 1 });
+    }
+    buildings.sort((a, b) => (a.x + a.y) - (b.x + b.y));
+    let mode = 'ia', hover = null, startAt = null, running = false, colors = {};
+    const readColors = () => { colors = { human: hexRgb(cssVar('--human')), mixed: hexRgb(cssVar('--mixed')), ai: hexRgb(cssVar('--ai')), azure: hexRgb(cssVar('--azure')), gold: hexRgb(cssVar('--gold')), line: cssVar('--line') }; };
+    const toneOf = (b) => {
+      if (mode === 'ia') return b.ia >= 60 ? 'ai' : b.ia >= 30 ? 'mixed' : 'human';
+      return b.sim >= 40 ? 'ai' : b.sim >= 15 ? 'gold' : 'azure';
+    };
+    const value = (b) => (mode === 'ia' ? b.ia : b.sim);
+    const target = (b) => value(b) * (mode === 'ia' ? 1.25 : 1.8);
+    const poly = (pts, fill) => { ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); };
+    const draw = () => {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      const s = cv.width / W; ctx.setTransform(s, 0, 0, s, 0, 0);
+      // suelo
+      poly([P(0, 0, 0), P(N, 0, 0), P(N, N, 0), P(0, N, 0)], 'rgba(127,127,127,.07)');
+      const d = 0.78;
+      for (const b of buildings) {
+        const [r, g, bl] = colors[toneOf(b)];
+        const lift = hover === b ? 6 : 0;
+        const h = Math.max(1.5, b.h) + lift;
+        const t = (f) => 'rgb(' + Math.min(255, r * f | 0) + ',' + Math.min(255, g * f | 0) + ',' + Math.min(255, bl * f | 0) + ')';
+        const k = hover && hover !== b ? 0.55 : 1;
+        poly([P(b.x, b.y + d, 0), P(b.x + d, b.y + d, 0), P(b.x + d, b.y + d, h), P(b.x, b.y + d, h)], t(0.55 * k));
+        poly([P(b.x + d, b.y, 0), P(b.x + d, b.y + d, 0), P(b.x + d, b.y + d, h), P(b.x + d, b.y, h)], t(0.8 * k));
+        poly([P(b.x, b.y, h), P(b.x + d, b.y, h), P(b.x + d, b.y + d, h), P(b.x, b.y + d, h)], t(1.12 * k));
+        b.hull = [P(b.x, b.y, h), P(b.x + d, b.y, h), P(b.x + d, b.y, 0), P(b.x + d, b.y + d, 0), P(b.x, b.y + d, 0), P(b.x, b.y + d, h)];
+      }
+    };
+    const step = (now) => {
+      if (startAt === null) startAt = now;
+      let moving = false;
+      for (const b of buildings) {
+        const goal = RM || now - startAt > b.delay ? target(b) : 0;
+        if (RM) { b.h = goal; b.v = 0; continue; }
+        // Resorte amortiguado: aceleración proporcional a la distancia, menos fricción
+        const a = (goal - b.h) * 0.075 - b.v * 0.2;
+        b.v += a; b.h += b.v;
+        if (Math.abs(b.v) > 0.02 || Math.abs(goal - b.h) > 0.05) moving = true;
+      }
+      draw();
+      if (moving || buildings.some((b) => now - startAt <= b.delay)) requestAnimationFrame(step); else running = false;
+    };
+    const kick = () => { if (!startAt) { draw(); return; } if (!running) { running = true; requestAnimationFrame(step); } };
+    const start = () => { if (startAt !== null) return; readColors(); running = true; requestAnimationFrame(step); };
+    readColors(); resize(); draw();
+    window.addEventListener('resize', resize);
+    new IntersectionObserver((es) => { if (es[0].isIntersecting) start(); }, { threshold: 0.35 }).observe(stage);
+    // El scroll inclina la cámara (Motion)
+    if (window.Motion && !RM) {
+      Motion.scroll((p) => { elev = 0.42 + p * 0.18; if (!running) draw(); }, { target: stage, offset: ['start end', 'end start'] });
+    }
+    // Cambio de lectura: los edificios se re-dirigen con el mismo resorte
+    const sumEl = $('#city-sum'), legend = $('#city-legend');
+    const setMode = (m) => {
+      mode = m;
+      $('#mode-ia').setAttribute('aria-pressed', String(m === 'ia')); $('#mode-sim').setAttribute('aria-pressed', String(m === 'sim'));
+      const items = m === 'ia' ? [['human', 'Humano (< 30 %)'], ['mixed', 'Mixto'], ['ai', 'IA probable (≥ 60 %)']] : [['azure', 'Baja (< 15 %)'], ['gold', 'Media'], ['ai', 'Alta (≥ 40 %)']];
+      legend.innerHTML = items.map(([c, l]) => '<span><i style="background:var(--' + c + ')"></i>' + l + '</span>').join('');
+      const hot = buildings.filter((b) => toneOf(b) === 'ai').length;
+      sumEl.innerHTML = m === 'ia' ? '<b>' + hot + ' de 36 párrafos</b> superan el 60 % de probabilidad de IA. Son los edificios rojos: se ven antes de leer nada.'
+                                   : '<b>' + hot + ' de 36 párrafos</b> coinciden en más de un 40 % con fuentes abiertas.';
+      readColors(); kick();
+    };
+    $('#mode-ia').addEventListener('click', () => setMode('ia'));
+    $('#mode-sim').addEventListener('click', () => setMode('sim'));
+    setMode('ia');
+    // Hover: prueba de impacto de delante hacia atrás
+    const inside = (pt, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > pt[1]) !== (yj > pt[1]) && pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi) c = !c; } return c; };
+    cv.addEventListener('pointermove', (e) => {
+      const b = cv.getBoundingClientRect(); const s = W / b.width;
+      const pt = [(e.clientX - b.left) * s, (e.clientY - b.top) * s];
+      let hit = null;
+      for (let i = buildings.length - 1; i >= 0; i--) { if (buildings[i].hull && inside(pt, buildings[i].hull)) { hit = buildings[i]; break; } }
+      if (hit !== hover) { hover = hit; if (!running) draw(); }
+      if (hit) {
+        tip.innerHTML = 'Párrafo ' + hit.n + ' · ' + (mode === 'ia' ? 'IA ' : 'Similitud ') + '<b>' + fmt(value(hit), 0) + ' %</b>';
+        tip.style.left = (e.clientX - b.left) + 'px'; tip.style.top = (e.clientY - b.top) + 'px'; tip.style.opacity = 1;
+      } else tip.style.opacity = 0;
+    });
+    cv.addEventListener('pointerleave', () => { hover = null; tip.style.opacity = 0; if (!running) draw(); });
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onTheme = () => { readColors(); if (!running) draw(); };
+    mq.addEventListener && mq.addEventListener('change', onTheme);
+    new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  });
+
+  /* ───────── Humanizador: Physics2D + Flip + resorte de Motion ───────── */
+  safe('humanizador', () => {
+    const SEG = [
+      { t: 'En conclusión,', r: 'En definitiva,' }, { t: 'es crucial destacar que', r: 'conviene reparar en que' }, 'la inteligencia artificial',
+      { t: 'desempeña un papel fundamental en', r: 'resulta determinante en' }, 'la transformación del sector educativo contemporáneo.',
+      { t: 'Asimismo,', r: 'A su vez,' }, { t: 'cabe señalar que', r: 'importa advertir que' }, 'su implementación requiere un enfoque integral.',
+    ];
+    const doc = $('#doc'), layer = $('#fall-layer'), stage = $('#doc-stage'), swaps = $('#swaps');
+    const num = $('#ia-num'), bar = $('#ia-bar');
+    let state = 'before', busy = false;
+    const words = (txt, cls, seg) => txt.split(' ').map((w) => { const s = document.createElement('span'); s.className = 'w ' + cls; s.textContent = w; if (seg !== undefined) s.dataset.seg = seg; return s; });
+    const render = (which) => {
+      doc.textContent = '';
+      const parts = [];
+      SEG.forEach((s, i) => {
+        if (typeof s === 'string') parts.push(...words(s, 'keep'));
+        else parts.push(...words(which === 'before' ? s.t : s.r, which === 'before' ? 'cliche' : 'new', i));
+      });
+      parts.forEach((p, i) => { doc.appendChild(p); if (i < parts.length - 1) doc.appendChild(document.createTextNode(' ')); });
+    };
+    const setMeter = (v) => { num.textContent = String(Math.round(v)); bar.style.width = v + '%'; bar.style.background = v > 45 ? 'var(--ai)' : v > 30 ? 'var(--mixed)' : 'var(--human)'; };
+    const listSwaps = () => { swaps.innerHTML = SEG.filter((s) => typeof s !== 'string').map((s) => '<li><s>' + s.t + '</s><span aria-hidden="true">→</span><b>' + s.r + '</b></li>').join(''); };
+    render('before'); setMeter(68); listSwaps();
+
+    const go = () => {
+      if (busy || state === 'after') return; busy = true;
+      const cl = $$('.w.cliche', doc);
+      const lis = $$('#swaps li');
+      if (RM || !hasGsap) { render('after'); setMeter(22); lis.forEach((l) => (l.style.opacity = 1)); state = 'after'; busy = false; return; }
+      const tl = gsap.timeline({ onComplete: () => { busy = false; } });
+      tl.add(() => cl.forEach((w) => w.classList.add('flag')))
+        .from(cl, { scale: 1.12, duration: 0.35, stagger: 0.03, ease: 'back.out(2)' }, 0)
+        .add(() => {
+          const sb = stage.getBoundingClientRect();
+          // 1) clones en la capa física, en la posición exacta de cada palabra
+          const falling = cl.map((w) => {
+            const b = w.getBoundingClientRect();
+            const f = document.createElement('span'); f.className = 'fall'; f.textContent = w.textContent;
+            f.style.left = (b.left - sb.left) + 'px'; f.style.top = (b.top - sb.top) + 'px';
+            f.style.fontSize = getComputedStyle(doc).fontSize; f.style.lineHeight = getComputedStyle(doc).lineHeight;
+            layer.appendChild(f); return f;
+          });
+          // 2) Flip: el resto del texto se reacomoda sin saltos
+          const keep = $$('.w.keep', doc);
+          keep.forEach((el, i) => { el.dataset.flipId = 'k' + i; });
+          const st = Flip.getState(keep);
+          render('after');
+          const fresh = $$('.w.new', doc);
+          gsap.set(fresh, { opacity: 0 });
+          const keepNow = $$('.w.keep', doc);
+          keepNow.forEach((el, i) => { el.dataset.flipId = 'k' + i; });
+          Flip.from(st, { targets: keepNow, duration: 0.9, ease: 'power3.inOut' });
+          // 3) caída con gravedad, giro y velocidad iniciales distintas
+          falling.forEach((f) => {
+            gsap.to(f, { duration: 2.2, ease: 'none',
+              physics2D: { velocity: 260 + Math.random() * 260, angle: -90 + (Math.random() * 70 - 35), gravity: 1400 },
+              rotation: Math.random() * 240 - 120 });
+            gsap.to(f, { opacity: 0, duration: 0.5, delay: 1.4, onComplete: () => f.remove() });
+          });
+          // 4) la frase nueva entra con un resorte (Motion)
+          if (window.Motion) {
+            Motion.animate(fresh, { opacity: [0, 1], y: [16, 0], scale: [0.92, 1] }, { type: 'spring', bounce: 0.45, visualDuration: 0.55, delay: Motion.stagger(0.045, { startDelay: 0.55 }) });
+            Motion.animate(68, 22, { duration: 1.6, delay: 0.4, ease: [0.16, 1, 0.3, 1], onUpdate: setMeter });
+          } else { gsap.to(fresh, { opacity: 1, delay: 0.5, stagger: 0.04 }); setMeter(22); }
+          gsap.to(lis, { opacity: 1, x: 0, duration: 0.5, stagger: 0.1, delay: 0.6, startAt: { x: -8 } });
+        }, 0.55);
+      state = 'after';
+    };
+    const reset = () => {
+      if (busy) return;
+      layer.textContent = ''; render('before'); setMeter(68); state = 'before';
+      $$('#swaps li').forEach((l) => (l.style.opacity = 0));
+      if (hasGsap && !RM) gsap.from('.w', { opacity: 0, y: 8, duration: 0.5, stagger: 0.012, ease: 'power3.out' });
+    };
+    $('#hum-go').addEventListener('click', go);
+    $('#hum-reset').addEventListener('click', reset);
+  });
+
+  /* ───────── Resortes: mazo arrastrable + botón magnético (Motion) ───────── */
+  safe('resortes', () => {
+    if (!window.Motion) return;
+    const { animate, motionValue, styleEffect } = Motion;
+    const deck = $('#deck');
+    let cards = $$('.rcard', deck);
+    const SLOT = (i) => ({ x: i * 14 - 14, y: -i * 16 + 16, rotate: [-5, 2, 7][i] || 0, scale: 1 - i * 0.045 });
+    const mv = new Map();
+    cards.forEach((c) => {
+      const v = { x: motionValue(0), y: motionValue(0), rotate: motionValue(0), scale: motionValue(1) };
+      styleEffect(c, v); mv.set(c, v);
+    });
+    const spring = { type: 'spring', stiffness: 320, damping: 26 };
+    const layout = (instant) => {
+      cards.forEach((c, i) => {
+        c.style.zIndex = String(10 - i);
+        const s = SLOT(i), v = mv.get(c);
+        ['x', 'y', 'rotate', 'scale'].forEach((k) => { if (instant) v[k].set(s[k]); else animate(v[k], s[k], spring); });
+      });
+    };
+    layout(true);
+    cards.forEach((c) => {
+      let sx = 0, sy = 0, ox = 0, oy = 0, dragging = false;
+      const v = mv.get(c);
+      c.addEventListener('pointerdown', (e) => {
+        if (cards[0] !== c) return;
+        dragging = true; c.setPointerCapture(e.pointerId);
+        sx = e.clientX; sy = e.clientY; ox = v.x.get(); oy = v.y.get();
+        ['x', 'y', 'rotate'].forEach((k) => v[k].stop && v[k].stop());
+        animate(v.scale, 1.04, spring);
+      });
+      c.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const dx = e.clientX - sx, dy = e.clientY - sy;
+        v.x.set(ox + dx); v.y.set(oy + dy); v.rotate.set(-5 + dx * 0.06);
+      });
+      const release = () => {
+        if (!dragging) return; dragging = false;
+        const vx = v.x.getVelocity(), vy = v.y.getVelocity();
+        const flung = Math.abs(vx) > 650 || Math.abs(v.x.get()) > 170;
+        if (flung) {
+          // Sale del mazo con la velocidad del gesto y entra por detrás
+          const dir = Math.sign(vx || v.x.get()) || 1;
+          animate(v.x, dir * 420, { type: 'spring', velocity: vx, stiffness: 120, damping: 20 });
+          animate(v.rotate, dir * 24, { type: 'spring', velocity: vx * 0.05, stiffness: 120, damping: 20 });
+          setTimeout(() => { cards = [...cards.slice(1), c]; layout(false); }, 260);
+        } else {
+          const s = SLOT(0);
+          animate(v.x, s.x, { ...spring, velocity: vx });
+          animate(v.y, s.y, { ...spring, velocity: vy });
+          animate(v.rotate, s.rotate, spring);
+          animate(v.scale, 1, spring);
+        }
+      };
+      c.addEventListener('pointerup', release);
+      c.addEventListener('pointercancel', release);
+      c.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && cards[0] === c) { e.preventDefault(); cards = [...cards.slice(1), c]; layout(false); } });
+    });
+    // Botón magnético
+    const zone = $('#magnet-zone'), btn = $('#magnet');
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches && !RM) {
+      const bx = motionValue(0), by = motionValue(0); styleEffect(btn, { x: bx, y: by });
+      const sp = { type: 'spring', stiffness: 220, damping: 14, mass: 0.6 };
+      zone.addEventListener('pointermove', (e) => {
+        const b = btn.getBoundingClientRect();
+        animate(bx, (e.clientX - (b.left + b.width / 2 - bx.get())) * 0.35, sp);
+        animate(by, (e.clientY - (b.top + b.height / 2 - by.get())) * 0.35, sp);
+      });
+      zone.addEventListener('pointerleave', () => { animate(bx, 0, sp); animate(by, 0, sp); });
+    }
+  });
+
+  /* ───────── Bloques: anime.js stagger en cuadrícula + morphTo ───────── */
+  safe('bloques', () => {
+    const A = window.anime; if (!A) return;
+    const G = $('#grid-b'); const COLS = 12, ROWS = 6, NB = COLS * ROWS;
+    const data = [];
+    for (let i = 0; i < NB; i++) {
+      const x = i % COLS, y = (i / COLS) | 0;
+      const sim = ((x * 13 + y * 7 + x * y) % 23) / 22;           // 0..1
+      const ia = ((x * 5 + y * 17 + (x ^ y) * 3) % 19) / 18;
+      data.push({ sim: sim > 0.86 ? sim : sim * 0.35, ia: ia > 0.7 ? ia : ia * 0.55, hum: ia > 0.88 ? 0.36 : ia > 0.7 ? 0.16 + ia * 0.1 : ia * 0.4 });
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'blk'; b.setAttribute('aria-label', 'Oración ' + (i + 1)); b.dataset.i = i; G.appendChild(b);
+    }
+    const blocks = $$('.blk', G);
+    const R = {
+      sim: { lbl: 'Similitud cotejada', tone: (v) => (v > 0.6 ? '--ai' : v > 0.25 ? '--gold' : '--azure'), num: '11 %', note: 'Rojo: coincide con una fuente abierta sin cita. Dorado: cita atribuida o terminología estándar.' },
+      ia: { lbl: 'Probabilidad de IA', tone: (v) => (v > 0.6 ? '--ai' : v > 0.3 ? '--mixed' : '--human'), num: '23 %', note: 'Las oraciones rojas concentran las fórmulas de IA: cadencia uniforme y conectores predecibles.' },
+      hum: { lbl: 'Tras humanizar', tone: (v) => (v > 0.6 ? '--ai' : v > 0.3 ? '--mixed' : '--human'), num: '9 %', note: 'Las mismas oraciones después del humanizador. Citas, cifras y referencias no se tocan.' },
+    };
+    let cur = 'sim';
+    const apply = (key, origin, instant) => {
+      cur = key;
+      $$('[data-r]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.r === key)));
+      $('#blk-lbl').textContent = R[key].lbl; $('#blk-num').textContent = R[key].num; $('#blk-note').textContent = R[key].note;
+      const colorOf = (i) => cssVar(R[key].tone(data[i][key]));
+      if (instant || RM) {
+        blocks.forEach((b, i) => { b.style.background = colorOf(i); b.style.transform = 'scale(' + (0.55 + data[i][key] * 0.45) + ')'; });
+        $('#badge-shape').setAttribute('d', $('#shape-' + key).getAttribute('d'));
+        $('#badge-shape').style.fill = cssVar(key === 'sim' ? '--gold' : key === 'ia' ? '--ai' : '--human');
+        return;
+      }
+      A.animate(blocks, {
+        backgroundColor: (el, i) => colorOf(i),
+        scale: [{ to: (el, i) => 0.25 + data[i][key] * 0.2, duration: 220 }, { to: (el, i) => 0.55 + data[i][key] * 0.45, duration: 650, ease: 'outElastic(1, .55)' }],
+        borderRadius: [{ to: '50%', duration: 220 }, { to: '4px', duration: 500 }],
+        delay: A.stagger(26, { grid: [COLS, ROWS], from: origin }),
+      });
+      A.animate('#badge-shape', { d: A.morphTo('#shape-' + key), duration: 700, ease: 'inOutQuart' });
+      $('#badge-shape').style.fill = cssVar(key === 'sim' ? '--gold' : key === 'ia' ? '--ai' : '--human');
+    };
+    $$('[data-r]').forEach((b) => b.addEventListener('click', () => apply(b.dataset.r, 'center')));
+    blocks.forEach((b) => b.addEventListener('click', () => apply(cur === 'sim' ? 'ia' : cur === 'ia' ? 'hum' : 'sim', +b.dataset.i)));
+    apply('sim', 'center', true);
+    $('#badge-shape').style.fill = cssVar('--gold');
+    // Primera onda cuando la cuadrícula entra en pantalla
+    let first = true;
+    new IntersectionObserver((es) => { if (es[0].isIntersecting && first) { first = false; if (!RM) apply('sim', 'center'); } }, { threshold: 0.5 }).observe(G);
+  });
+  /* ═════════════ v2 ═════════════ */
+  const onVisible = (el, cb, threshold) => new IntersectionObserver((es) => cb(es[0].isIntersecting), { threshold: threshold || 0.15 }).observe(el);
+  const dprOf = () => Math.min(window.devicePixelRatio || 1, 2);
+
+  /* ───────── Héroe 3D: texto letra a letra y palabra que rota (técnica de animejs.com) ───────── */
+  safe('estudio-texto', () => {
+    const A = window.anime; if (!A) return;
+    if (!RM) {
+      const st = A.splitText('#studio-static', { words: { class: 'word' }, chars: { class: 'char' } });
+      A.animate(st.chars, { x: ['.35em', 0], opacity: [0, 1], duration: 1000, delay: A.stagger(25, { ease: 'outIn(2)' }), ease: 'outQuint' });
+    }
+    const WORDS = ['párrafo', 'cita', 'fuente', 'oración', 'voz'];
+    const rot = $('#rot'), dot = $('#rot-dot');
+    let wi = 0, sp = null;
+    const split = (txt) => { if (sp) sp.revert(); if (txt !== undefined) rot.textContent = txt; sp = A.splitText(rot, { chars: { class: 'char' } }); return sp.chars; };
+    const cycle = () => {
+      const out = split();
+      A.createTimeline({ delay: 1700, onComplete: () => {
+        wi = (wi + 1) % WORDS.length;
+        const inn = split(WORDS[wi]);
+        A.createTimeline({ onComplete: cycle })
+          .add(inn, { opacity: [0, 1], scaleX: [0, 1], x: [10, 0], duration: 150, delay: A.stagger(25, { from: 'first', ease: 'in(3)', start: 100 }) }, 0)
+          .add(dot, { x: [-rot.offsetWidth, 0], scaleX: [8, 1], duration: inn.length * 25 + 75, ease: 'out(3)' }, 0);
+      } })
+        .add(out, { opacity: [1, 0], scaleX: [1, 0], x: [0, -8], duration: 140, delay: A.stagger(20, { from: 'last' }) }, 0)
+        .add(dot, { x: [0, -rot.offsetWidth], scaleX: [1, 8], duration: out.length * 20 + 100, ease: 'in(3)' }, 0);
+    };
+    if (!RM) setTimeout(cycle, 900);
+  });
+
+  /* ───────── Anatomía: réplica del stagger de animejs.com (Canvas 2D + anime.js) ───────── */
+  safe('mini', () => {
+    const A = window.anime; if (!A) return;
+    const cv = $('#mini'), stage = $('#mini-stage'), ctx = cv.getContext('2d');
+    const G = 13; let S = 0;
+    const pts = [];
+    for (let r = 0; r < G; r++) for (let c = 0; c < G; c++) pts.push({ c, r, scale: 1, o: 1 });
+    const draw = () => {
+      ctx.clearRect(0, 0, S, S);
+      const step = S / (G + 1), rad = step * 0.17, az = cssVar('--azure'), hu = cssVar('--human');
+      for (const p of pts) {
+        const ring = Math.max(Math.abs(p.c - 6), Math.abs(p.r - 6));
+        ctx.globalAlpha = Math.max(0, Math.min(1, p.o)); ctx.fillStyle = ring % 2 ? az : hu;
+        ctx.beginPath(); ctx.arc(step * (p.c + 1), step * (p.r + 1), Math.max(0.5, rad * p.scale), 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    };
+    const size = () => { const w = stage.clientWidth, d = dprOf(); cv.width = Math.round(w * d); cv.height = Math.round(w * d); S = cv.width; draw(); };
+    size(); window.addEventListener('resize', size);
+    if (RM) return;
+    let anim = null;
+    onVisible(stage, (vis) => {
+      if (!vis) { if (anim) anim.pause(); return; }
+      if (anim) { anim.play(); return; }
+      anim = A.animate(pts, {
+        scale: [{ to: A.stagger([2.6, 0.35], { grid: [G, G], from: 'center' }), duration: 520, ease: 'out(3)' }, { to: 1, duration: 700, ease: 'inOut(2)' }],
+        o: [{ to: A.stagger([1, 0.3], { grid: [G, G], from: 'center' }), duration: 520 }, { to: 1, duration: 700 }],
+        delay: A.stagger(60, { grid: [G, G], from: 'center' }),
+        loop: true, onUpdate: draw,
+      });
+    });
+  });
+
+  /* ───────── Partículas de texto (Canvas 2D, resortes por partícula) ───────── */
+  safe('particulas', () => {
+    const cv = $('#pt'), stage = $('#pt-stage'), ctx = cv.getContext('2d');
+    const TEXTS = [{ t: 'IA 84 %', c: '--ai' }, { t: 'Humano 91 %', c: '--human' }, { t: 'Cita 11 %', c: '--gold' }];
+    let W = 0, H = 0, d = 1, idx = 0, parts = [], visible = false, running = false, hover = false;
+    const mouse = { x: -1e5, y: -1e5 };
+    const sample = (txt) => {
+      const off = document.createElement('canvas'); off.width = W; off.height = H;
+      const o = off.getContext('2d');
+      let fs = H * 0.6; const font = (s) => '800 ' + s + 'px Manrope, system-ui, sans-serif';
+      o.font = font(fs); const tw = o.measureText(txt).width;
+      if (tw > W * 0.88) { fs *= (W * 0.88) / tw; o.font = font(fs); }
+      o.textAlign = 'center'; o.textBaseline = 'middle'; o.fillStyle = '#fff'; o.fillText(txt, W / 2, H / 2 + fs * 0.05);
+      const data = o.getImageData(0, 0, W, H).data; const gap = Math.max(3, Math.round(W / 250)); const pts = [];
+      for (let y = 0; y < H; y += gap) for (let x = 0; x < W; x += gap) if (data[(y * W + x) * 4 + 3] > 140) pts.push([x, y]);
+      return { pts, gap };
+    };
+    const assign = (k, scatter) => {
+      const { pts, gap } = sample(TEXTS[k].t); const col = hexRgb(cssVar(TEXTS[k].c));
+      for (let i = pts.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; const t = pts[i]; pts[i] = pts[j]; pts[j] = t; }
+      while (parts.length < pts.length) parts.push({ x: Math.random() * W, y: Math.random() * H, vx: 0, vy: 0, tx: 0, ty: 0, c: col.slice(), tc: col, s: gap, a: 0, ta: 1 });
+      parts.forEach((p, i) => {
+        const t = pts[i % pts.length]; p.tx = t[0]; p.ty = t[1]; p.tc = col; p.s = gap * 0.64; p.ta = i < pts.length ? 1 : 0;
+        if (scatter) { p.vx += (Math.random() - 0.5) * 26 * d; p.vy += (Math.random() - 0.5) * 26 * d; }
+      });
+    };
+    const tick = () => {
+      ctx.clearRect(0, 0, W, H);
+      const R = 80 * d, R2 = R * R; let moving = false;
+      for (const p of parts) {
+        let ax = (p.tx - p.x) * 0.05, ay = (p.ty - p.y) * 0.05;
+        const dx = p.x - mouse.x, dy = p.y - mouse.y, dd = dx * dx + dy * dy;
+        if (dd < R2) { const dist = Math.sqrt(dd) || 1, f = (1 - dist / R) * 6 * d; ax += (dx / dist) * f; ay += (dy / dist) * f; }
+        p.vx = (p.vx + ax) * 0.84; p.vy = (p.vy + ay) * 0.84; p.x += p.vx; p.y += p.vy;
+        p.c[0] += (p.tc[0] - p.c[0]) * 0.08; p.c[1] += (p.tc[1] - p.c[1]) * 0.08; p.c[2] += (p.tc[2] - p.c[2]) * 0.08; p.a += (p.ta - p.a) * 0.08;
+        if (Math.abs(p.vx) + Math.abs(p.vy) > 0.04 || Math.abs(p.ta - p.a) > 0.02) moving = true;
+        if (p.a < 0.02) continue;
+        ctx.globalAlpha = p.a; ctx.fillStyle = 'rgb(' + (p.c[0] | 0) + ',' + (p.c[1] | 0) + ',' + (p.c[2] | 0) + ')'; ctx.fillRect(p.x, p.y, p.s, p.s);
+      }
+      ctx.globalAlpha = 1;
+      if (visible && (moving || hover)) requestAnimationFrame(tick); else running = false;
+    };
+    const kick = () => { if (visible && !running) { running = true; requestAnimationFrame(tick); } };
+    const resize = () => {
+      const b = stage.getBoundingClientRect(); d = dprOf();
+      W = Math.max(1, Math.round(b.width * d)); H = Math.max(1, Math.round(b.height * d)); cv.width = W; cv.height = H;
+      parts = []; assign(idx, false);
+      if (RM) parts.forEach((p) => { p.x = p.tx; p.y = p.ty; p.a = p.ta; });
+      running = false; if (visible) kick(); else tick();
+    };
+    const next = () => { idx = (idx + 1) % TEXTS.length; assign(idx, !RM); if (RM) parts.forEach((p) => { p.x = p.tx; p.y = p.ty; p.c = p.tc.slice(); p.a = p.ta; }); running = false; visible ? kick() : tick(); };
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(resize);
+    window.addEventListener('resize', () => { clearTimeout(resize.t); resize.t = setTimeout(resize, 150); });
+    onVisible(stage, (v) => { visible = v; if (v) kick(); });
+    stage.addEventListener('pointermove', (e) => { const b = cv.getBoundingClientRect(); mouse.x = (e.clientX - b.left) * d; mouse.y = (e.clientY - b.top) * d; hover = true; kick(); });
+    stage.addEventListener('pointerleave', () => { mouse.x = mouse.y = -1e5; hover = false; kick(); });
+    $('#pt-next').addEventListener('click', next);
+    $('#pt-burst').addEventListener('click', () => { parts.forEach((p) => { p.vx += (Math.random() - 0.5) * 70 * d; p.vy += (Math.random() - 0.5) * 70 * d; }); kick(); });
+    if (!RM) setInterval(() => { if (visible && !hover) next(); }, 3800);
+  });
+
+  /* ───────── Constelación de fuentes (Canvas 2D, fuerzas y resortes) ───────── */
+  safe('constelacion', () => {
+    const cv = $('#gr'), stage = $('#gr-stage'), ctx = cv.getContext('2d');
+    const SRC = [['SciELO', 2.1], ['Redalyc', 1.2], ['Dialnet', 0.9], ['OpenAlex', 1.6], ['Crossref', 0.6], ['arXiv', 0.4], ['CORE', 0.7], ['DOAJ', 0.3], ['Wikipedia', 3.2, true]];
+    const MAXS = 3.2;
+    let W = 0, H = 0, d = 1, u = 1, visible = false, running = false, drag = null, last = null;
+    const doc = { label: 'Tu ensayo', doc: true, s: 0, x: 0, y: 0, vx: 0, vy: 0 };
+    const nodes = [doc].concat(SRC.map(([n, s, unc]) => ({ label: n, s, unc: !!unc, x: 0, y: 0, vx: 0, vy: 0 })));
+    const pulses = [];
+    const radius = (n) => (n.doc ? 24 : 6 + n.s * 3.4) * u;
+    const place = () => nodes.forEach((n, i) => {
+      if (n.doc) { n.x = W / 2; n.y = H / 2; return; }
+      const a = (i / (nodes.length - 1)) * Math.PI * 2; n.x = W / 2 + Math.cos(a) * W * 0.42; n.y = H / 2 + Math.sin(a) * H * 0.42; n.vx = n.vy = 0;
+    });
+    const physics = () => {
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i]; if (n === drag) continue;
+        let fx = 0, fy = 0;
+        if (n.doc) { fx += (W / 2 - n.x) * 0.03; fy += (H / 2 - n.y) * 0.03; }
+        else {
+          const dx = doc.x - n.x, dy = doc.y - n.y, dist = Math.hypot(dx, dy) || 1;
+          const L = (78 + (1 - n.s / MAXS) * 120) * u;
+          const f = (dist - L) * 0.014; fx += (dx / dist) * f; fy += (dy / dist) * f;
+        }
+        for (let j = 0; j < nodes.length; j++) {
+          if (i === j) continue; const m = nodes[j];
+          const dx = n.x - m.x, dy = n.y - m.y, d2 = dx * dx + dy * dy + 1, dist = Math.sqrt(d2);
+          const f = Math.min(6 * u, (2600 * u * u) / d2); fx += (dx / dist) * f; fy += (dy / dist) * f;
+        }
+        n.vx = (n.vx + fx) * 0.86; n.vy = (n.vy + fy) * 0.86; n.x += n.vx; n.y += n.vy;
+        const r = radius(n) + 8 * u; n.x = Math.max(r, Math.min(W - r, n.x)); n.y = Math.max(r, Math.min(H - r, n.y));
+      }
+    };
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+      const az = cssVar('--azure'), gold = cssVar('--gold'), ai = cssVar('--ai'), hi = cssVar('--hi'), low = cssVar('--low');
+      for (const n of nodes) {
+        if (n.doc) continue;
+        ctx.strokeStyle = n.unc ? ai : gold; ctx.globalAlpha = 0.5; ctx.lineWidth = (0.8 + n.s * 0.9) * u;
+        ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(doc.x, doc.y); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      for (const p of pulses) {
+        const x = p.n.x + (doc.x - p.n.x) * p.t, y = p.n.y + (doc.y - p.n.y) * p.t;
+        ctx.fillStyle = p.n.unc ? ai : gold; ctx.beginPath(); ctx.arc(x, y, 2.6 * u, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      for (const n of nodes) {
+        const r = radius(n);
+        ctx.fillStyle = n.doc ? az : n.unc ? ai : gold;
+        ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, Math.PI * 2); ctx.fill();
+        if (n.doc) { ctx.strokeStyle = az; ctx.globalAlpha = 0.35; ctx.lineWidth = 6 * u; ctx.beginPath(); ctx.arc(n.x, n.y, r + 7 * u, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; }
+        ctx.fillStyle = n.doc ? hi : hi; ctx.font = '600 ' + Math.round(12.5 * u) + 'px Manrope, system-ui, sans-serif';
+        ctx.fillText(n.label, n.x, n.y + r + 6 * u);
+        if (!n.doc) { ctx.fillStyle = low; ctx.font = '500 ' + Math.round(11.5 * u) + 'px "JetBrains Mono", ui-monospace, monospace'; ctx.fillText(fmt(n.s, 1) + ' %', n.x, n.y + r + 22 * u); }
+      }
+    };
+    const loop = () => {
+      physics();
+      if (!RM) {
+        for (const n of nodes) if (!n.doc && Math.random() < n.s * 0.012) pulses.push({ n, t: 0 });
+        for (let i = pulses.length - 1; i >= 0; i--) { pulses[i].t += 0.014; if (pulses[i].t >= 1) pulses.splice(i, 1); }
+      }
+      draw();
+      const calm = nodes.every((n) => Math.abs(n.vx) + Math.abs(n.vy) < 0.02);
+      if (visible && (!RM || drag || !calm)) requestAnimationFrame(loop); else running = false;
+    };
+    const kick = () => { if (visible && !running) { running = true; requestAnimationFrame(loop); } };
+    const resize = () => {
+      const b = stage.getBoundingClientRect(); d = dprOf();
+      W = Math.max(1, Math.round(b.width * d)); H = Math.max(1, Math.round(b.height * d)); cv.width = W; cv.height = H;
+      u = Math.min(W, H) / 440; place();
+      if (RM) for (let i = 0; i < 400; i++) physics();
+      draw(); kick();
+    };
+    resize(); window.addEventListener('resize', () => { clearTimeout(resize.t); resize.t = setTimeout(resize, 150); });
+    onVisible(stage, (v) => { visible = v; if (v) kick(); });
+    const at = (e) => { const b = cv.getBoundingClientRect(); return [(e.clientX - b.left) * d, (e.clientY - b.top) * d]; };
+    cv.style.touchAction = 'none';
+    cv.addEventListener('pointerdown', (e) => {
+      const [x, y] = at(e);
+      drag = nodes.find((n) => Math.hypot(n.x - x, n.y - y) < radius(n) + 14 * u) || null;
+      if (drag) { cv.setPointerCapture(e.pointerId); last = [x, y]; cv.style.cursor = 'grabbing'; kick(); }
+    });
+    cv.addEventListener('pointermove', (e) => {
+      const [x, y] = at(e);
+      if (!drag) { cv.style.cursor = nodes.some((n) => Math.hypot(n.x - x, n.y - y) < radius(n) + 14 * u) ? 'grab' : 'default'; return; }
+      drag.vx = x - last[0]; drag.vy = y - last[1]; drag.x = x; drag.y = y; last = [x, y];
+    });
+    const drop = () => { if (drag) { drag = null; cv.style.cursor = 'default'; kick(); } };
+    cv.addEventListener('pointerup', drop); cv.addEventListener('pointercancel', drop);
+  });
+
+  /* ───────── Cadencia: longitud de oraciones en vivo (Canvas 2D) ───────── */
+  safe('cadencia', () => {
+    const cv = $('#cd'), stage = $('#cd-stage'), ctx = cv.getContext('2d');
+    let W = 0, H = 0, d = 1, visible = false, off = 0, lastT = 0, running = false;
+    const SLOT = 14;
+    let hv = 18;
+    const genH = () => { hv += (Math.random() - 0.5) * 16; if (Math.random() < 0.16) hv = 4 + Math.random() * 7; if (Math.random() < 0.14) hv = 30 + Math.random() * 12; hv = Math.max(4, Math.min(42, hv)); return hv; };
+    const genA = () => 20 + (Math.random() - 0.5) * 4.5;
+    const hum = [], gen = [];
+    const fill = () => { const need = Math.ceil(W / (SLOT * d)) + 3; while (hum.length < need) { hum.push(genH()); gen.push(genA()); } };
+    const sd = (a) => { const m = a.reduce((s, x) => s + x, 0) / a.length; return Math.sqrt(a.reduce((s, x) => s + (x - m) * (x - m), 0) / a.length); };
+    const lane = (arr, y0, h, color, label) => {
+      const slot = SLOT * d, maxV = 44, tops = [], band = 26 * d, bh0 = h - band;
+      ctx.strokeStyle = cssVar('--line'); ctx.globalAlpha = 0.6; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, y0 + h + 0.5); ctx.lineTo(W, y0 + h + 0.5); ctx.stroke();
+      ctx.fillStyle = color; ctx.globalAlpha = 0.75;
+      arr.forEach((v, i) => {
+        const x = i * slot - off, bh = (v / maxV) * bh0;
+        ctx.beginPath(); ctx.roundRect(x + slot * 0.2, y0 + h - bh, slot * 0.6, bh, 2 * d); ctx.fill();
+        tops.push([x + slot / 2, y0 + h - bh]);
+      });
+      ctx.globalAlpha = 1; ctx.strokeStyle = color; ctx.lineWidth = 1.6 * d; ctx.beginPath();
+      tops.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke();
+      const visibles = arr.slice(0, Math.ceil(W / slot));
+      ctx.fillStyle = cssVar('--hi'); ctx.font = '700 ' + Math.round(12.5 * d) + 'px Manrope, system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(label, 14 * d, y0 + 4 * d);
+      const lx = 14 * d + ctx.measureText(label).width + 12 * d;
+      ctx.fillStyle = color; ctx.font = '500 ' + Math.round(12.5 * d) + 'px "JetBrains Mono", ui-monospace, monospace';
+      ctx.fillText('σ ' + fmt(sd(visibles), 1) + ' palabras', lx, y0 + 4 * d);
+    };
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+      const pad = 12 * d, laneH = (H - pad * 3) / 2;
+      lane(hum, pad, laneH, cssVar('--human'), 'Texto humano');
+      lane(gen, pad * 2 + laneH, laneH, cssVar('--ai'), 'Texto generado');
+    };
+    const loop = (t) => {
+      const dt = lastT ? Math.min(64, t - lastT) : 16; lastT = t;
+      off += dt * 0.045 * d; const slot = SLOT * d;
+      while (off >= slot) { off -= slot; hum.shift(); gen.shift(); fill(); }
+      draw();
+      if (visible) requestAnimationFrame(loop); else { running = false; lastT = 0; }
+    };
+    const resize = () => { const b = stage.getBoundingClientRect(); d = dprOf(); W = Math.max(1, Math.round(b.width * d)); H = Math.max(1, Math.round(b.height * d)); cv.width = W; cv.height = H; fill(); draw(); };
+    resize(); window.addEventListener('resize', () => { clearTimeout(resize.t); resize.t = setTimeout(resize, 150); });
+    onVisible(stage, (v) => { visible = v; if (v && !RM && !running) { running = true; requestAnimationFrame(loop); } });
+  });
+})();
+</script>
+<script type="module">
+/* Héroe 3D: three.js dibuja, anime.js anima objetos JS (la técnica de animejs.com) */
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js';
+
+const A = window.anime;
+const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const stage = document.getElementById('studio-stage');
+const canvas = document.getElementById('studio-canvas');
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const rgb01 = (h) => { const m = h.replace('#', ''); const n = parseInt(m.length === 3 ? m.replace(/./g, (c) => c + c) : m, 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; };
+
+try {
+  if (!A) throw new Error('anime.js no cargó');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  const scene = new THREE.Scene();
+  const V = 8.6;
+  const camera = new THREE.OrthographicCamera(-V, V, V, -V, 0.1, 200);
+  camera.position.set(14, 12.5, 14);
+  camera.lookAt(0, 2.4, 0);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x2a3340, 1.25));
+  const sun = new THREE.DirectionalLight(0xffffff, 2.1); sun.position.set(7, 16, 4); scene.add(sun);
+  const group = new THREE.Group(); scene.add(group);
+
+  const COLS = 16, ROWS = 12, N = COLS * ROWS;
+  const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.05 }), N);
+  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  group.add(mesh);
+
+  // Datos de ejemplo deterministas: líneas de texto, veredictos y alturas
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647, (seed - 1) / 2147483646);
+  const PAR = [[1, 2, 'human'], [4, 5, 'ai'], [7, 8, 'mixed'], [10, 10, 'human']];
+  const cell = [];
+  for (let i = 0; i < N; i++) {
+    const c = i % COLS, r = (i / COLS) | 0;
+    const par = PAR.find(([a, b]) => r >= a && r <= b);
+    const ink = !!par && c > 0 && c < COLS - 1 && rnd() > 0.17 && !(r === par[1] && c > 11);
+    let v = par ? par[2] : 'human';
+    if (ink && rnd() < 0.12) v = v === 'ai' ? 'mixed' : 'ai';
+    const h = 0.35 + 5.2 * Math.abs(Math.sin(c * 0.55 + r * 0.35) * Math.cos(r * 0.8 - c * 0.22));
+    const cityV = h > 3.4 ? 'ai' : h > 1.8 ? 'mixed' : 'human';
+    // Sello: escudo en una rejilla de 12 x 16 (192 celdas, una por bloque)
+    const sc = i % 12, sr = (i / 12) | 0, u = (sc - 5.5) / 6, w = sr / 15;
+    const half = w < 0.5 ? 0.95 : 0.95 * Math.sqrt(Math.max(0, 1 - Math.pow((w - 0.5) / 0.53, 2)));
+    const inShield = Math.abs(u) <= half + 0.02;
+    const seg = (ax, ay, bx, by) => { const vx = bx - ax, vy = by - ay, t = Math.max(0, Math.min(1, ((u - ax) * vx + (w - ay) * vy) / (vx * vx + vy * vy))); return Math.hypot(u - (ax + vx * t), w - (ay + vy * t)); };
+    const check = inShield && Math.min(seg(-0.45, 0.47, -0.1, 0.7), seg(-0.1, 0.7, 0.48, 0.25)) < 0.105;
+    cell.push({ c, r, ink, v, h, cityV, sc, sr, inShield, check });
+  }
+
+  const P = cell.map(() => ({ x: (Math.random() - 0.5) * 30, y: 10 + Math.random() * 10, z: (Math.random() - 0.5) * 30, sx: 0, sy: 0, sz: 0, r: 0.25, g: 0.75, b: 1 }));
+  const dummy = new THREE.Object3D(), col = new THREE.Color();
+  const sync = () => {
+    for (let i = 0; i < N; i++) {
+      const p = P[i];
+      dummy.position.set(p.x, p.y, p.z);
+      dummy.scale.set(Math.max(p.sx, 1e-4), Math.max(p.sy, 1e-4), Math.max(p.sz, 1e-4));
+      dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix);
+      col.setRGB(Math.min(1, Math.max(0, p.r)), Math.min(1, Math.max(0, p.g)), Math.min(1, Math.max(0, p.b)), THREE.SRGBColorSpace);
+      mesh.setColorAt(i, col);
+    }
+    mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true;
+  };
+
+  const PAPER = [0.95, 0.95, 0.93], INK = [0.42, 0.44, 0.48], WHITE = [1, 1, 1];
+  const tone = (v) => rgb01(css('--' + v));
+  const STATES = {
+    documento: (k) => ({ x: k.c - 7.5, y: 0.1, z: k.r - 5.5, sx: 0.92, sy: 0.2, sz: 0.92, col: k.ink ? INK : PAPER }),
+    escaneo: (k) => ({ x: k.c - 7.5, y: 0.1, z: k.r - 5.5, sx: 0.92, sy: 0.2, sz: 0.92, col: k.ink ? tone(k.v) : PAPER }),
+    ciudad: (k) => ({ x: k.c - 7.5, y: k.h / 2, z: k.r - 5.5, sx: 0.76, sy: k.h, sz: 0.76, col: tone(k.cityV) }),
+    sello: (k) => k.inShield
+      ? { x: (k.sc - 5.5) * 0.66, y: (15 - k.sr) * 0.66 + 0.4, z: 0, sx: 0.6, sy: 0.6, sz: 0.6, col: k.check ? WHITE : tone('azure') }
+      : { x: (k.sc - 5.5) * 0.66, y: 14 + Math.random() * 4, z: (Math.random() - 0.5) * 6, sx: 0, sy: 0, sz: 0, col: tone('azure') },
+  };
+  const ORDER = ['documento', 'escaneo', 'ciudad', 'sello'];
+  const view = { ry: 0, lift: 0 };
+  let current = 'documento';
+
+  const go = (name, first) => {
+    current = name;
+    const T = cell.map((k) => STATES[name](k));
+    const geo = name === 'ciudad' ? 'outElastic(1, .7)' : 'inOutQuart';
+    const base = {
+      x: { to: (p, i) => T[i].x, ease: geo }, z: { to: (p, i) => T[i].z, ease: geo },
+      sx: { to: (p, i) => T[i].sx, ease: geo }, sz: { to: (p, i) => T[i].sz, ease: geo }, sy: { to: (p, i) => T[i].sy, ease: geo },
+      r: { to: (p, i) => T[i].col[0], ease: 'out(2)' }, g: { to: (p, i) => T[i].col[1], ease: 'out(2)' }, b: { to: (p, i) => T[i].col[2], ease: 'out(2)' },
+      duration: first ? 1100 : 900,
+    };
+    if (RM) {
+      P.forEach((p, i) => { Object.assign(p, { x: T[i].x, y: T[i].y, z: T[i].z, sx: T[i].sx, sy: T[i].sy, sz: T[i].sz, r: T[i].col[0], g: T[i].col[1], b: T[i].col[2] }); });
+      view.ry = name === 'sello' ? Math.PI / 4 : 0; return;
+    }
+    if (name === 'escaneo') {
+      // la ola recorre las filas: cada bloque sube y cae ya con su veredicto
+      A.animate(P, { ...base, y: [{ to: (p, i) => T[i].y + 1.3, duration: 260, ease: 'out(3)' }, { to: (p, i) => T[i].y, duration: 560, ease: 'outBounce' }],
+        delay: A.stagger(55, { grid: [COLS, ROWS], from: 'first', axis: 'y' }) });
+    } else {
+      A.animate(P, { ...base, y: { to: (p, i) => T[i].y, ease: geo }, delay: A.stagger(first ? 9 : 14, { grid: [COLS, ROWS], from: 'center' }) });
+    }
+    A.animate(view, { ry: name === 'sello' ? Math.PI / 4 : 0, duration: 1300, ease: 'inOutQuart' });
+  };
+
+  // Tamaño
+  const resize = () => {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    renderer.setSize(w, h, false);
+    const a = w / h; camera.left = -V * a; camera.right = V * a; camera.top = V; camera.bottom = -V;
+    if (a < 1) { camera.left = -V; camera.right = V; camera.top = V / a; camera.bottom = -V / a; }
+    camera.updateProjectionMatrix();
+  };
+  resize(); window.addEventListener('resize', resize);
+
+  // Puntero: la escena se inclina un poco
+  const ptr = { x: 0, y: 0 }, cur = { x: 0, y: 0 };
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches && !RM) {
+    stage.addEventListener('pointermove', (e) => { const b = stage.getBoundingClientRect(); ptr.x = (e.clientX - b.left) / b.width - 0.5; ptr.y = (e.clientY - b.top) / b.height - 0.5; });
+    stage.addEventListener('pointerleave', () => { ptr.x = ptr.y = 0; });
+  }
+
+  let visible = true;
+  new IntersectionObserver((es) => { visible = es[0].isIntersecting; }, { threshold: 0.05 }).observe(stage);
+  const frame = (t) => {
+    if (visible) {
+      cur.x += (ptr.x - cur.x) * 0.06; cur.y += (ptr.y - cur.y) * 0.06;
+      group.rotation.y = view.ry + cur.x * 0.5;
+      group.rotation.x = cur.y * 0.12;
+      group.position.y = current === 'sello' && !RM ? Math.sin(t / 700) * 0.18 : 0;
+      sync(); renderer.render(scene, camera);
+    }
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+
+  // Capítulos: avance automático y botones
+  const btns = Array.from(document.querySelectorAll('[data-chap]'));
+  const bar = document.getElementById('chap-progress');
+  let k = 0, holdUntil = 0, timer = 0;
+  const mark = () => btns.forEach((b, i) => b.setAttribute('aria-pressed', String(i === k)));
+  const show = (first) => {
+    go(ORDER[k], first); mark();
+    if (!RM) A.animate(bar, { scaleX: [0, 1], duration: 3600, ease: 'linear' });
+  };
+  const schedule = () => { clearTimeout(timer); timer = setTimeout(() => { if (visible && Date.now() > holdUntil) { k = (k + 1) % ORDER.length; show(); } schedule(); }, 3600); };
+  btns.forEach((b, i) => b.addEventListener('click', () => { k = i; holdUntil = Date.now() + 9000; show(); }));
+  // Retoma los colores al cambiar de tema
+  const retheme = () => go(current);
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', retheme);
+  new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  show(true);
+  if (!RM) schedule();
+} catch (err) {
+  console.error('[héroe 3D]', err);
+  const p = document.createElement('p');
+  p.className = 'hint'; p.style.cssText = 'position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px';
+  p.textContent = 'Este navegador no puede mostrar la escena 3D (WebGL desactivado). El resto del prototipo funciona igual.';
+  stage.appendChild(p);
+}
+</script>
+</body>
+</html>

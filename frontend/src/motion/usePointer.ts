@@ -46,33 +46,3 @@ export function usePointerParallax<T extends HTMLElement>() {
 
   return ref;
 }
-
-/**
- * Botón magnético: se desplaza unos píxeles hacia el puntero cuando está
- * cerca y vuelve con la transición CSS del propio botón. Puntero fino sólo.
- */
-export function useMagnetic<T extends HTMLElement>(strength = 0.28, radius = 90) {
-  const ref = useRef<T>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || !hasFinePointer() || prefersReducedMotion()) return;
-    const parent = el.parentElement || el;
-    let raf = 0;
-    const reset = () => { el.style.transform = ''; };
-    const onMove = (e: PointerEvent) => {
-      const r = el.getBoundingClientRect();
-      const dx = e.clientX - (r.left + r.width / 2);
-      const dy = e.clientY - (r.top + r.height / 2);
-      const d = Math.hypot(dx, dy);
-      if (d > radius + Math.max(r.width, r.height) / 2) { reset(); return; }
-      if (raf) cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => { el.style.transform = `translate3d(${(dx * strength).toFixed(1)}px, ${(dy * strength).toFixed(1)}px, 0)`; });
-    };
-    parent.addEventListener('pointermove', onMove, { passive: true });
-    parent.addEventListener('pointerleave', reset);
-    return () => { parent.removeEventListener('pointermove', onMove); parent.removeEventListener('pointerleave', reset); if (raf) cancelAnimationFrame(raf); reset(); };
-  }, [strength, radius]);
-
-  return ref;
-}

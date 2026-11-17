@@ -1,7 +1,8 @@
 import { LinguisticEngine } from '../src/utils/linguisticEngine';
 import { SimilarityEngine } from '../src/utils/similarityCorpus';
+import { TextSimilarity } from '../src/utils/TextSimilarity';
 
-describe('Verificación de Dinamismo en LinguisticEngine y SimilarityEngine', () => {
+describe('Verificación de Dinamismo en LinguisticEngine y TextSimilarity', () => {
   it('debe diferenciar claramente texto de IA frente a texto humano', () => {
     const aiText =
       'En el vertiginoso mundo contemporáneo, es crucial destacar que la inteligencia artificial desempeña un papel fundamental en la transformación de la sociedad. Asimismo, resulta imperativo señalar que estas tecnologías ofrecen un amplio abanico de posibilidades que transforman el paradigma educativo y científico. En conclusión, no cabe duda de que navegamos hacia una nueva era.';
@@ -18,34 +19,40 @@ describe('Verificación de Dinamismo en LinguisticEngine y SimilarityEngine', ()
     // El texto humano debe tener un puntaje bajo de IA (Índice humano alto)
     expect(humanReport.overallAiScore).toBeLessThanOrEqual(20);
 
-    // Nunca deben ser iguales a 14%
+    // Nunca deben ser iguales a valores arbitrarios fijos
     expect(aiReport.overallAiScore).not.toBe(14);
     expect(humanReport.overallAiScore).not.toBe(14);
   });
 
-  it('debe generar porcentajes de similitud variados según contenido, tema y longitud', () => {
-    const techText =
-      'Las arquitecturas de redes neuronales profundas y mecanismos de atención han transformado radicalmente el procesamiento del lenguaje natural y la visión computacional.';
+  it('debe calcular porcentajes de similitud coherentes y dinámicos según el vocabulario y n-gramas', () => {
+    const originalArticle =
+      'Las redes neuronales profundas utilizan mecanismos de retropropagación para ajustar los pesos y reducir el error en tareas complejas de visión artificial.';
 
-    const casualText =
-      'Mañana vamos al cine a ver la película nueva que acaban de estrenar y luego cenamos con los primos.';
+    const copiedSnippet =
+      'Las redes neuronales profundas utilizan mecanismos de retropropagación para ajustar pesos en visión artificial.';
 
-    const legalText =
-      'Es lícita la inclusión en una obra propia de fragmentos de otras ajenas siempre que se trate de obras ya divulgadas a título de cita bibliográfica según la Ley de Propiedad Intelectual.';
+    const unrelatedSnippet =
+      'Los arrecifes de coral en el océano Pacífico enfrentan graves amenazas por el aumento de la temperatura del agua.';
 
-    const techSim = SimilarityEngine.analyzeSimilarity(techText);
-    const casualSim = SimilarityEngine.analyzeSimilarity(casualText);
-    const legalSim = SimilarityEngine.analyzeSimilarity(legalText);
+    const highMatch = TextSimilarity.scoreMatch(originalArticle, copiedSnippet, 'Fuente IA');
+    const lowMatch = TextSimilarity.scoreMatch(originalArticle, unrelatedSnippet, 'Fuente Biología');
 
-    // Ninguno debe estar atascado en 7% o 14%
-    expect(casualSim.overallSimilarityScore).not.toBe(7);
-    expect(legalSim.overallSimilarityScore).not.toBe(7);
+    // El fragmento con copia de n-gramas debe tener similitud sustancial
+    expect(highMatch.similarityPercentage).toBeGreaterThan(45);
 
-    // Fuentes encontradas deben ser contextualmente relevantes
-    expect(techSim.sources.length).toBeGreaterThan(0);
-    expect(legalSim.sources.length).toBeGreaterThan(0);
+    // El fragmento no relacionado debe tener similitud 0 o insignificante
+    expect(lowMatch.similarityPercentage).toBeLessThan(10);
 
-    // Deben variar entre sí
-    expect(casualSim.overallSimilarityScore).not.toBe(legalSim.overallSimilarityScore);
+    // No deben ser iguales
+    expect(highMatch.similarityPercentage).not.toBe(lowMatch.similarityPercentage);
+  });
+
+  it('debe manejar textos breves o consultas sin inventar fuentes ficticias', async () => {
+    const veryShortText = 'Hola mundo';
+    const report = await SimilarityEngine.analyzeSimilarity(veryShortText);
+
+    expect(report.overallSimilarityScore).toBe(0);
+    expect(report.sources).toEqual([]);
+    expect(report.disclaimer).toContain('demasiado breve');
   });
 });

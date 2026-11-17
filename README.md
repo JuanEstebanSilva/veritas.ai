@@ -39,13 +39,19 @@ cd backend
 # 2. Instalar todas las dependencias
 npm install
 
-# 3. Sincronizar el esquema de Prisma con PostgreSQL
+# 3. Crear el .env a partir de la plantilla y generar una API Key por cliente.
+#    Ejecuta este comando tres veces y pega cada resultado en API_KEY_POSTMAN,
+#    API_KEY_WEB y API_KEY_MOVIL. Sin las tres, el servidor no arranca.
+cp .env.example .env
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# 4. Sincronizar el esquema de Prisma con PostgreSQL
 npx prisma db push
 
-# 4. Poblar la base de datos con las cuentas iniciales (Admin y Usuario Demo)
+# 5. Poblar la base de datos con las cuentas iniciales (Admin y Usuario Demo)
 npm run seed
 
-# 5. Iniciar el servidor backend en modo desarrollo
+# 6. Iniciar el servidor backend en modo desarrollo
 npm run dev
 ```
 
@@ -64,7 +70,10 @@ cd frontend
 # 2. Instalar dependencias del cliente
 npm install
 
-# 3. Iniciar el servidor web de desarrollo Vite
+# 3. Crear el .env y poner en VITE_API_KEY el mismo valor que API_KEY_WEB del backend
+cp .env.example .env
+
+# 4. Iniciar el servidor web de desarrollo Vite
 npm run dev
 ```
 

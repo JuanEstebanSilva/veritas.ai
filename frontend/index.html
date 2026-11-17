@@ -17,7 +17,7 @@
         var d = document.documentElement;
         d.classList.add('js');
         try {
-          var t = localStorage.getItem('plagelio_theme') || localStorage.getItem('veritas_theme');
+          var t = localStorage.getItem('plagelio_theme');
           var dark = t === 'light' ? false : true;
           d.classList.toggle('dark', dark);
           d.setAttribute('data-theme', dark ? 'dark' : 'light');

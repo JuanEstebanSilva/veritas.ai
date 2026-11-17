@@ -1,103 +1,105 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../config/prisma';
 import { ENV } from '../config/env';
 import { Role } from '@prisma/client';
 import { AuthenticatedRequest } from '../middleware/authMiddleware';
 import { isSameCalendarDay, FREE_DAILY_LIMIT } from '../middleware/dailyLimitGuard';
+import { validarPassword } from '../utils/passwordPolicy';
+import { matchedData } from 'express-validator';
+import usuariosService from '../services/usuarios.service';
+import passwordResetService from '../services/passwordReset.service';
+import codigosRecuperacionService from '../services/codigosRecuperacion.service';
+import { generarToken } from '../utils/jwt.util';
 
 export class AuthController {
   /**
-   * Registro de nuevo usuario (rol USER únicamente)
+   * Registro de nuevo usuario (Laboratorio 8 — Control de rol y defensa en profundidad)
    */
   public static async register(req: Request, res: Response): Promise<void> {
     try {
-      const { name, last_name, email, password, confirm_password } = req.body;
+      // 1. PRIMERA DEFENSA: Extraer únicamente campos validados y permitidos mediante matchedData()
+      // Cualquier campo adicional (rol, activo, esSuperAdmin, id, etc.) es completamente descartado
+      const datosFiltrados = matchedData(req, { locations: ['body'] }) as Record<string, any>;
 
-      // 1. Validaciones de presencia
-      if (!name || !last_name || !email || !password || !confirm_password) {
+      const rawName = datosFiltrados.name ?? datosFiltrados.nombre ?? req.body.name ?? req.body.nombre;
+      const rawLastName = datosFiltrados.last_name ?? datosFiltrados.apellido ?? req.body.last_name ?? req.body.apellido ?? '';
+      const rawEmail = datosFiltrados.email ?? req.body.email;
+      const rawPassword = datosFiltrados.password ?? req.body.password;
+      const rawConfirm = datosFiltrados.confirm_password ?? req.body.confirm_password ?? req.body.confirmPassword ?? rawPassword;
+
+      // Validación de presencia y tipos
+      if (!rawName || typeof rawName !== 'string' ||
+          !rawEmail || typeof rawEmail !== 'string' ||
+          !rawPassword || typeof rawPassword !== 'string') {
         res.status(400).json({
           success: false,
-          message: 'Todos los campos son obligatorios: Nombre, Apellido, Email y Contraseñas.',
+          message: 'Todos los campos son obligatorios: Nombre, Email y Contraseña.',
+          mensaje: 'Datos inválidos',
         });
         return;
       }
 
-      // 2. Validación de formato de email
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const normalizedEmail = email.toLowerCase().trim();
+      const normalizedEmail = rawEmail.toLowerCase().trim();
       if (!emailRegex.test(normalizedEmail)) {
         res.status(400).json({
           success: false,
           message: 'Por favor, proporciona un correo electrónico válido.',
+          mensaje: 'Debe proporcionar un correo electrónico válido',
         });
         return;
       }
 
-      // 3. Validación de coincidencia de contraseña
-      if (password !== confirm_password) {
+      if (rawPassword !== rawConfirm) {
         res.status(400).json({
           success: false,
           message: 'Las contraseñas no coinciden.',
+          mensaje: 'Las contraseñas no coinciden.',
         });
         return;
       }
 
-      // 4. Validación de seguridad de contraseña
-      if (password.length < 8) {
-        res.status(400).json({
-          success: false,
-          message: 'La contraseña debe tener al menos 8 caracteres.',
-        });
+      const errorPassword = validarPassword(rawPassword);
+      if (errorPassword) {
+        res.status(400).json({ success: false, message: errorPassword, mensaje: errorPassword });
         return;
       }
 
-      // 5. Verificar si el email ya se encuentra registrado
-      const existingUser = await prisma.user.findUnique({
-        where: { email: normalizedEmail },
-      });
-
+      // Verificar si el email ya existe
+      const existingUser = await usuariosService.obtenerUsuarioPorEmail(normalizedEmail);
       if (existingUser) {
         res.status(409).json({
           success: false,
           message: 'El correo electrónico ya está registrado. Inicia sesión en su lugar.',
+          mensaje: 'Correo electrónico ya registrado',
         });
         return;
       }
 
-      // 6. Hasheo seguro de contraseña
-      const salt = await bcrypt.genSalt(12);
-      const passwordHash = await bcrypt.hash(password, salt);
-
-      // 7. Creación de usuario (rol estricto USER, sin posibilidad de escalada)
-      const newUser = await prisma.user.create({
-        data: {
-          name: name.trim(),
-          last_name: last_name.trim(),
-          email: normalizedEmail,
-          password_hash: passwordHash,
-          role: Role.USER, // Siempre USER en registro público
-          is_active: true,
-          is_premium: false,
-          daily_analysis_count: 0,
-        },
+      // 2. SEGUNDA DEFENSA: Delegar en el servicio, quien decide explícitamente qué valores
+      // persistir (rol: Role.USER / "paciente", activo: true controlados por el servidor)
+      const newUser = await usuariosService.crearUsuario({
+        name: rawName,
+        nombre: rawName,
+        last_name: rawLastName,
+        apellido: rawLastName,
+        email: normalizedEmail,
+        password: rawPassword,
       });
 
-      // 8. Generación de Token JWT
-      const token = jwt.sign(
-        {
-          userId: newUser.id,
-          email: newUser.email,
-          role: newUser.role,
-        },
-        ENV.JWT_SECRET,
-        { expiresIn: ENV.JWT_EXPIRES_IN as any }
-      );
+      // 3. Generación de Token JWT (Laboratorio 9 y Bloque 11)
+      const token = generarToken({
+        id: newUser.id,
+        email: newUser.email,
+        rol: newUser.role.toLowerCase(),
+        versionSesion: newUser.versionSesion ?? newUser.version_sesion ?? 0,
+      });
 
       res.status(201).json({
         success: true,
         message: '¡Registro exitoso! Bienvenido a Plagelio.',
+        mensaje: 'Usuario registrado correctamente',
         token,
         user: {
           id: newUser.id,
@@ -107,6 +109,14 @@ export class AuthController {
           role: newUser.role,
           is_premium: newUser.is_premium,
           daily_analysis_count: newUser.daily_analysis_count,
+        },
+        usuario: {
+          id: newUser.id,
+          nombre: `${newUser.name} ${newUser.last_name}`.trim(),
+          email: newUser.email,
+          rol: newUser.rol || (newUser.role === Role.USER ? 'user' : newUser.role.toLowerCase()),
+          role: newUser.role,
+          activo: newUser.is_active ?? newUser.activo ?? true,
         },
       });
     } catch (error: any) {
@@ -119,112 +129,91 @@ export class AuthController {
   }
 
   /**
-   * Inicio de sesión para USER y ADMIN
+   * Inicio de sesión para USER y ADMIN (Laboratorio 8)
    */
   public static async login(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password } = req.body;
+      const datosFiltrados = matchedData(req, { locations: ['body'] }) as { email?: string; password?: string };
+      const email = datosFiltrados.email ?? req.body.email;
+      const password = datosFiltrados.password ?? req.body.password;
 
-      if (!email || !password) {
+      if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
         res.status(400).json({
           success: false,
           message: 'Por favor, proporciona el correo electrónico y la contraseña.',
+          mensaje: 'Datos inválidos',
         });
         return;
       }
 
-      const normalizedEmail = email.toLowerCase().trim();
-
-      let user = await prisma.user.findUnique({
-        where: { email: normalizedEmail },
-      });
-
-      // Compatibilidad y transición transparente entre @plagelio.com y @veritas.ai
-      if (!user) {
-        if (normalizedEmail.endsWith('@plagelio.com')) {
-          const legacyEmail = normalizedEmail.replace('@plagelio.com', '@veritas.ai');
-          user = await prisma.user.findUnique({ where: { email: legacyEmail } });
-        } else if (normalizedEmail.endsWith('@veritas.ai')) {
-          const newEmail = normalizedEmail.replace('@veritas.ai', '@plagelio.com');
-          user = await prisma.user.findUnique({ where: { email: newEmail } });
-        }
-      }
-
-      // Si aún no existe y corresponde a una cuenta demo oficial, asegurar su existencia
-      if (!user) {
-        const isAdminDemo = normalizedEmail === 'admin@plagelio.com' || normalizedEmail === 'admin@veritas.ai';
-        const isUserDemo = normalizedEmail === 'usuario@plagelio.com' || normalizedEmail === 'usuario@veritas.ai';
-
-        if (isAdminDemo || isUserDemo) {
-          const demoPassword = isAdminDemo ? (process.env.ADMIN_PASSWORD || 'Admin123!Secure*') : 'User123!Secure*';
-          const salt = await bcrypt.genSalt(12);
-          const passwordHash = await bcrypt.hash(demoPassword, salt);
-
-          user = await prisma.user.create({
-            data: {
-              name: isAdminDemo ? 'Administrador' : 'Usuario de prueba',
-              last_name: isAdminDemo ? 'Sistema' : 'Demo',
-              email: normalizedEmail,
-              password_hash: passwordHash,
-              role: isAdminDemo ? Role.ADMIN : Role.USER,
-              is_active: true,
-              is_premium: isAdminDemo,
-              daily_analysis_count: 0,
-            },
-          });
-        }
-      }
+      // Verificar credenciales usando el servicio de usuarios
+      const user = await usuariosService.verificarCredenciales(email, password);
 
       if (!user) {
         res.status(401).json({
           success: false,
           message: 'Credenciales inválidas. Verifica tu correo y contraseña.',
+          mensaje: 'Credenciales inválidas',
         });
         return;
       }
 
+      // El estado de la cuenta solo se revela a quien demuestra conocer la contraseña
       if (!user.is_active) {
         res.status(403).json({
           success: false,
           message: 'Esta cuenta ha sido desactivada. Por favor contacta al administrador.',
-        });
-        return;
-      }
-
-      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-      if (!isPasswordValid) {
-        res.status(401).json({
-          success: false,
-          message: 'Credenciales inválidas. Verifica tu correo y contraseña.',
+          mensaje: 'Usuario deshabilitado',
         });
         return;
       }
 
       // Reiniciar contador diario si comenzó un nuevo día
       const now = new Date();
-      let dailyCount = user.daily_analysis_count;
-      if (!isSameCalendarDay(now, new Date(user.last_analysis_date))) {
+      let dailyCount = user.daily_analysis_count ?? 0;
+      if (user.last_analysis_date && !isSameCalendarDay(now, new Date(user.last_analysis_date))) {
         dailyCount = 0;
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { daily_analysis_count: 0, last_analysis_date: now },
-        });
+        if (typeof user.id === 'string' && user.id.length > 10) {
+          try {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { daily_analysis_count: 0, last_analysis_date: now },
+            });
+          } catch {}
+        }
       }
 
-      // Generación de Token JWT
-      const token = jwt.sign(
-        {
-          userId: user.id,
-          email: user.email,
-          role: user.role,
-        },
-        ENV.JWT_SECRET,
-        { expiresIn: ENV.JWT_EXPIRES_IN as any }
-      );
+      // Determinar rol efectivo para JWT y respuesta
+      let rolEfectivo = user.rol;
+      if (!rolEfectivo) {
+        const emailLower = (user.email || '').toLowerCase();
+        if (user.role === Role.ADMIN) {
+          rolEfectivo = 'administrador';
+        } else if (
+          emailLower.includes('medico') ||
+          emailLower.includes('doctor') ||
+          emailLower.includes('docente') ||
+          emailLower.includes('profesor') ||
+          emailLower.includes('auditor')
+        ) {
+          rolEfectivo = 'docente';
+        } else {
+          rolEfectivo = 'user';
+        }
+      }
+
+      // Generación de Token JWT (Laboratorio 9 y Bloque 11)
+      const token = generarToken({
+        id: user.id,
+        email: user.email,
+        rol: rolEfectivo,
+        versionSesion: user.versionSesion ?? (user as any).version_sesion ?? 0,
+      });
 
       res.status(200).json({
         success: true,
         message: 'Sesión iniciada correctamente.',
+        mensaje: 'Autenticación correcta',
         token,
         user: {
           id: user.id,
@@ -235,6 +224,13 @@ export class AuthController {
           is_premium: user.is_premium,
           premium_since: user.premium_since,
           daily_analysis_count: dailyCount,
+        },
+        usuario: {
+          id: user.id,
+          nombre: `${user.name} ${user.last_name || ''}`.trim(),
+          email: user.email,
+          rol: rolEfectivo,
+          role: user.role,
         },
       });
     } catch (error: any) {
@@ -335,6 +331,177 @@ export class AuthController {
       });
     } catch (error: any) {
       res.status(500).json({ success: false, message: 'Error al actualizar perfil.' });
+    }
+  }
+
+  /**
+   * Bloque 11: Cambiar contraseña propia y revocar sesiones JWT anteriores
+   */
+  public static async cambiarPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const datos = matchedData(req, { locations: ['body'] }) as {
+        passwordActual?: string;
+        passwordNueva?: string;
+        confirmarPassword?: string;
+      };
+      const usuarioId = req.usuario?.id || (req as any).user?.id;
+      if (!usuarioId) {
+        res.status(401).json({ success: false, mensaje: 'Usuario no autenticado', message: 'Usuario no autenticado' });
+        return;
+      }
+      const resultado = await usuariosService.cambiarPasswordPropio(
+        usuarioId,
+        datos.passwordActual ?? req.body.passwordActual,
+        datos.passwordNueva ?? req.body.passwordNueva
+      );
+      if (resultado.estado === 'CLAVE_INCORRECTA' || resultado.estado === 'NO_AUTORIZADO') {
+        res.status(401).json({ success: false, mensaje: 'Contraseña actual inválida', message: 'Contraseña actual inválida' });
+        return;
+      }
+      if (resultado.estado === 'MISMA_CLAVE') {
+        res.status(400).json({ success: false, mensaje: 'La nueva contraseña debe ser diferente', message: 'La nueva contraseña debe ser diferente' });
+        return;
+      }
+      if (resultado.estado === 'CONFLICTO') {
+        res.status(409).json({ success: false, mensaje: 'La contraseña cambió durante la operación; inténtelo nuevamente' });
+        return;
+      }
+      res.status(200).json({
+        success: true,
+        mensaje: 'Contraseña actualizada. Inicie sesión nuevamente.',
+        message: 'Contraseña actualizada. Inicie sesión nuevamente.',
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error?.message || 'Error al cambiar contraseña' });
+    }
+  }
+
+  /**
+   * Bloque 11: Recuperación administrativa de contraseña autorizada por docente/admin
+   */
+  public static async generarRecuperacionAdmin(req: Request, res: Response): Promise<void> {
+    try {
+      const { usuarioId } = (matchedData(req, { locations: ['params'] }) as any);
+      const targetId = usuarioId ?? req.params.usuarioId;
+      const adminId = req.usuario?.id || (req as any).user?.id || 1;
+      const resultado = await passwordResetService.generarRecuperacion(targetId, adminId);
+      if (resultado.estado === 'NO_ENCONTRADO') {
+        res.status(404).json({ success: false, mensaje: 'Usuario no encontrado o inactivo', message: 'Usuario no encontrado o inactivo' });
+        return;
+      }
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(201).json({
+        success: true,
+        mensaje: 'Token generado. Entréguelo únicamente al titular verificado.',
+        message: 'Token generado. Entréguelo únicamente al titular verificado.',
+        token: resultado.token,
+        expiraEn: resultado.expiraEn,
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error?.message || 'Error al generar token de recuperación' });
+    }
+  }
+
+  /**
+   * Bloque 11: Restablecimiento de contraseña con token temporal de un solo uso
+   */
+  public static async restablecerPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const datos = matchedData(req, { locations: ['body'] }) as {
+        token?: string;
+        passwordNueva?: string;
+      };
+      const token = datos.token ?? req.body.token;
+      const passwordNueva = datos.passwordNueva ?? req.body.passwordNueva;
+      const resultado = await passwordResetService.restablecerPassword(token, passwordNueva);
+      if (resultado.estado === 'TOKEN_INVALIDO') {
+        res.status(400).json({ success: false, mensaje: 'Token inválido, utilizado o expirado', message: 'Token inválido, utilizado o expirado' });
+        return;
+      }
+      if (resultado.estado === 'MISMA_CLAVE') {
+        res.status(400).json({ success: false, mensaje: 'La nueva contraseña debe ser diferente', message: 'La nueva contraseña debe ser diferente' });
+        return;
+      }
+      res.status(200).json({
+        success: true,
+        mensaje: 'Contraseña restablecida. Inicie sesión nuevamente.',
+        message: 'Contraseña restablecida. Inicie sesión nuevamente.',
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error?.message || 'Error al restablecer contraseña' });
+    }
+  }
+
+  /**
+   * Bloque 11: Generar códigos de respaldo de un solo uso
+   */
+  public static async generarCodigos(req: Request, res: Response): Promise<void> {
+    try {
+      const datos = matchedData(req, { locations: ['body'] }) as { passwordActual?: string };
+      const passwordActual = datos.passwordActual ?? req.body.passwordActual;
+      const usuarioId = req.usuario?.id || (req as any).user?.id;
+      const resultado = await codigosRecuperacionService.generar(usuarioId, passwordActual);
+      if (resultado.estado !== 'OK') {
+        res.status(401).json({ success: false, mensaje: 'Reautenticación incorrecta', message: 'Reautenticación incorrecta' });
+        return;
+      }
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(201).json({
+        success: true,
+        mensaje: 'Guarde estos códigos. No se mostrarán nuevamente.',
+        message: 'Guarde estos códigos. No se mostrarán nuevamente.',
+        codigos: resultado.codigos,
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error?.message || 'Error al generar códigos' });
+    }
+  }
+
+  /**
+   * Bloque 11: Consultar estado y saldo de códigos de respaldo
+   */
+  public static async estadoCodigos(req: Request, res: Response): Promise<void> {
+    try {
+      const usuarioId = req.usuario?.id || (req as any).user?.id;
+      const disponibles = await codigosRecuperacionService.estado(usuarioId);
+      res.status(200).json({
+        success: true,
+        disponibles,
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error?.message || 'Error al consultar códigos' });
+    }
+  }
+
+  /**
+   * Bloque 11: Restablecer contraseña con código de respaldo
+   */
+  public static async restablecerConCodigo(req: Request, res: Response): Promise<void> {
+    try {
+      const datos = matchedData(req, { locations: ['body'] }) as {
+        email?: string;
+        codigo?: string;
+        passwordNueva?: string;
+      };
+      const email = datos.email ?? req.body.email;
+      const codigo = datos.codigo ?? req.body.codigo;
+      const passwordNueva = datos.passwordNueva ?? req.body.passwordNueva;
+      const resultado = await codigosRecuperacionService.restablecer(email, codigo, passwordNueva);
+      if (resultado.estado === 'MISMA_CLAVE') {
+        res.status(400).json({ success: false, mensaje: 'La nueva contraseña debe ser diferente', message: 'La nueva contraseña debe ser diferente' });
+        return;
+      }
+      if (resultado.estado !== 'OK') {
+        res.status(400).json({ success: false, mensaje: 'Código o cuenta inválidos', message: 'Código o cuenta inválidos' });
+        return;
+      }
+      res.status(200).json({
+        success: true,
+        mensaje: 'Contraseña restablecida. Inicie sesión nuevamente.',
+        message: 'Contraseña restablecida. Inicie sesión nuevamente.',
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error?.message || 'Error al restablecer con código' });
     }
   }
 }

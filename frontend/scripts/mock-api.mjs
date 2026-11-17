@@ -18,24 +18,50 @@ const history = [
   { id: 'a6', title_or_filename: 'Artículo para revista indexada', type: 'TEXT', ai_score: 72, similarity_score: 33, improved_ai_score: 11, improved_similarity_score: 21, created_at: '2026-08-20T10:30:00Z' },
 ];
 
+// Informe de muestra: nueve párrafos y cinco fuentes. Los fragmentos
+// detectados (userSnippet) están tomados del propio texto.
+const PARAS = [
+  [87, 'En conclusión, es crucial destacar que la inteligencia artificial desempeña un papel fundamental en la transformación del sector educativo contemporáneo. Asimismo, cabe señalar que su implementación requiere un enfoque integral.', ['Fuerte presencia de fórmulas de IA', 'Cadencia uniforme', 'Simetría estructural sintética'], 'Alta concentración de giros de IA (4 detectados) y simetría cadencial típica de modelos generativos.'],
+  [46, 'Los datos recogidos durante el trabajo de campo (Mendoza, 2024) sugieren una correlación que el marco teórico previo no había anticipado. La muestra, sin embargo, es pequeña.', ['Conector formal reiterado'], 'Rasgos híbridos: cierta uniformidad estructural combinada con modulaciones de ritmo propias de la redacción humana.'],
+  [9, 'Llegué a esta pregunta por accidente. Revisaba actas de 1987 buscando otra cosa y el nombre apareció tres veces en una misma página. No podía ser casualidad.', ['Variación estilística natural'], 'Estructura orgánica con alternancia rítmica marcada y sin muletillas de IA.'],
+  [74, 'Es importante mencionar que los sistemas de tutoría inteligente ofrecen una experiencia de aprendizaje personalizada y adaptativa. De igual manera, estos sistemas permiten optimizar los procesos de evaluación y retroalimentación. Por consiguiente, su adopción representa una oportunidad significativa para las instituciones.', ['Conectores predecibles', 'Cadencia uniforme'], 'Tres oraciones de longitud casi idéntica encadenadas con conectores de manual.'],
+  [22, 'Tres docentes rechazaron participar. Uno de ellos lo dijo sin rodeos: «no quiero que una máquina corrija lo que yo tardé veinte años en aprender a leer». Lo anoté tal cual, porque resume una resistencia que las encuestas no recogen.', ['Variación estilística natural', 'Cita textual'], 'Alternancia entre frases muy cortas y largas; la cita se conserva sin alterar.'],
+  [63, 'La metodología de la investigación comprende el conjunto de procedimientos racionales utilizados para alcanzar los objetivos que rigen una investigación científica. En este estudio se adoptó un enfoque mixto, con entrevistas semiestructuradas y un cuestionario cerrado.', ['Definición de manual', 'Registro impersonal'], 'Definición genérica seguida de una descripción concreta del diseño; mezcla de patrones.'],
+  [12, 'El aula no cambió de golpe. Cambió el tiempo que los estudiantes dedicaban a releer sus propios borradores, y eso sí lo medimos: pasó de once minutos de media a casi veinte.', ['Variación estilística natural'], 'Ritmo irregular y dato propio; sin fórmulas de IA.'],
+  [81, 'En el contexto actual, resulta fundamental comprender que la integración de herramientas digitales constituye un factor determinante para la mejora de la calidad educativa. En este sentido, es necesario promover estrategias que garanticen un uso ético y responsable.', ['Fuerte presencia de fórmulas de IA', 'Cadencia uniforme'], 'Apertura y cierre de manual («en el contexto actual», «en este sentido») con vocabulario abstracto.'],
+  [35, 'Queda pendiente una pregunta incómoda. Si la herramienta mejora los textos pero no a quienes los escriben, ¿qué estamos evaluando exactamente? La UNESCO plantea algo parecido en su guía de 2023, aunque con más cautela.', ['Pregunta retórica'], 'Mayormente humano; la referencia institucional final es convencional.'],
+];
+const originalText = PARAS.map((p) => p[1]).join('\n\n');
+
 const analysis = {
   id: 'a2', title: 'Marco teórico — capítulo 2', type: 'TEXT',
-  originalText: 'En conclusión, es crucial destacar que la inteligencia artificial desempeña un papel fundamental en la transformación del sector educativo contemporáneo. Asimismo, cabe señalar que su implementación requiere un enfoque integral.\n\nLos datos recogidos durante el trabajo de campo (Mendoza, 2024) sugieren una correlación que el marco teórico previo no había anticipado.\n\nLlegué a esta pregunta por accidente. Revisaba actas de 1987 buscando otra cosa y el nombre apareció tres veces en una misma página. No podía ser casualidad.',
+  originalText,
   improvedText: null, aiScore: 61, similarityScore: 24, improvedAiScore: null, improvedSimilarityScore: null,
   overallIndicators: ['Fuerte presencia de fórmulas de IA', 'Cadencia uniforme', 'Variación estilística natural'],
   summaryExplanation: 'Se identificaron secciones equilibradas con alternancia entre estructuras convencionales y variaciones expresivas naturales.',
   legalDisclaimer: 'Aviso: estimación probabilística.', similarityDisclaimer: 'Una coincidencia no implica plagio.',
-  paragraphs: [
-    { index: 0, text: 'En conclusión, es crucial destacar que la inteligencia artificial desempeña un papel fundamental en la transformación del sector educativo contemporáneo. Asimismo, cabe señalar que su implementación requiere un enfoque integral.', aiScore: 87, indicators: ['Fuerte presencia de fórmulas de IA', 'Cadencia uniforme', 'Simetría estructural sintética'], explanation: 'Presenta una alta concentración de giros de IA (4 detectados) y simetría cadencial típica de modelos generativos.' },
-    { index: 1, text: 'Los datos recogidos durante el trabajo de campo (Mendoza, 2024) sugieren una correlación que el marco teórico previo no había anticipado.', aiScore: 46, indicators: ['Conector formal reiterado'], explanation: 'Muestra características híbridas: cierta uniformidad estructural combinada con modulaciones de ritmo de redacción humana.' },
-    { index: 2, text: 'Llegué a esta pregunta por accidente. Revisaba actas de 1987 buscando otra cosa y el nombre apareció tres veces en una misma página. No podía ser casualidad.', aiScore: 9, indicators: ['Variación estilística natural'], explanation: 'Estructura orgánica con alternancia rítmica marcada, ausencia de muletillas de IA y rica variedad léxica propia de la redacción humana.' },
-  ],
+  paragraphs: PARAS.map(([aiScore, text, indicators, explanation], index) => ({ index, text, aiScore, indicators, explanation })),
   sources: [
     { id: 's1', url: 'https://es.wikipedia.org/wiki/Inteligencia_artificial', title: 'Wikipedia: Inteligencia Artificial y Aprendizaje Automático', matchedText: 'La inteligencia artificial es un campo de la informática que enfatiza la creación de máquinas inteligentes…', userSnippet: 'la inteligencia artificial desempeña un papel fundamental en la transformación…', similarityPercentage: 16 },
-    { id: 's2', url: 'https://dialnet.unirioja.es/', title: 'Dialnet: Metodología de la Investigación Científica', matchedText: 'La metodología de la investigación comprende el conjunto de procedimientos racionales…', userSnippet: 'Los datos recogidos durante el trabajo de campo sugieren una correlación…', similarityPercentage: 8 },
+    { id: 's2', url: 'https://dialnet.unirioja.es/', title: 'Dialnet: Metodología de la Investigación Científica', matchedText: 'La metodología de la investigación comprende el conjunto de procedimientos racionales utilizados para alcanzar los objetivos…', userSnippet: 'La metodología de la investigación comprende el conjunto de procedimientos racionales…', similarityPercentage: 31 },
+    { id: 's3', url: 'https://www.redalyc.org/', title: 'Redalyc: Sistemas de tutoría inteligente en educación superior', matchedText: 'Los sistemas de tutoría inteligente ofrecen una experiencia de aprendizaje personalizada y adaptativa al ritmo de cada estudiante…', userSnippet: 'los sistemas de tutoría inteligente ofrecen una experiencia de aprendizaje personalizada y adaptativa…', similarityPercentage: 38 },
+    { id: 's4', url: 'https://scielo.org/', title: 'SciELO: Tecnologías digitales y calidad educativa', matchedText: 'La integración de herramientas digitales constituye un factor determinante para la calidad de la educación…', userSnippet: 'la integración de herramientas digitales constituye un factor determinante para la mejora…', similarityPercentage: 12 },
+    { id: 's5', url: 'https://www.unesco.org/', title: 'UNESCO: Guía para la IA generativa en la educación', matchedText: 'La guía de 2023 plantea un enfoque centrado en las personas para el uso de la IA generativa…', userSnippet: 'La UNESCO plantea algo parecido en su guía de 2023…', similarityPercentage: 5 },
   ],
   createdAt: '2026-09-12T11:05:00Z',
 };
+
+// Versión humanizada de muestra: reescribe las oraciones con fórmulas de IA
+const REWRITES = [
+  ['En conclusión, es crucial destacar que la inteligencia artificial desempeña un papel fundamental en la transformación del sector educativo contemporáneo.', 'La inteligencia artificial ya está cambiando la educación, y no siempre por donde se esperaba.'],
+  ['Asimismo, cabe señalar que su implementación requiere un enfoque integral.', 'Implantarla bien exige mirar el conjunto.'],
+  ['Es importante mencionar que los sistemas de tutoría inteligente ofrecen una experiencia de aprendizaje personalizada y adaptativa.', 'Los tutores inteligentes adaptan el ritmo a cada estudiante.'],
+  ['De igual manera, estos sistemas permiten optimizar los procesos de evaluación y retroalimentación.', 'También devuelven correcciones en minutos, cuando antes tardaban semanas.'],
+  ['Por consiguiente, su adopción representa una oportunidad significativa para las instituciones.', 'Para una universidad con grupos de sesenta alumnos, eso no es poca cosa.'],
+  ['En el contexto actual, resulta fundamental comprender que la integración de herramientas digitales constituye un factor determinante para la mejora de la calidad educativa.', 'Integrar herramientas digitales influye en la calidad educativa, pero no por sí solo.'],
+  ['En este sentido, es necesario promover estrategias que garanticen un uso ético y responsable.', 'Hace falta acordar antes para qué se usan y para qué no.'],
+];
+const improvedText = REWRITES.reduce((t, [a, b]) => t.replace(a, b), originalText);
 
 const users = [
   { id: 'u-admin', name: 'Administradora', last_name: 'Sistema', fullName: 'Administradora Sistema', email: 'admin@plagelio.com', role: 'ADMIN', is_active: true, is_premium: true, premium_since: '2026-01-10', totalAnalyses: 9, dailyAnalysisCount: 0, lastAccess: '2026-09-15', createdAt: '2025-11-02' },
@@ -44,7 +70,7 @@ const users = [
   { id: 'u-4', name: 'Tomás', last_name: 'Ibáñez', fullName: 'Tomás Ibáñez', email: 'tomas@correo.com', role: 'USER', is_active: false, is_premium: false, premium_since: null, totalAnalyses: 2, dailyAnalysisCount: 0, lastAccess: '2026-07-01', createdAt: '2026-06-30' },
 ];
 
-const json = (res, status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type, Authorization', 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS' }); res.end(JSON.stringify(body)); };
+const json = (res, status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key', 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS' }); res.end(JSON.stringify(body)); };
 
 http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x'); const p = url.pathname;
@@ -57,6 +83,6 @@ http.createServer((req, res) => {
   if (p === '/api/users') return json(res, 200, { success: true, users });
   if (p === '/api/payments/sandbox-init') return json(res, 200, { success: true, transaction: { transactionId: 'sbx_mock', amount: 2 }, testInstructions: {} });
   if (p === '/api/payments/sandbox-confirm') return json(res, 200, { success: true, message: 'ok', isPremium: true });
-  if (p === '/api/writing/improve') return json(res, 200, { success: true, originalText: analysis.originalText, improvedText: analysis.originalText.replace('En conclusión, es crucial destacar que', 'En definitiva, conviene reparar en que').replace('Asimismo, cabe señalar que', 'A su vez, importa advertir que'), summaryOfChanges: ['Eliminación de fórmulas de IA', 'Ruptura de cadencia simétrica', 'Preservación de citas'], originalAiScore: 61, improvedAiScore: 9, aiReduction: 52, notice: '' });
+  if (p === '/api/writing/improve') return json(res, 200, { success: true, originalText, improvedText, summaryOfChanges: ['Eliminación de fórmulas de IA', 'Ruptura de cadencia simétrica', 'Preservación de citas'], originalAiScore: 61, improvedAiScore: 9, aiReduction: 52, notice: '' });
   json(res, 404, { success: false, message: 'mock: ruta no simulada ' + p });
 }).listen(5000, () => console.log('mock api en http://localhost:5000/api'));

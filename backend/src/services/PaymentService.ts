@@ -120,7 +120,7 @@ export class PaymentService {
     userId: string;
     transactionId: string;
     simulateSuccess: boolean;
-  }): Promise<{ success: boolean; message: string }> {
+  }): Promise<{ success: boolean; message: string; conflict?: boolean }> {
     const payment = await prisma.payment.findUnique({
       where: { transaction_id: options.transactionId },
     });
@@ -135,6 +135,17 @@ export class PaymentService {
 
     if (payment.status === PaymentStatus.COMPLETED) {
       return { success: true, message: 'La cuenta ya tiene Premium activo.' };
+    }
+
+    // Maquina de estados del pago (Lab 5 - BLOQUE 2, pruebas manuales de negocio).
+    // FAILED es un estado terminal: un cobro rechazado no puede "revivirse" como
+    // exitoso reenviando la misma transaccion. Solo se confirma desde PENDING.
+    if (payment.status !== PaymentStatus.PENDING) {
+      return {
+        success: false,
+        conflict: true,
+        message: 'La transacción fue rechazada anteriormente y no puede reutilizarse. Inicia un pago nuevo.',
+      };
     }
 
     if (!options.simulateSuccess) {

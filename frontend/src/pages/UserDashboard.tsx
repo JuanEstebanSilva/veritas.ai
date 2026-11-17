@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { analysisApi } from '../services/api';
 import { sound } from '../utils/soundEffects';
 import { getScoreMood } from '../utils/scoreMood';
-import { CountUp } from '../motion';
+import { CountUp, Magnetic } from '../motion';
+import { RecentDeck, type DeckItem } from '../components/analysis';
 import { Skeleton, SkeletonRows } from '../components/ui';
-import { ArrowRight, FileText, FileType, ShieldCheck, Crown, RefreshCw } from 'lucide-react';
+import { ArrowRight, FileText, FileType, ShieldCheck, RefreshCw } from 'lucide-react';
 
 export const UserDashboard: React.FC = () => {
-  const { user, isPremium, openPremiumModal } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [allAnalyses, setAllAnalyses] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
@@ -47,6 +48,16 @@ export const UserDashboard: React.FC = () => {
   const docxCount = allAnalyses.filter((a) => a.type === 'DOCX').length;
   const textCount = allAnalyses.filter((a) => a.type === 'TEXT').length;
   const recent = allAnalyses.slice(0, 5);
+  const deck = useMemo<DeckItem[]>(() => allAnalyses.slice(0, 3).map((a) => ({
+    id: a.id,
+    title: a.title_or_filename || a.title,
+    type: a.type,
+    aiScore: Math.round(a.ai_score ?? a.aiScore ?? 0),
+    similarity: Math.round(a.similarity_score ?? a.similarityScore ?? 0),
+    improvedAi: a.improved_ai_score !== null && a.improved_ai_score !== undefined ? Math.round(a.improved_ai_score) : null,
+    createdAt: a.created_at || a.createdAt,
+  })), [allAnalyses]);
+  const openReport = (id: string) => { sound.playClick(); navigate(`/analyzer?id=${id}`); };
   const frac = (x: number) => (n > 0 ? x / n : 0);
 
   const Stat: React.FC<{ label: string; children: React.ReactNode; tone?: string }> = ({ label, children, tone = 'text-hi' }) => (
@@ -63,18 +74,20 @@ export const UserDashboard: React.FC = () => {
         <div className="flex flex-col gap-3">
           <h1 className="text-d-4 font-light">Hola, <span className="serif text-azure">{user?.name}.</span></h1>
           <p className="text-[14px] text-low">
-            {isPremium ? 'Licencia vitalicia activa: análisis y descargas sin límite.' : availableToday === 0 ? 'Has usado tus 5 análisis gratuitos de hoy.' : `Te quedan ${availableToday} análisis gratuitos hoy.`}
+            Plataforma libre y de código abierto: análisis de plagio e IA ilimitados y gratuitos.
           </p>
         </div>
-        <Link to="/analyzer" onClick={() => sound.playClick()} className="btn btn-primary btn-sm">Analizar un texto <ArrowRight className="w-4 h-4" strokeWidth={2} /></Link>
+        <Magnetic strength={0.24} radius={70}>
+          <Link to="/analyzer" onClick={() => sound.playClick()} className="btn btn-primary btn-sm">Verificar plagio o humanizar <ArrowRight className="w-4 h-4" strokeWidth={2} /></Link>
+        </Magnetic>
       </div>
 
       {/* Cifras del día */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 border-y hair">
-        <Stat label="Usados hoy">{isPremium ? <span className="text-[18px] text-hi">Sin cuota</span> : <><CountUp value={usedToday} /><span className="text-low text-[16px]"> / 5</span></>}</Stat>
-        <Stat label="Disponibles" tone={availableToday === 0 && !isPremium ? 'text-ai' : 'text-human'}>{isPremium ? <span className="text-[18px]">Ilimitados</span> : <CountUp value={availableToday} />}</Stat>
-        <Stat label="Licencia" tone={isPremium ? 'text-gold' : 'text-mid'}><span className="text-[18px]">{isPremium ? 'Vitalicia' : 'Estándar'}</span></Stat>
         <Stat label="Documentos">{loadingHistory ? <Skeleton className="h-7 w-10 mt-0.5" /> : <CountUp value={totalAnalysesCount} />}</Stat>
+        <Stat label="Análisis Disponibles" tone="text-human"><span className="text-[20px]">Ilimitados</span></Stat>
+        <Stat label="Licencia" tone="text-gold"><span className="text-[20px]">Open Source</span></Stat>
+        <Stat label="Cotejo">{n > 0 ? <span className="text-[20px] text-azure">En Repositorio</span> : <span className="text-[20px] text-low">Activo</span>}</Stat>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-6">
@@ -119,20 +132,33 @@ export const UserDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6 pt-5 border-t hair">
-            <div className="flex flex-col gap-1.5"><span className="num text-[26px] leading-none text-hi"><CountUp value={improvedDocs.length} animate={!loadingHistory} /></span><span className="eyebrow">Documentos reescritos</span></div>
-            <div className="flex flex-col gap-1.5"><span className="num text-[26px] leading-none text-human">−<CountUp value={avgReduction} animate={!loadingHistory} /> pts</span><span className="eyebrow">Reducción media de IA</span></div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-5 border-t hair">
+            <div className="flex flex-col gap-1.5"><span className="num text-[26px] leading-none text-hi"><CountUp value={improvedDocs.length} animate={!loadingHistory} /></span><span className="eyebrow">Reescritos</span></div>
+            <div className="flex flex-col gap-1.5"><span className="num text-[26px] leading-none text-human">−<CountUp value={avgReduction} animate={!loadingHistory} /> pts</span><span className="eyebrow">Reducción media</span></div>
+            <div className="flex flex-col gap-1.5"><span className="num text-[26px] leading-none text-hi inline-flex items-center gap-2"><FileText className="w-4 h-4 text-low" strokeWidth={1.6} aria-hidden="true" />{textCount}</span><span className="eyebrow">Texto plano</span></div>
+            <div className="flex flex-col gap-1.5"><span className="num text-[26px] leading-none text-hi inline-flex items-center gap-2"><FileType className="w-4 h-4 text-low" strokeWidth={1.6} aria-hidden="true" />{docxCount}</span><span className="eyebrow">Documentos .docx</span></div>
           </div>
         </div>
 
-        {/* Formatos y consejos */}
+        {/* Mazo de los tres últimos informes y consejos */}
         <div className="flex flex-col gap-6">
-          <div className="card p-7 flex flex-col gap-5">
-            <span className="eyebrow">Formatos</span>
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between"><span className="flex items-center gap-3 text-[14px] text-mid"><FileText className="w-4 h-4 text-low" strokeWidth={1.6} /> Texto plano</span><span className="num text-[16px] text-hi">{textCount}</span></div>
-              <div className="flex items-center justify-between"><span className="flex items-center gap-3 text-[14px] text-mid"><FileType className="w-4 h-4 text-low" strokeWidth={1.6} /> Documentos .docx</span><span className="num text-[16px] text-hi">{docxCount}</span></div>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="eyebrow">Lo último</span>
+              {deck.length > 0 && <span className="font-mono text-[11px] text-low">{deck.length} {deck.length === 1 ? 'informe' : 'informes'}</span>}
             </div>
+            {loadingHistory ? (
+              <div className="h-[310px] grid place-items-center" aria-busy="true"><Skeleton className="h-[280px] w-[min(320px,100%)] rounded-[20px]" /></div>
+            ) : deck.length === 0 ? (
+              <div className="h-[200px] rounded-[20px] border border-dashed hair-2 grid place-items-center p-6 text-center">
+                <div className="flex flex-col items-center gap-3">
+                  <p className="text-[13px] text-low max-w-[240px]">Tus tres últimos informes aparecerán aquí.</p>
+                  <Link to="/analyzer" onClick={() => sound.playClick()} className="btn btn-ghost btn-sm">Analizar un texto</Link>
+                </div>
+              </div>
+            ) : (
+              <RecentDeck items={deck} onOpen={openReport} />
+            )}
           </div>
           <div className="card p-7 flex flex-col gap-4">
             <span className="eyebrow">Buenas prácticas</span>
@@ -145,22 +171,11 @@ export const UserDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Licencia vitalicia para cuentas estándar */}
-      {!isPremium && (
-        <div className="halo relative overflow-hidden rounded-[20px] border border-azure/30 p-7 sm:p-8 flex flex-wrap items-center justify-between gap-6"
-          style={{ background: 'linear-gradient(165deg, rgb(var(--azure) / .09), rgb(var(--azure) / .015) 60%)' }}>
-          <div className="glow" style={{ width: 420, height: 420, top: -220, right: -160, ['--glow-color' as string]: 'rgb(var(--azure) / .18)' }} aria-hidden="true" />
-          <div className="relative flex flex-col gap-2 max-w-[560px]">
-            <span className="eyebrow text-azure">Licencia vitalicia</span>
-            <h3 className="text-d-5 font-semibold">Sin cuota diaria, <span className="serif">para siempre.</span></h3>
-            <p className="text-[13.5px] leading-[1.65] text-mid">Un solo pago de $2. Análisis ilimitados, descargas sin límite y prioridad en documentos extensos.</p>
-          </div>
-          <button type="button" onClick={() => { sound.playClick(); openPremiumModal(); }} className="btn btn-primary shrink-0 relative"><Crown className="w-4 h-4" strokeWidth={1.8} /> Activar por $2</button>
-        </div>
-      )}
-      {isPremium && (
-        <div className="flex items-center gap-4 py-5 border-y border-gold/30 text-[13.5px] text-mid"><ShieldCheck className="w-5 h-5 text-gold shrink-0" strokeWidth={1.6} /> Licencia vitalicia activa desde {user?.premium_since ? new Date(user.premium_since).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) : 'hoy'}.</div>
-      )}
+      {/* Banner de acceso completo Open Source */}
+      <div className="flex items-center gap-4 py-5 border-y border-human/30 text-[13.5px] text-mid">
+        <ShieldCheck className="w-5 h-5 text-human shrink-0" strokeWidth={1.6} /> 
+        <span>Acceso completo activo: Cotejo en repositorio institucional, detección de IA y reescritura ética sin costo ni límites.</span>
+      </div>
 
       {/* Recientes */}
       <div className="flex flex-col gap-5">
@@ -188,7 +203,7 @@ export const UserDashboard: React.FC = () => {
               const m = getScoreMood(aiScore);
               return (
                 <li key={item.id}>
-                  <button type="button" onClick={() => { sound.playClick(); navigate(`/analyzer?id=${item.id}`); }}
+                  <button type="button" onClick={() => openReport(item.id)}
                     className={`group w-full flex items-center gap-5 py-4 border-b hair text-left hover:bg-hair transition-colors duration-240 -mx-2 px-2 rounded-lg ${i === 0 ? 'border-t' : ''}`} style={{ width: 'calc(100% + 16px)' }}>
                     <span className={`num text-[20px] w-16 shrink-0 ${m.textClass}`}>{aiScore}%</span>
                     <span className="flex flex-col gap-0.5 min-w-0 flex-1">

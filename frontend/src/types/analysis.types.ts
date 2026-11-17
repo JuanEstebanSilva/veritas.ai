@@ -6,6 +6,11 @@ export interface ParagraphResult {
   explanation: string;
 }
 
+export interface ApaCitation {
+  inText: string;
+  reference: string;
+}
+
 export interface MatchedSource {
   id?: string;
   url: string;
@@ -13,12 +18,13 @@ export interface MatchedSource {
   matchedText: string;
   userSnippet: string;
   similarityPercentage: number;
+  apaCitation?: ApaCitation;
 }
 
 export interface Analysis {
   id: string;
   title: string;
-  type: 'TEXT' | 'DOCX';
+  type: 'TEXT' | 'DOCX' | 'PDF' | string;
   originalText: string;
   improvedText?: string | null;
   aiScore: number;

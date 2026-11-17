@@ -8,13 +8,16 @@ dist/
 build/
 *.tsbuildinfo
 
-# Environment variables
+# Environment variables and Secrets
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+**/.env
+**/.env.*
 !.env.example
+!**/.env.example
+*.pem
+*.key
+*.cert
 
 # Logs
 npm-debug.log*
@@ -41,7 +44,18 @@ temp/
 uploads/
 
 # Canvas de diseño ensamblado (generado desde design/*.dc.html + canvas.json)
-design/rediseno-veritas-ai.html
+design/rediseno-*.html
 
 # Notas de dirección de diseño: documento interno, no se publica
 design/PRINCIPIOS.md
+
+# Postman collections
+Postman_*.json
+
+# Evidencias y capturas locales generadas
+Evidencias_*/
+
+# Documentación, guías de laboratorios y evidencias extraíbles
+extraible/
+extraíble/
+
