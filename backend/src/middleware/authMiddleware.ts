@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { ENV } from '../config/env';
 import { prisma } from '../config/prisma';
 import { User } from '@prisma/client';
+import * as usuariosService from '../services/usuarios.service';
 
 import { AuthenticatedRequest, JwtPayload } from '../types';
 export type { AuthenticatedRequest };
@@ -49,6 +50,18 @@ export const authenticateJWT = async (
         message: 'Tu cuenta ha sido desactivada. Comunícate con el administrador.',
       });
       return;
+    }
+
+    // Versión de sesión: si la contraseña cambió después de emitir el token, la sesión queda revocada
+    // (misma regla que autenticarJWT en el módulo académico).
+    if (typeof decoded.vs === 'number') {
+      const identidad: any = await usuariosService.obtenerUsuarioPorId(String(targetUserId)).catch(() => null);
+      const vsActual = typeof identidad?.versionSesion === 'number' ? identidad.versionSesion
+        : typeof identidad?.version_sesion === 'number' ? identidad.version_sesion : 0;
+      if (decoded.vs !== vsActual) {
+        res.status(401).json({ success: false, message: 'Sesión revocada. Inicia sesión de nuevo.' });
+        return;
+      }
     }
 
     req.user = user;

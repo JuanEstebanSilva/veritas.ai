@@ -4,6 +4,7 @@ import { authenticateJWT } from '../middleware/authMiddleware';
 import { autenticarJWT } from '../middlewares/auth.middleware';
 import { autorizarRoles } from '../middlewares/roles.middleware';
 import { preventPrivilegeEscalation } from '../middleware/roleGuard';
+import { limitarIntentosLogin } from '../middleware/loginRateLimit';
 import {
   validarRegistro,
   validarLogin,
@@ -30,6 +31,7 @@ router.post(
 
 router.post(
   '/login',
+  limitarIntentosLogin,
   validarLogin,
   verificarErroresValidacion,
   AuthController.login

@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, param, matchedData, validationResult } from 'express-validator';
 
+/** Los errores se devuelven sin el valor recibido: podría ser una contraseña. */
+const sinValores = (errs: any[]) => errs.map(({ value: _omitido, ...resto }: any) => resto);
+
+
 /**
  * Validaciones de Autenticación para Plagelio (Laboratorio 8 y Bloque 11)
  *
@@ -203,8 +207,8 @@ export const verificarErroresValidacion = (
         primerError === 'Debe proporcionar un correo electrónico válido'
           ? 'Debe proporcionar un correo electrónico válido'
           : 'Datos inválidos',
-      errores: errors.array(),
-      errors: errors.array(),
+      errores: sinValores(errors.array()),
+      errors: sinValores(errors.array()),
     });
     return;
   }

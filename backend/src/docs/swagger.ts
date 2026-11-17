@@ -74,7 +74,7 @@ const options: swaggerJsdoc.Options = {
           type: 'apiKey',
           in: 'header',
           name: 'X-API-Key',
-          description: 'API Key requerida para consumir los endpoints (ej. 61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0).',
+          description: 'API Key del cliente (se configura en el .env del backend; nunca se publica).',
         },
         BearerAuth: {
           type: 'http',

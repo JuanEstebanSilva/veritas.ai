@@ -42,15 +42,9 @@ export class WritingController {
       ]);
 
       const originalAiScore = originalReport.overallAiScore;
-      // El proceso de humanización jamás debe devolver un índice de IA superior al original
-      let improvedAiScore = Math.min(originalAiScore, improvedReport.overallAiScore);
-
-      // Si el texto fue humanizado pero el score mejorado quedó igual al original (ej: textos que ya eran humanos),
-      // asegurar que se refleje la optimización estilística real sin estancarse en el mismo número
-      if (improvedAiScore >= originalAiScore && originalAiScore > 1) {
-        const reduction = originalAiScore > 20 ? Math.max(12, Math.round(originalAiScore * 0.4)) : (originalAiScore > 5 ? 2 : 1);
-        improvedAiScore = Math.max(1, originalAiScore - reduction);
-      }
+      // Se informa lo que mide el motor sobre el texto reescrito, aunque no baje: un ajuste
+      // manual haría creer al usuario en una reducción que no existe.
+      const improvedAiScore = improvedReport.overallAiScore;
 
       // Si existe un analysisId asociado, actualizar en base de datos
       if (analysisId && analysisRecord) {
@@ -96,6 +90,11 @@ export class WritingController {
 
       if (analysisId) {
         const analysis = await prisma.analysis.findUnique({ where: { id: analysisId } });
+        // Solo el dueño del análisis (o un administrador) puede exportarlo
+        if (analysis && analysis.user_id !== req.user?.id && req.user?.role !== 'ADMIN') {
+          res.status(403).json({ success: false, message: 'No tienes permiso para exportar este análisis.' });
+          return;
+        }
         if (analysis) {
           content = analysis.improved_text || content || analysis.original_text;
           docTitle = analysis.title_or_filename;
