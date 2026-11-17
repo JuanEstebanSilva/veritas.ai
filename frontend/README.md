@@ -2,7 +2,7 @@
 
 Interfaz de usuario moderna, reactiva y segura para la plataforma de integridad académica, detección de inteligencia artificial y auditoría de documentos **Plagelio**.
 
-Desarrollada como una **Single Page Application (SPA)** con **React**, **TypeScript**, **Vite**, **Tailwind CSS**, **Framer Motion** y **Lucide React**. Se comunica mediante peticiones asíncronas HTTP/JSON con la API REST del backend utilizando tokens **JWT Bearer**, ofreciendo paneles especializados para estudiantes/autores y administradores.
+Desarrollada como una **Single Page Application (SPA)** con **React**, **TypeScript**, **Vite**, **Tailwind CSS**, **Lucide React** y animación con **GSAP**, **anime.js**, **Motion** y **three.js**. Se comunica mediante peticiones asíncronas HTTP/JSON con la API REST del backend utilizando tokens **JWT Bearer**, ofreciendo paneles especializados para estudiantes/autores y administradores.
 
 ---
 
@@ -38,7 +38,7 @@ Navegador Web (Chrome, Edge, Firefox)
 ├─────────────────────────────────────────────────────────────────┤
 │ 5. Experiencia de Usuario y Animaciones                        │
 │    - Tailwind CSS + Tokens de diseño suizo editorial            │
-│    - Framer Motion para transiciones suaves de página           │
+│    - GSAP, anime.js, Motion y three.js (three en diferido)      │
 │    - Efectos sonoros de accesibilidad (Web Audio API)          │
 └─────────────────────────────────────────────────────────────────┘
          │

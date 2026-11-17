@@ -1,10 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'motion/react';
 import { analysisApi } from '../services/api';
 import { getScoreMood } from '../utils/scoreMood';
 import { sound } from '../utils/soundEffects';
 import { SkeletonRows, useConfirm, useToast } from '../components/ui';
 import { Search, Eye, Trash2, FileText, FileType, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
+
+/* Filas con Motion: al buscar o borrar, las que salen se desvanecen y las
+   que quedan se recolocan con un resorte (layout). La entrada inicial va
+   escalonada, con un tope para listas largas. */
+const ROW_SPRING = { type: 'spring', stiffness: 420, damping: 38, mass: 0.7 } as const;
+const EASE_OUT = [0.22, 1, 0.36, 1] as const, EASE_IN = [0.4, 0, 1, 1] as const;
+const rowMotion = (i: number) => ({
+  layout: 'position' as const,
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.32, ease: EASE_OUT, delay: Math.min(i, 8) * 0.035 } },
+  exit: { opacity: 0, x: -14, transition: { duration: 0.16, ease: EASE_IN } },
+  transition: { layout: ROW_SPRING },
+});
 
 export const HistoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -88,13 +102,14 @@ export const HistoryPage: React.FC = () => {
         <div>
           {/* Móvil: lista apilada, sin scroll horizontal */}
           <ul className="sm:hidden flex flex-col">
+            <AnimatePresence>
             {filtered.map((item, i) => {
               const aiScore = Math.round(item.ai_score ?? item.aiScore ?? 0);
               const m = getScoreMood(aiScore);
               const impAi = item.improved_ai_score !== null && item.improved_ai_score !== undefined ? Math.round(item.improved_ai_score) : null;
               const title = item.title_or_filename || item.title;
               return (
-                <li key={item.id} className={`flex items-center gap-3 border-b hair ${i === 0 ? 'border-t' : ''}`}>
+                <motion.li key={item.id} {...rowMotion(i)} className={`flex items-center gap-3 border-b hair ${i === 0 ? 'border-t' : ''}`}>
                   <button type="button" onClick={() => open(item.id)} className="flex flex-1 min-w-0 items-center gap-4 py-4 text-left">
                     <span className={`num text-[20px] w-14 shrink-0 ${m.textClass}`}>{aiScore}%</span>
                     <span className="flex flex-col gap-1 min-w-0 flex-1">
@@ -103,9 +118,10 @@ export const HistoryPage: React.FC = () => {
                     </span>
                   </button>
                   <button type="button" disabled={deletingId === item.id} onClick={() => handleDelete(item.id, title)} aria-label={`Eliminar ${title}`} className="btn-icon hover:!text-ai disabled:opacity-40"><Trash2 className="w-4 h-4" strokeWidth={1.7} /></button>
-                </li>
+                </motion.li>
               );
             })}
+            </AnimatePresence>
           </ul>
 
           <div className="relative hidden sm:block overflow-x-auto">
@@ -118,14 +134,15 @@ export const HistoryPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((item) => {
+                <AnimatePresence>
+                {filtered.map((item, i) => {
                   const aiScore = Math.round(item.ai_score ?? item.aiScore ?? 0);
                   const m = getScoreMood(aiScore);
                   const isDocx = item.type === 'DOCX';
                   const impAi = item.improved_ai_score !== null && item.improved_ai_score !== undefined ? Math.round(item.improved_ai_score) : null;
                   const title = item.title_or_filename || item.title;
                   return (
-                    <tr key={item.id} onClick={() => open(item.id)} className="group border-b hair cursor-pointer hover:bg-hair transition-colors duration-240">
+                    <motion.tr key={item.id} {...rowMotion(i)} onClick={() => open(item.id)} className="group border-b hair cursor-pointer hover:bg-hair transition-colors duration-240">
                       <td className="py-4 pl-1 pr-4 max-w-[320px]">
                         <button type="button" onClick={(e) => { e.stopPropagation(); open(item.id); }} className="flex items-center gap-3 min-w-0 w-full text-left rounded-md">
                           {isDocx ? <FileType className="w-4 h-4 text-low shrink-0" strokeWidth={1.6} /> : <FileText className="w-4 h-4 text-low shrink-0" strokeWidth={1.6} />}
@@ -170,9 +187,10 @@ export const HistoryPage: React.FC = () => {
                           </button>
                         </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                   );
                 })}
+                </AnimatePresence>
               </tbody>
             </table>
           </div>

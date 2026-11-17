@@ -76,3 +76,6 @@
 
 /* Alto de pantalla para el contenido fijado */
 .pin-screen { height: 100vh; height: 100svh; }
+
+/* La fórmula de IA que ya cayó (ver motion/wordFall.ts): la original se oculta hasta volver atrás */
+.diff-cell.fell .diff-old { visibility: hidden; }
