@@ -9,7 +9,7 @@ interface AnalysisProgressProps {
 }
 
 const STEPS = {
-  analyze: ['Leyendo el documento párrafo a párrafo', 'Midiendo perplejidad y cadencia', 'Cotejando similitud con fuentes abiertas para descartar plagio'],
+  analyze: ['Leyendo el documento párrafo a párrafo', 'Midiendo riqueza léxica y cadencia', 'Cotejando similitud con fuentes abiertas para descartar plagio'],
   rewrite: ['Leyendo el texto', 'Rompiendo la cadencia uniforme', 'Humanizando y eliminando fórmulas de IA sin tocar citas'],
 };
 

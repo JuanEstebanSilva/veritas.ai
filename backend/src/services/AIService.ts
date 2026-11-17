@@ -73,22 +73,18 @@ export class AIService {
    */
   public static async compareAgainstInternalRepository(
     text: string,
-    excludeAnalysisId?: string
+    excludeAnalysisId?: string,
+    requesterId?: string
   ): Promise<MatchedSource[]> {
     try {
       const previousDocs = await prisma.analysis.findMany({
         where: excludeAnalysisId ? { id: { not: excludeAnalysisId } } : undefined,
         select: {
           id: true,
+          user_id: true,
           title_or_filename: true,
           original_text: true,
           created_at: true,
-          user: {
-            select: {
-              name: true,
-              last_name: true,
-            },
-          },
         },
         take: 150,
         orderBy: { created_at: 'desc' },
@@ -101,25 +97,37 @@ export class AIService {
 
         const match = TextSimilarity.scoreMatch(text, doc.original_text, doc.title_or_filename);
         if (match.similarityPercentage >= 8) {
-          const authorLast = doc.user?.last_name || 'Estudiante';
-          const authorInitial = doc.user?.name?.[0] ? `${doc.user.name[0]}.` : 'A.';
-          const year = new Date(doc.created_at).getFullYear();
+          const propio = !!requesterId && doc.user_id === requesterId;
+          // Identificador opaco: no expone el id real del análisis de otra persona
+          const ref = createHash('sha256').update(doc.id).digest('hex').slice(0, 12);
+          const fecha = new Date(doc.created_at).toLocaleDateString('es-CO');
 
-          matchedInternalSources.push({
-            sourceUrl: `repositorio://plagelio/documentos/${doc.id}`,
-            sourceTitle: `Repositorio Institucional: "${doc.title_or_filename}" (${doc.user?.name || 'Estudiante'} ${doc.user?.last_name || ''})`,
-            matchedText: match.matchedText,
-            userSnippet: match.userSnippet,
-            similarityPercentage: match.similarityPercentage,
-            apaCitation: {
-              inText: `(${authorLast}, ${year})`,
-              reference: `${authorLast}, ${authorInitial} (${year}). ${doc.title_or_filename} [Trabajo académico en archivo digital]. Repositorio Institucional Plagelio.`,
-            },
-            ieeeCitation: {
-              inText: `[Rep-${doc.id.slice(0, 4)}]`,
-              reference: `${doc.user?.name || ''} ${doc.user?.last_name || 'Autor'}, "${doc.title_or_filename}", Repositorio Digital Plagelio, ${year}.`,
-            },
-          });
+          matchedInternalSources.push(
+            propio
+              ? {
+                  sourceUrl: `repositorio://plagelio/mis-documentos/${ref}`,
+                  sourceTitle: `Tu documento previo «${doc.title_or_filename}» (${fecha})`,
+                  matchedText: match.matchedText,
+                  userSnippet: match.userSnippet,
+                  similarityPercentage: match.similarityPercentage,
+                  apaCitation: {
+                    inText: 'No aplica',
+                    reference: 'Documento propio no publicado: si reutilizas tu trabajo previo, decláralo según las normas de tu curso.',
+                  },
+                }
+              : {
+                  // Documento de otra persona: se informa la coincidencia, nunca su contenido, título ni autor
+                  sourceUrl: `repositorio://plagelio/coincidencia/${ref}`,
+                  sourceTitle: 'Documento previo de otro usuario en el repositorio de Plagelio',
+                  matchedText: '[Contenido protegido: pertenece a otro usuario]',
+                  userSnippet: match.userSnippet,
+                  similarityPercentage: match.similarityPercentage,
+                  apaCitation: {
+                    inText: 'No aplica',
+                    reference: 'Trabajo no publicado de otro usuario: no se cita. Si es tu propia fuente, consulta con tu docente.',
+                  },
+                }
+          );
         }
       }
 
@@ -133,14 +141,14 @@ export class AIService {
   /**
    * Analiza índice de similitud con el repositorio institucional (Turnitin) y fuentes web en tiempo real.
    */
-  public static async analyzeSimilarity(text: string, excludeAnalysisId?: string): Promise<SimilarityReport> {
+  public static async analyzeSimilarity(text: string, excludeAnalysisId?: string, requesterId?: string): Promise<SimilarityReport> {
     if (!text || text.trim().length < 15) {
       return SimilarityEngine.analyzeSimilarity(text);
     }
 
     try {
       // 1. Cotejo contra el repositorio de documentos ya subidos (Turnitin institucional)
-      const internalSourcesPromise = this.compareAgainstInternalRepository(text, excludeAnalysisId);
+      const internalSourcesPromise = this.compareAgainstInternalRepository(text, excludeAnalysisId, requesterId);
 
       // 2. Consulta web en tiempo real (Wikipedia API, OpenAlex y búsqueda abierta)
       const rawWebResultsPromise = LiveSearchService.fetchRawWebResults(text);
@@ -198,10 +206,10 @@ export class AIService {
   /**
    * Ejecuta ambos análisis en conjunto de forma óptima
    */
-  public static async runFullAnalysis(text: string, excludeAnalysisId?: string): Promise<FullAnalysisPayload> {
+  public static async runFullAnalysis(text: string, excludeAnalysisId?: string, requesterId?: string): Promise<FullAnalysisPayload> {
     const [aiReport, similarityReport] = await Promise.all([
       this.analyzeAI(text),
-      this.analyzeSimilarity(text, excludeAnalysisId),
+      this.analyzeSimilarity(text, excludeAnalysisId, requesterId),
     ]);
 
     return {

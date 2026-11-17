@@ -158,7 +158,7 @@ export const AnalyzerPage: React.FC = () => {
         return;
       }
       setLoading(true);
-      setLoadingStage('Midiendo perplejidad, burstiness y cotejando similitud');
+      setLoadingStage('Midiendo cadencia y léxico, y cotejando similitud');
       sound.playScan();
       const res = await analysisApi.analyzeText(textInput);
       setLoading(false);

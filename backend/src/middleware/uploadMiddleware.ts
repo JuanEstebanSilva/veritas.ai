@@ -33,7 +33,7 @@ const fileFilter = (
   } else {
     cb(
       new Error(
-        'Formato no admitido. Se admiten documentos .docx, .doc, .pdf, .odt, .rtf, .txt, .md, .csv y .html'
+        'Formato inválido: se admiten documentos .docx, .doc, .pdf, .odt, .rtf, .txt, .md, .csv y .html'
       )
     );
   }

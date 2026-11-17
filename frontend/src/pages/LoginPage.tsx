@@ -44,7 +44,7 @@ export const LoginPage: React.FC = () => {
     <AuthShell
       tone="azure"
       headline={<>Cada texto<br /><span className="serif text-azure">deja una huella.</span></>}
-      lede="Perplejidad, cadencia y similitud, medidas párrafo a párrafo. Accede para continuar donde dejaste tu último informe."
+      lede="Riqueza léxica, cadencia y similitud, medidas párrafo a párrafo. Accede para continuar donde dejaste tu último informe."
       aside={
         <div className="flex items-center gap-8">
           <div className="flex flex-col gap-1.5"><span className="eyebrow">Acceso</span><span className="text-[20px] font-bold text-human">100% Libre</span></div>

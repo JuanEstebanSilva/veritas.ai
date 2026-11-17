@@ -11,7 +11,7 @@ import './landing.css';
    Datos de muestra del informe y de la reescritura.
    ──────────────────────────────────────────────────────────────── */
 const METRICS = [
-  { key: 'perplejidad', label: 'Perplejidad léxica', value: 82.4, decimals: 1, unit: ' / 100', width: 0.824, tone: 'human', at: 0.3, note: 'Vocabulario variado y poco predecible' },
+  { key: 'lexico',      label: 'Riqueza léxica', value: 82.4, decimals: 1, unit: ' / 100', width: 0.824, tone: 'human', at: 0.3, note: 'Vocabulario variado, pocas repeticiones' },
   { key: 'burstiness',  label: 'Burstiness · cadencia', value: 0.78, decimals: 2, unit: ' σ 7.9', width: 0.78, tone: 'human', at: 0.52, note: 'Longitud de oración orgánica, no uniforme' },
   { key: 'similitud',   label: 'Similitud cotejada', value: 11, decimals: 0, unit: '% · 14 citas', width: 0.11, tone: 'azure', at: 0.72, note: 'Todas atribuidas en formato APA 7' },
 ] as const;
@@ -20,7 +20,7 @@ const BEFORE = 'En conclusión, es crucial destacar que la inteligencia artifici
 const AFTER  = 'En definitiva, conviene reparar en que la inteligencia artificial resulta determinante en la transformación del sector educativo contemporáneo. A su vez, importa advertir que su implementación requiere un enfoque integral.';
 
 const READINGS = [
-  { tone: 'azure', Icon: BarChart3, title: 'Detección de IA', lead: 'Mide cómo está escrito.', body: 'Perplejidad, burstiness, riqueza léxica y uniformidad sintáctica, párrafo a párrafo. Cada sección recibe su puntuación y los indicadores que la justifican.', Instrument: CadenceInstrument },
+  { tone: 'azure', Icon: BarChart3, title: 'Detección de IA', lead: 'Mide cómo está escrito.', body: 'Burstiness, riqueza léxica, conectores formulaicos y uniformidad sintáctica, párrafo a párrafo. Cada sección recibe su puntuación y los indicadores que la justifican.', Instrument: CadenceInstrument },
   { tone: 'gold', Icon: Search, title: 'Detección de plagio', lead: 'Verifica que no sea copia de otro lugar.', body: 'Compara el documento con repositorios de acceso abierto y muestra los fragmentos coincidentes en paralelo. Separa la cita legítima y la terminología estándar del plagio sin atribución.', Instrument: SimilarityInstrument },
   { tone: 'human', Icon: PenLine, title: 'Humanizador de texto', lead: 'Humaniza la voz, no la idea.', body: 'Rompe la cadencia uniforme y sustituye las fórmulas de IA sin tocar citas, cifras ni referencias. Descarga directa en .docx.', Instrument: RewriteInstrument },
 ] as const;
@@ -366,7 +366,7 @@ const PricingAndClose: React.FC<{ onStart: () => void; onPremium: () => void; cl
               {[
                 'Cotejo contra repositorio interno (Turnitin)',
                 'Cotejo web en vivo con Wikipedia y fuentes académicas',
-                'Detección de IA por perplejidad y burstiness',
+                'Detección de IA por estilometría (cadencia y léxico)',
                 'Humanizador y reescritura ética con Google Gemini',
                 'Soporte multiformato: Word (.docx, .doc), PDF, ODT, RTF, TXT y MD',
                 'Panel administrativo con gestión de archivos y usuarios',
