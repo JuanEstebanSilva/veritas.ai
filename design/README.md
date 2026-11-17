@@ -13,6 +13,8 @@ de 24px.
 | `Register.dc.html`      | Crear cuenta (1440×900)                  |
 | `LandingMobile.dc.html` | Landing a 390px, verificación responsive |
 | `canvas.json`           | Posición de cada artboard y notas        |
+| `veritas-en-movimiento.html` | Prototipo de movimiento v1: coreografía de scroll de la landing |
+| `plagelio-movimiento-v2.html` | Prototipo de movimiento v2: héroe 3D, partículas, grafo de fuentes, cadencia, ciudad de párrafos, resortes y bloques. Referencia de lo integrado en el frontend (carga las librerías desde CDN) |
 
 El archivo ensamblado (`rediseno-plagelio.html`, ~2.5 MB) no se versiona:
 se regenera a partir de los anteriores.
@@ -85,8 +87,26 @@ El movimiento está en `frontend/src/motion`:
 | --- | --- |
 | `useScrollGroup` | Escribe el progreso 0–1 del capítulo en la variable CSS `--p` (pin por ScrollTrigger); el CSS deriva de ahí umbrales y cruces con `clamp()`. El JS nunca escribe colores, así el tema cambia entero. |
 | `useReveal` | Revelado por IntersectionObserver con escalonado por `--i`; oculto sólo con `html.js`. Sólo en la landing. |
-| `usePointerParallax` / `useMagnetic` | Parallax de puntero y botón magnético, sólo con puntero fino. |
+| `usePointerParallax` | Parallax de puntero, sólo con puntero fino. |
+| `Magnetic` | Envoltorio de botón magnético con resorte (Motion); el botón conserva su hover y `:active`. |
+| `useSplitEntrance` | Entrada del titular letra a letra (anime.js `splitText`). |
+| `wordFall` | Caída con física (GSAP Physics2D) de las fórmulas sustituidas en «Misma idea, otra voz». |
+| `canvas.ts` | `useCanvasScene`: canvas con DPR limitado, pausa fuera de pantalla y con la pestaña oculta, colores leídos de los tokens y redibujo al cambiar de tema. |
 | `CountUp` / `Odometer` | Cifras que cuentan y rodillo de dígitos, en mono tabular. |
+
+Librerías: GSAP (scroll, DrawSVG, Physics2D), anime.js 4 (cuadrículas,
+`splitText`, `morphTo`), Motion (resortes, `drag`, `layout`,
+`AnimatePresence`) y three.js (escena del héroe, en un chunk que se carga en
+diferido). Cada página se carga por ruta con `React.lazy`.
+
+Piezas por zona:
+
+| Zona | Componentes |
+| --- | --- |
+| Landing | `components/landing/HeroScene` + `heroScene3d` (three.js + anime.js; cae a `ReadingField` sin WebGL), `RotatingWord`, `components/viz/ParticleVerdict`, `CadenceSignal` en vivo |
+| Login y registro | `components/viz/Fingerprint` (DrawSVG) |
+| App | `components/ui/Dialog` (AnimatePresence), historial con `layout`, `components/analysis/RecentDeck` (mazo arrastrable) |
+| Informe | `components/report`: `SentenceGrid` (anime.js), `ParagraphCity` (canvas isométrico), `SourceGraph` (grafo con física) y `CadenceSignal` con las oraciones reales |
 
 La landing (`frontend/src/pages/LandingPage.tsx` + `landing.css`) recorre sus
 capítulos en este orden: héroe con el campo de lectura, banda de cifras,
@@ -102,6 +122,8 @@ La prueba visual y funcional se ejecuta con `node frontend/scripts/qa.mjs`
 - Las cifras del panel izquierdo del login son marcadores `[TU CIFRA]`.
 - Razón social y ciudad del pie, igual.
 - Los datos del informe son de muestra, elegidos para enseñar los tres estados.
+- Los veredictos de partículas del cierre de la landing son de ejemplo y así
+  se rotulan.
 - El tema claro se mantiene: es el inverso cuidado del oscuro y todo el
   movimiento es compatible con él.
 

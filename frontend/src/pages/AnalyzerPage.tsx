@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { analysisApi, writingApi } from '../services/api';
-import { Analysis } from '../types';
+import { Analysis, ParagraphResult } from '../types';
 import { ResultScoreCard, DiffViewer, AnalysisProgress } from '../components/analysis';
+import { SentenceGrid, ParagraphCity, SourceGraph, buildSentences, sentenceLengths, domainOf, type GraphSource } from '../components/report';
+import { CadenceSignal, type CadenceLane } from '../components/viz';
 import { useToast } from '../components/ui';
 import { sound } from '../utils/soundEffects';
 import { getScoreMood } from '../utils/scoreMood';
@@ -358,6 +360,31 @@ export const AnalyzerPage: React.FC = () => {
   };
 
   const wordCount = textInput.split(/\s+/).filter(Boolean).length;
+  // Datos de las visualizaciones del informe (todo sale del análisis real)
+  const improvedText = improvedResult?.improvedText ?? null;
+  const sentences = useMemo(() => (analysis ? buildSentences(analysis, improvedText) : []), [analysis, improvedText]);
+  const cadenceLanes = useMemo<CadenceLane[]>(() => {
+    const lanes: CadenceLane[] = [{ label: 'Tu texto', values: sentences.map((x) => x.words), tone: 'azure' }];
+    if (improvedText) lanes.push({ label: 'Versión humanizada', values: sentenceLengths(improvedText), tone: 'human' });
+    return lanes;
+  }, [sentences, improvedText]);
+  const cityParagraphs = useMemo(() => (analysis?.paragraphs || []).map((p) => ({ index: p.index, aiScore: p.aiScore })), [analysis]);
+  const graphSources = useMemo<GraphSource[]>(() => (analysis?.sources || []).map((src) => ({ label: domainOf(src.url), pct: src.similarityPercentage })), [analysis]);
+  const [paraView, setParaView] = useState<'list' | 'city'>('list');
+  const [cityPick, setCityPick] = useState<number | null>(null);
+  const [flashSource, setFlashSource] = useState<number | null>(null);
+  const pickParagraph = useCallback((index: number) => setCityPick(index), []);
+  const pickSource = useCallback((i: number) => {
+    const el = document.getElementById(`fuente-${i}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+    el.focus({ preventScroll: true });
+    setFlashSource(i);
+    window.setTimeout(() => setFlashSource((v) => (v === i ? null : v)), 1600);
+  }, []);
+  const hotParagraphs = cityParagraphs.filter((p) => p.aiScore >= 70).length;
+  const cityDetail = analysis?.paragraphs?.find((p) => p.index === (cityPick ?? [...cityParagraphs].sort((a, b) => b.aiScore - a.aiScore)[0]?.index));
+
   const showForm = !analysis && !improvedResult;
   const busy = loading || improving || extractingDoc;
 
@@ -763,6 +790,33 @@ export const AnalyzerPage: React.FC = () => {
             summaryExplanation={analysis.summaryExplanation}
           />
 
+          {/* Mapa de oraciones y cadencia */}
+          {sentences.length >= 3 && (
+            <section className="flex flex-col gap-6 pt-4" aria-labelledby="mapa-oraciones">
+              <div className="flex flex-wrap items-baseline justify-between gap-3">
+                <h3 id="mapa-oraciones" className="text-d-5 font-light">El documento, <span className="serif">oración por oración.</span></h3>
+                <span className="font-mono text-[11.5px] text-low">{sentences.length} oraciones</span>
+              </div>
+              <SentenceGrid
+                sentences={sentences}
+                sources={analysis.sources || []}
+                aiScore={Math.round(analysis.aiScore)}
+                similarityScore={Math.round(analysis.similarityScore)}
+                improvedAiScore={improvedResult?.improvedAiScore ?? null}
+              />
+              <div className="card p-6 flex flex-col gap-4">
+                <div className="flex flex-wrap items-baseline justify-between gap-3">
+                  <span className="eyebrow">Cadencia</span>
+                  <span className="text-[12.5px] text-low">Cada barra es una oración; su altura, el número de palabras.</span>
+                </div>
+                <div className={improvedText ? 'h-[220px]' : 'h-[120px]'}>
+                  <CadenceSignal mode="data" lanes={cadenceLanes} label={`Longitud de las ${sentences.length} oraciones del documento${improvedText ? ' y de la versión humanizada' : ''}`} />
+                </div>
+                <p className="text-[12.5px] leading-[1.6] text-mid">Una σ alta indica un ritmo variado, propio de la escritura humana; una σ baja, oraciones de longitud muy pareja.</p>
+              </div>
+            </section>
+          )}
+
           {error && (
             <div className="flex items-start gap-3 py-4 border-y border-ai/30 text-[13px] text-ai" role="alert">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.8} />
@@ -819,44 +873,51 @@ export const AnalyzerPage: React.FC = () => {
                 <h3 className="text-d-5 font-light">
                   No un número. <span className="serif">Un argumento.</span>
                 </h3>
-                <span className="font-mono text-[11.5px] text-low">
-                  {analysis.paragraphs.length > 5
-                    ? showAllParagraphs
-                      ? `Mostrando los ${analysis.paragraphs.length} párrafos`
-                      : `Mostrando 5 de ${analysis.paragraphs.length} párrafos`
-                    : `${analysis.paragraphs.length} párrafos`}
-                </span>
+                <div className="flex items-center gap-4">
+                  <span className="font-mono text-[11.5px] text-low">
+                    {paraView === 'list' && analysis.paragraphs.length > 5
+                      ? showAllParagraphs
+                        ? `Mostrando los ${analysis.paragraphs.length} párrafos`
+                        : `Mostrando 5 de ${analysis.paragraphs.length} párrafos`
+                      : `${analysis.paragraphs.length} párrafos`}
+                  </span>
+                  {analysis.paragraphs.length >= 4 && (
+                    <div className="inline-flex p-1 rounded-full border hair bg-hair/40" role="group" aria-label="Vista de los párrafos">
+                      {([['list', 'Lista'], ['city', 'Ciudad']] as const).map(([v, l]) => (
+                        <button key={v} type="button" aria-pressed={paraView === v} onClick={() => setParaView(v)}
+                          className={`h-8 px-4 rounded-full text-[12.5px] font-semibold transition-colors ${paraView === v ? 'bg-surface text-hi shadow-xs' : 'text-mid hover:text-hi'}`}>{l}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
+              {paraView === 'city' && analysis.paragraphs.length >= 4 ? (
+                <div className="flex flex-col gap-5">
+                  <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-6 items-center">
+                    <ParagraphCity
+                      paragraphs={cityParagraphs}
+                      selected={cityDetail?.index ?? null}
+                      onSelect={pickParagraph}
+                      label={`Vista isométrica de ${cityParagraphs.length} párrafos; la altura de cada edificio es su probabilidad de IA. ${hotParagraphs} superan el 70 %.`}
+                    />
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-wrap gap-x-5 gap-y-2 text-[12.5px] text-mid">
+                        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-[3px] bg-human" />Humano (&lt; 40 %)</span>
+                        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-[3px] bg-mixed" />Mixto</span>
+                        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-[3px] bg-ai" />IA probable (≥ 70 %)</span>
+                      </div>
+                      <p className="text-[14px] leading-[1.65] text-mid">
+                        <span className="font-semibold text-hi">{hotParagraphs} de {cityParagraphs.length} párrafos</span> superan el 70 % de probabilidad de IA. Cada edificio es un párrafo y su altura, la puntuación.
+                      </p>
+                      <p className="text-[12.5px] text-low">Pasa el cursor por un edificio para ver su párrafo; púlsalo para leerlo abajo.</p>
+                    </div>
+                  </div>
+                  {cityDetail && <ParagraphCard p={cityDetail} as="div" />}
+                </div>
+              ) : (
+              <>
               <ol className="flex flex-col gap-3">
-                {(showAllParagraphs ? analysis.paragraphs : analysis.paragraphs.slice(0, 5)).map((p, idx) => {
-                  const m = getScoreMood(p.aiScore);
-                  return (
-                    <li key={idx} className="card px-6 py-6 flex flex-col sm:flex-row gap-5 sm:gap-7">
-                      <div className="flex sm:flex-col items-baseline sm:items-center gap-2 sm:w-[76px] shrink-0">
-                        <span className={`num text-[28px] leading-none ${m.textClass}`}>{Math.round(p.aiScore)}%</span>
-                        <span className="eyebrow">{m.tone === 'ai' ? 'IA' : m.tone === 'mixed' ? 'Mixto' : 'Humano'}</span>
-                      </div>
-                      <div className="flex flex-col gap-3 min-w-0 flex-1">
-                        <div className="flex items-center gap-3">
-                          <span className="font-mono text-[11px] text-low">Párrafo {p.index + 1}</span>
-                          <span className="h-[3px] flex-1 max-w-[120px] rounded-full bg-hair overflow-hidden" aria-hidden="true">
-                            <span className={`block h-full ${m.barClass}`} style={{ width: `${Math.round(p.aiScore)}%` }} />
-                          </span>
-                        </div>
-                        <p className="text-[14px] leading-[1.75] text-mid">{p.text}</p>
-                        {p.indicators.length > 0 && (
-                          <div className="flex items-baseline gap-3">
-                            <span className={`h-px w-[16px] shrink-0 relative -top-1 ${m.barClass}`} />
-                            <span className={`text-[12.5px] font-semibold leading-[1.6] ${m.textClass}`}>
-                              {p.indicators.join('  ·  ')}
-                            </span>
-                          </div>
-                        )}
-                        <p className="text-[12.5px] leading-[1.6] text-low italic">{p.explanation}</p>
-                      </div>
-                    </li>
-                  );
-                })}
+                {(showAllParagraphs ? analysis.paragraphs : analysis.paragraphs.slice(0, 5)).map((p, idx) => <ParagraphCard key={idx} p={p} />)}
               </ol>
 
               {analysis.paragraphs.length > 5 && (
@@ -883,6 +944,8 @@ export const AnalyzerPage: React.FC = () => {
                   </button>
                 </div>
               )}
+              </>
+              )}
             </div>
           )}
 
@@ -892,15 +955,15 @@ export const AnalyzerPage: React.FC = () => {
               <div className="flex flex-wrap items-baseline justify-between gap-3 pt-6 border-t hair">
                 <div className="flex items-center gap-3">
                   <h3 className="text-d-5 font-light">
-                    Detección de Similitud y <span className="serif text-azure">Citas APA 7.</span>
+                    Detección de similitud y <span className="serif text-azure">citas APA 7.</span>
                   </h3>
                 </div>
                 <span
                   className={`num text-[13px] px-3 py-1 rounded-full font-bold ${
                     analysis.similarityScore >= 35
-                      ? 'bg-red-500/10 text-red-500 border border-red-500/30'
+                      ? 'bg-ai/10 text-ai border border-ai/30'
                       : analysis.similarityScore >= 18
-                      ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30'
+                      ? 'bg-mixed/10 text-mixed border border-mixed/30'
                       : 'bg-azure/10 text-azure border border-azure/30'
                   }`}
                 >
@@ -912,9 +975,9 @@ export const AnalyzerPage: React.FC = () => {
               <div
                 className={`p-5 sm:p-6 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
                   analysis.similarityScore >= 35
-                    ? 'border-red-500/40 bg-red-500/[0.04] dark:bg-red-500/[0.08]'
+                    ? 'border-ai/40 bg-ai/[0.05]'
                     : analysis.similarityScore >= 18
-                    ? 'border-amber-500/40 bg-amber-500/[0.04] dark:bg-amber-500/[0.08]'
+                    ? 'border-mixed/40 bg-mixed/[0.05]'
                     : 'border-azure/30 bg-azure/[0.03] dark:bg-azure/[0.06]'
                 }`}
               >
@@ -922,9 +985,9 @@ export const AnalyzerPage: React.FC = () => {
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                       analysis.similarityScore >= 35
-                        ? 'bg-red-500/15 text-red-500'
+                        ? 'bg-ai/15 text-ai'
                         : analysis.similarityScore >= 18
-                        ? 'bg-amber-500/15 text-amber-500'
+                        ? 'bg-mixed/15 text-mixed'
                         : 'bg-azure/15 text-azure'
                     }`}
                   >
@@ -933,7 +996,7 @@ export const AnalyzerPage: React.FC = () => {
                   <div className="flex flex-col gap-1">
                     <h4 className="text-[14.5px] font-semibold text-hi flex items-center gap-2">
                       {analysis.similarityScore >= 35
-                        ? '⚠️ Alerta de Similitud Significativa (Posible Plagio)'
+                        ? 'Similitud significativa: posible plagio'
                         : analysis.similarityScore >= 18
                         ? 'Similitud moderada con fuentes abiertas'
                         : 'Cotejo bibliográfico completado'}
@@ -944,6 +1007,29 @@ export const AnalyzerPage: React.FC = () => {
                         : 'Coincidencias de frases o terminología común. Puedes copiar las referencias en formato APA 7 si requieres citar estas fuentes.'}
                     </p>
                   </div>
+                </div>
+              </div>
+
+              {/* Fuentes en órbita: distancia y tamaño según la similitud */}
+              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-6 items-center">
+                <div className="w-full aspect-[1.1/1] sm:aspect-[1.6/1]">
+                  <SourceGraph
+                    sources={graphSources}
+                    onSelect={pickSource}
+                    label={`Grafo de ${graphSources.length} fuentes alrededor del documento; cuanto más cerca y más grande el nodo, mayor la similitud.`}
+                  />
+                </div>
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-wrap gap-x-5 gap-y-2 text-[12.5px] text-mid">
+                    <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-azure" />Tu documento</span>
+                    <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-low" />Menor (&lt; 18 %)</span>
+                    <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-mixed" />Moderada</span>
+                    <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-ai" />Alta (≥ 35 %)</span>
+                  </div>
+                  <p className="text-[14px] leading-[1.65] text-mid">
+                    <span className="font-semibold text-hi">{analysis.similarityScore}% de similitud</span> repartida en {graphSources.length} {graphSources.length === 1 ? 'fuente abierta' : 'fuentes abiertas'}. Cuanto más se parece una fuente, más cerca orbita y más pulsos envía.
+                  </p>
+                  <p className="text-[12.5px] text-low">Arrastra los nodos; pulsa uno para ir a su cita.</p>
                 </div>
               </div>
 
@@ -970,11 +1056,13 @@ export const AnalyzerPage: React.FC = () => {
                   return (
                     <li
                       key={src.id || i}
-                      className={`p-6 sm:p-7 rounded-2xl border transition-all flex flex-col gap-5 ${
+                      id={`fuente-${i}`}
+                      tabIndex={-1}
+                      className={`p-6 sm:p-7 rounded-2xl border transition-all duration-500 flex flex-col gap-5 outline-none ${flashSource === i ? 'ring-2 ring-azure/70 ring-offset-2 ring-offset-[rgb(var(--ground))]' : ''} ${
                         isHighMatch
-                          ? 'border-red-500/30 bg-red-500/[0.02] dark:bg-red-500/[0.04]'
+                          ? 'border-ai/30 bg-ai/[0.03]'
                           : isModMatch
-                          ? 'border-amber-500/30 bg-amber-500/[0.02] dark:bg-amber-500/[0.04]'
+                          ? 'border-mixed/30 bg-mixed/[0.03]'
                           : 'border-line/70 bg-surface/80'
                       }`}
                     >
@@ -984,19 +1072,19 @@ export const AnalyzerPage: React.FC = () => {
                           <span
                             className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
                               isHighMatch
-                                ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+                                ? 'bg-ai/15 text-ai'
                                 : isModMatch
-                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                ? 'bg-mixed/15 text-mixed'
                                 : 'bg-azure/10 text-azure'
                             }`}
                           >
                             <span
                               className="w-1.5 h-1.5 rounded-full"
                               style={{
-                                background: isHighMatch ? '#ef4444' : isModMatch ? '#f59e0b' : 'rgb(var(--azure))',
+                                background: isHighMatch ? 'rgb(var(--ai))' : isModMatch ? 'rgb(var(--mixed))' : 'rgb(var(--azure))',
                               }}
                             />
-                            {isHighMatch ? 'Posible Plagio' : isModMatch ? 'Similitud Moderada' : 'Coincidencia'}
+                            {isHighMatch ? 'Posible plagio' : isModMatch ? 'Similitud moderada' : 'Coincidencia'}
                           </span>
                           {src.url.startsWith('http') ? (
                             <div className="flex flex-col min-w-0">
@@ -1034,13 +1122,13 @@ export const AnalyzerPage: React.FC = () => {
                       {/* Comparativa visual destacando el fragmento detectado */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Texto en documento del usuario con resaltado visual destacado */}
-                        <div className="flex flex-col gap-2 rounded-xl p-4 bg-amber-500/[0.06] dark:bg-amber-500/[0.12] border-l-4 border-amber-500">
+                        <div className="flex flex-col gap-2 rounded-xl p-4 bg-mixed/[0.08] border-l-4 border-mixed">
                           <div className="flex items-center justify-between">
-                            <span className="text-[11.5px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                            <span className="text-[11.5px] font-bold uppercase tracking-wider text-mixed flex items-center gap-1.5">
                               <AlertCircle className="w-3.5 h-3.5" /> Fragmento detectado en tu documento
                             </span>
                           </div>
-                          <p className="serif text-[15px] leading-[1.65] text-hi selection:bg-amber-500/30">
+                          <p className="serif text-[15px] leading-[1.65] text-hi selection:bg-mixed/30">
                             {src.userSnippet}
                           </p>
                         </div>
@@ -1149,5 +1237,35 @@ export const AnalyzerPage: React.FC = () => {
         <div className="flex items-center gap-3 text-[13px] text-mid" role="status"><Loader2 className="w-4 h-4 animate-spin text-azure" /> {loadingStage || 'Cargando…'}</div>
       )}
     </div>
+  );
+};
+
+/** Tarjeta de un párrafo del informe (lista y detalle de la ciudad). */
+const ParagraphCard: React.FC<{ p: ParagraphResult; as?: 'li' | 'div' }> = ({ p, as = 'li' }) => {
+  const m = getScoreMood(p.aiScore);
+  const Tag = as;
+  return (
+    <Tag id={`parrafo-${p.index + 1}`} className="card px-6 py-6 flex flex-col sm:flex-row gap-5 sm:gap-7">
+      <div className="flex sm:flex-col items-baseline sm:items-center gap-2 sm:w-[76px] shrink-0">
+        <span className={`num text-[28px] leading-none ${m.textClass}`}>{Math.round(p.aiScore)}%</span>
+        <span className="eyebrow">{m.tone === 'ai' ? 'IA' : m.tone === 'mixed' ? 'Mixto' : 'Humano'}</span>
+      </div>
+      <div className="flex flex-col gap-3 min-w-0 flex-1">
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-[11px] text-low">Párrafo {p.index + 1}</span>
+          <span className="h-[3px] flex-1 max-w-[120px] rounded-full bg-hair overflow-hidden" aria-hidden="true">
+            <span className={`block h-full ${m.barClass}`} style={{ width: `${Math.round(p.aiScore)}%` }} />
+          </span>
+        </div>
+        <p className="text-[14px] leading-[1.75] text-mid">{p.text}</p>
+        {p.indicators.length > 0 && (
+          <div className="flex items-baseline gap-3">
+            <span className={`h-px w-[16px] shrink-0 relative -top-1 ${m.barClass}`} />
+            <span className={`text-[12.5px] font-semibold leading-[1.6] ${m.textClass}`}>{p.indicators.join('  ·  ')}</span>
+          </div>
+        )}
+        <p className="text-[12.5px] leading-[1.6] text-low italic">{p.explanation}</p>
+      </div>
+    </Tag>
   );
 };
