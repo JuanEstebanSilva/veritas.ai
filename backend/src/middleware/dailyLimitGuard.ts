@@ -30,43 +30,9 @@ export const checkDailyAnalysisLimit = async (
     return;
   }
 
-  // Los usuarios Premium disfrutan de análisis ilimitados
-  if (user.is_premium) {
-    next();
-    return;
-  }
-
-  const now = new Date();
-  const lastDate = new Date(user.last_analysis_date);
-
-  let currentDailyCount = user.daily_analysis_count;
-
-  // Si comenzó un nuevo día, reiniciar contador en base de datos
-  if (!isSameCalendarDay(now, lastDate)) {
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        daily_analysis_count: 0,
-        last_analysis_date: now,
-      },
-    });
-    req.user = updatedUser;
-    currentDailyCount = 0;
-  }
-
-  // Verificar si ya alcanzó el límite de 5 análisis
-  if (currentDailyCount >= FREE_DAILY_LIMIT) {
-    res.status(429).json({
-      success: false,
-      isLimitReached: true,
-      limit: FREE_DAILY_LIMIT,
-      usedToday: currentDailyCount,
-      message: 'Has alcanzado tus 5 análisis gratuitos de hoy. Obtén Premium para disfrutar de análisis ilimitados.',
-    });
-    return;
-  }
-
+  // En esta versión Open Source de Plagelio / Veritas.ai, todos los usuarios tienen análisis ilimitados y gratuitos.
   next();
+  return;
 };
 
 /**

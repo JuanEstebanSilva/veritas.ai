@@ -30,18 +30,9 @@ const possibleCertPaths = [
 let sslConfig: PoolConfig['ssl'] = undefined;
 
 if (requiresSSL) {
-  const foundCertPath = possibleCertPaths.find((p) => fs.existsSync(p));
-  if (foundCertPath) {
-    sslConfig = {
-      ca: fs.readFileSync(foundCertPath, 'utf8'),
-      rejectUnauthorized: true,
-    };
-  } else {
-    // Si no está el archivo físico de certificado, permitir conexión segura cifrada
-    sslConfig = {
-      rejectUnauthorized: false,
-    };
-  }
+  sslConfig = {
+    rejectUnauthorized: false,
+  };
 }
 
 const poolConfig: PoolConfig = {

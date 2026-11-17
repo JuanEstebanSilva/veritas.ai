@@ -76,22 +76,10 @@ export const Navbar: React.FC = () => {
   ) : null;
 
   const quota = isAuthenticated && user ? (
-    isPremium ? (
-      <span className="hidden sm:inline-flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.16em] text-gold">
-        <span className="status-dot" style={{ color: 'rgb(var(--gold) / .18)', background: 'rgb(var(--gold))' }} />
-        Vitalicio
-      </span>
-    ) : (
-      <button
-        type="button"
-        onClick={() => { sound.playClick(); openPremiumModal(); }}
-        title="Desbloquea análisis ilimitados por $2 USD"
-        className="btn btn-ghost btn-sm gap-3"
-      >
-        <span className="num text-[13px]">{user.daily_analysis_count}<span className="text-low">/5</span></span>
-        <span className="hidden lg:inline text-azure">Desbloquear</span>
-      </button>
-    )
+    <span className="hidden sm:inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-human bg-human/10 px-3 py-1 rounded-full border border-human/20">
+      <span className="status-dot" style={{ color: 'rgb(var(--human) / .18)', background: 'rgb(var(--human))' }} />
+      Acceso Ilimitado
+    </span>
   ) : null;
 
   return (

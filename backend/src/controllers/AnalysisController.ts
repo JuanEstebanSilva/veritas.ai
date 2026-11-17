@@ -390,7 +390,7 @@ export class AnalysisController {
         return;
       }
 
-      const { aiReport, similarityReport } = await AIService.runFullAnalysis(analysis.improved_text);
+      const { aiReport, similarityReport } = await AIService.runFullAnalysis(analysis.improved_text, id);
 
       const updated = await prisma.analysis.update({
         where: { id },

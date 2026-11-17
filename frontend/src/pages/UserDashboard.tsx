@@ -7,10 +7,10 @@ import { getScoreMood } from '../utils/scoreMood';
 import { CountUp, Magnetic } from '../motion';
 import { RecentDeck, type DeckItem } from '../components/analysis';
 import { Skeleton, SkeletonRows } from '../components/ui';
-import { ArrowRight, FileText, FileType, ShieldCheck, Crown, RefreshCw } from 'lucide-react';
+import { ArrowRight, FileText, FileType, ShieldCheck, RefreshCw } from 'lucide-react';
 
 export const UserDashboard: React.FC = () => {
-  const { user, isPremium, openPremiumModal } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [allAnalyses, setAllAnalyses] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
@@ -74,7 +74,7 @@ export const UserDashboard: React.FC = () => {
         <div className="flex flex-col gap-3">
           <h1 className="text-d-4 font-light">Hola, <span className="serif text-azure">{user?.name}.</span></h1>
           <p className="text-[14px] text-low">
-            {isPremium ? 'Licencia vitalicia activa: análisis y descargas sin límite.' : availableToday === 0 ? 'Has usado tus 5 análisis gratuitos de hoy.' : `Te quedan ${availableToday} análisis gratuitos hoy.`}
+            Plataforma libre y de código abierto: análisis de plagio e IA ilimitados y gratuitos.
           </p>
         </div>
         <Magnetic strength={0.24} radius={70}>
@@ -84,10 +84,10 @@ export const UserDashboard: React.FC = () => {
 
       {/* Cifras del día */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 border-y hair">
-        <Stat label="Usados hoy">{isPremium ? <span className="text-[18px] text-hi">Sin cuota</span> : <><CountUp value={usedToday} /><span className="text-low text-[16px]"> / 5</span></>}</Stat>
-        <Stat label="Disponibles" tone={availableToday === 0 && !isPremium ? 'text-ai' : 'text-human'}>{isPremium ? <span className="text-[18px]">Ilimitados</span> : <CountUp value={availableToday} />}</Stat>
-        <Stat label="Licencia" tone={isPremium ? 'text-gold' : 'text-mid'}><span className="text-[18px]">{isPremium ? 'Vitalicia' : 'Estándar'}</span></Stat>
         <Stat label="Documentos">{loadingHistory ? <Skeleton className="h-7 w-10 mt-0.5" /> : <CountUp value={totalAnalysesCount} />}</Stat>
+        <Stat label="Análisis Disponibles" tone="text-human"><span className="text-[20px]">Ilimitados</span></Stat>
+        <Stat label="Licencia" tone="text-gold"><span className="text-[20px]">Open Source</span></Stat>
+        <Stat label="Cotejo">{n > 0 ? <span className="text-[20px] text-azure">En Repositorio</span> : <span className="text-[20px] text-low">Activo</span>}</Stat>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-6">
@@ -171,24 +171,11 @@ export const UserDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Licencia vitalicia para cuentas estándar */}
-      {!isPremium && (
-        <div className="halo relative overflow-hidden rounded-[20px] border border-azure/30 p-7 sm:p-8 flex flex-wrap items-center justify-between gap-6"
-          style={{ background: 'linear-gradient(165deg, rgb(var(--azure) / .09), rgb(var(--azure) / .015) 60%)' }}>
-          <div className="glow" style={{ width: 420, height: 420, top: -220, right: -160, ['--glow-color' as string]: 'rgb(var(--azure) / .18)' }} aria-hidden="true" />
-          <div className="relative flex flex-col gap-2 max-w-[560px]">
-            <span className="eyebrow text-azure">Licencia vitalicia</span>
-            <h3 className="text-d-5 font-semibold">Sin cuota diaria, <span className="serif">para siempre.</span></h3>
-            <p className="text-[13.5px] leading-[1.65] text-mid">Un solo pago de $2. Análisis ilimitados, descargas sin límite y prioridad en documentos extensos.</p>
-          </div>
-          <Magnetic className="shrink-0 relative" strength={0.24} radius={70}>
-            <button type="button" onClick={() => { sound.playClick(); openPremiumModal(); }} className="btn btn-primary"><Crown className="w-4 h-4" strokeWidth={1.8} /> Activar por $2</button>
-          </Magnetic>
-        </div>
-      )}
-      {isPremium && (
-        <div className="flex items-center gap-4 py-5 border-y border-gold/30 text-[13.5px] text-mid"><ShieldCheck className="w-5 h-5 text-gold shrink-0" strokeWidth={1.6} /> Licencia vitalicia activa desde {user?.premium_since ? new Date(user.premium_since).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) : 'hoy'}.</div>
-      )}
+      {/* Banner de acceso completo Open Source */}
+      <div className="flex items-center gap-4 py-5 border-y border-human/30 text-[13.5px] text-mid">
+        <ShieldCheck className="w-5 h-5 text-human shrink-0" strokeWidth={1.6} /> 
+        <span>Acceso completo activo: Cotejo en repositorio institucional, detección de IA y reescritura ética sin costo ni límites.</span>
+      </div>
 
       {/* Recientes */}
       <div className="flex flex-col gap-5">
