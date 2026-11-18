@@ -21,7 +21,8 @@ describe('Laboratorio No. 11 — Plagelio (Auditoría de Integridad Académica: 
         .set('X-API-Key', apiKey)
         .send({
           email: 'admin@veritas.ai',
-          password: 'SANTOTO_2026--2',
+          // crearAdministradorInicial() (beforeAll) sincroniza esta cuenta con ADMIN_PASSWORD
+          password: process.env.ADMIN_PASSWORD || '',
         });
 
       expect(res.status).toBe(200);
