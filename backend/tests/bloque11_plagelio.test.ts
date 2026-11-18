@@ -55,7 +55,8 @@ describe('Bloque 11 — Plagelio: Actualización Progresiva de API Segura (25 Pr
         .post('/api/auth/login')
         .send({
           email: 'admin@veritas.ai',
-          password: 'SANTOTO_2026--2',
+          // crearAdministradorInicial() (beforeAll) sincroniza esta cuenta con ADMIN_PASSWORD
+          password: process.env.ADMIN_PASSWORD || '',
         });
       if (adminRes.status === 200) {
         tokenAdmin = adminRes.body.token;
