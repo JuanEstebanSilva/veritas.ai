@@ -46,6 +46,7 @@ const rutasRecursosJWT = new Set([
 ]);
 
 const rutasAuthJWT = new Set([
+  '/auth/me',
   '/auth/perfil',
   '/auth/profile',
   '/auth/cambiar-password',

@@ -5,7 +5,7 @@ import { Role } from '@prisma/client';
 import { createTestToken } from './helpers';
 import bcrypt from 'bcryptjs';
 
-describe('3. Control Estricto del Límite Diario de 5 Análisis', () => {
+describe('3. Análisis gratuitos ilimitados en la versión Open Source', () => {
   let freeUserToken: string;
   let freeUserId: string;
   let premiumUserToken: string;
@@ -14,7 +14,7 @@ describe('3. Control Estricto del Límite Diario de 5 Análisis', () => {
   beforeAll(async () => {
     const pass = await bcrypt.hash('Secret123!', 10);
 
-    // Usuario gratuito con 0 análisis
+    // Usuario gratuito con un contador previo para comprobar que sigue incrementando
     const freeUser = await prisma.user.create({
       data: {
         name: 'Gratuito',
@@ -24,7 +24,7 @@ describe('3. Control Estricto del Límite Diario de 5 Análisis', () => {
         role: Role.USER,
         is_active: true,
         is_premium: false,
-        daily_analysis_count: 4, // Lo inicializamos en 4 para probar el límite en la siguiente llamada
+        daily_analysis_count: 4,
         last_analysis_date: new Date(),
       },
     });
@@ -77,21 +77,20 @@ describe('3. Control Estricto del Límite Diario de 5 Análisis', () => {
     expect(dbUser?.daily_analysis_count).toBe(5);
   });
 
-  it('debe bloquear con 429 cuando el usuario gratuito intenta su 6to análisis', async () => {
+  it('debe permitir el 6to análisis gratuito y aumentar el contador', async () => {
     const res = await request(app)
       .post('/api/analyses/text')
       .set('Authorization', `Bearer ${freeUserToken}`)
       .send({
-        title: 'Análisis número 6 (bloqueado)',
-        text: 'Este análisis debería ser bloqueado de inmediato porque ya consumió sus 5 cuotas del día.',
+        title: 'Análisis número 6',
+        text: 'Este análisis debe completarse porque la versión Open Source permite análisis gratuitos ilimitados.',
       });
 
-    expect(res.status).toBe(429);
-    expect(res.body.success).toBe(false);
-    expect(res.body.isLimitReached).toBe(true);
-    expect(res.body.message).toBe(
-      'Has alcanzado tus 5 análisis gratuitos de hoy. Obtén Premium para disfrutar de análisis ilimitados.'
-    );
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+
+    const dbUser = await prisma.user.findUnique({ where: { id: freeUserId } });
+    expect(dbUser?.daily_analysis_count).toBe(6);
   });
 
   it('debe permitir análisis ilimitados a un usuario Premium', async () => {
