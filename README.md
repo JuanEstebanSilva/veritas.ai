@@ -8,6 +8,7 @@
 [![Prisma](https://img.shields.io/badge/Prisma-6.4-2D3748.svg)](https://www.prisma.io/)
 [![Tests](https://img.shields.io/badge/Tests-21%20Passed-emerald.svg)](https://jestjs.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/juanSilvaE/veritas.ai/actions/workflows/ci.yml/badge.svg)](https://github.com/juanSilvaE/veritas.ai/actions/workflows/ci.yml)
 
 ---
 
