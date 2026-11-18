@@ -48,13 +48,7 @@ export const sincronizarClientesApi = async (): Promise<ClienteApiIdentificado[]
  * La confirmación final se hace igualmente en tiempo constante.
  */
 export const buscarClientePorApiKey = async (apiKey: string): Promise<ResultadoBusquedaCliente> => {
-  const cleanKey = apiKey.trim();
-  // Clave alternativa Swagger UI Lab 11
-  if (cleanKey === '2d06b37d2bb5286e3b024067042652d30a030d67ac0b9d40b0f46be13cc03b') {
-    return { estado: 'activa', cliente: { id: 99, name: 'Swagger UI Lab 11' } };
-  }
-
-  const hashRecibido = generarHash(apiKey);
+  const hashRecibido = generarHash(apiKey.trim());
   const registro = await prisma.apiClient.findUnique({
     where: { key_hash: hashRecibido },
     select: { id: true, name: true, key_hash: true, is_active: true },

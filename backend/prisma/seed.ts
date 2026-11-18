@@ -1,5 +1,6 @@
 import { PrismaClient, Role, AnalysisType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -11,7 +12,11 @@ async function main() {
   console.log('🌱 Iniciando sembrado de datos (Seed) para Plagelio...');
 
   const adminEmail = (process.env.ADMIN_EMAIL || 'admin@plagelio.com').toLowerCase().trim();
-  const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123!Secure*';
+  // Sin contraseña por defecto: un valor escrito en el código queda publicado con el repositorio
+  const adminPassword = process.env.ADMIN_PASSWORD || '';
+  if (adminPassword.length < 12) {
+    throw new Error('Define ADMIN_PASSWORD (12 caracteres o más) en backend/.env antes de ejecutar el seed.');
+  }
 
   // 1. Crear o actualizar el Administrador Único
   const adminPasswordHash = await bcrypt.hash(adminPassword, 12);
@@ -58,7 +63,13 @@ async function main() {
 
   // 2. Crear un usuario estándar de demostración
   const demoEmail = 'usuario@plagelio.com';
-  const demoPasswordHash = await bcrypt.hash('User123!Secure*', 12);
+  // Contraseña del usuario de demostración: DEMO_PASSWORD o una aleatoria que se muestra una sola vez
+  let demoPassword = process.env.DEMO_PASSWORD || '';
+  if (demoPassword.length < 10) {
+    demoPassword = randomBytes(12).toString('base64url');
+    console.log(`  Contraseña generada para usuario@plagelio.com (guárdala o define DEMO_PASSWORD): ${demoPassword}`);
+  }
+  const demoPasswordHash = await bcrypt.hash(demoPassword, 12);
   const demoUser = await prisma.user.upsert({
     where: { email: demoEmail },
     update: {},

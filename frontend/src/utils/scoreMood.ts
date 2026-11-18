@@ -50,7 +50,7 @@ const MOODS: Record<Tone, Omit<ScoreMood, 'tone'>> = {
   human: {
     status: 'Probabilidad predominantemente humana',
     shortStatus: 'Alta autenticidad',
-    description: 'Cadencia natural, perplejidad variada y autoría humana',
+    description: 'Cadencia natural, vocabulario variado y autoría humana',
     textClass: 'text-human',
     borderClass: 'border-l-human',
     bgClass: 'bg-human/10',

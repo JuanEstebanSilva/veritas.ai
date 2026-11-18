@@ -59,7 +59,16 @@ interface OpenAlexWork {
     source?: { display_name?: string };
   };
   authorships?: { author?: { display_name?: string } }[];
+  abstract_inverted_index?: Record<string, number[]> | null;
 }
+
+/** OpenAlex entrega el resumen como índice invertido (palabra → posiciones); se reconstruye en orden. */
+const reconstruirResumen = (inv?: Record<string, number[]> | null): string => {
+  if (!inv) return '';
+  const pos: string[] = [];
+  for (const [palabra, posiciones] of Object.entries(inv)) for (const p of posiciones) pos[p] = palabra;
+  return pos.filter(Boolean).join(' ');
+};
 
 export class LiveSearchService {
   /**
@@ -108,10 +117,14 @@ export class LiveSearchService {
     }
 
     // 2. Extraer oraciones de alta informatividad (proposiciones salientes)
+    // Fin de oración solo cuando al signo le sigue un espacio o un salto de línea
+    // (así «Humata.ai», «3.5» o «p.ej.» no parten la oración). Las oraciones largas no se
+    // descartan: se recortan a un fragmento de hasta ~130 caracteres en un límite de palabra.
+    const recortar = (t: string) => (t.length <= 140 ? t : t.slice(0, 130).replace(/\s+\S*$/, ''));
     const sentences = cleanText
-      .split(/[.!?\n]+/)
-      .map((s) => s.trim())
-      .filter((s) => s.length >= 35 && s.length <= 140);
+      .split(/(?<=[.!?])\s+|\n+/)
+      .map((s) => recortar(s.replace(/[.!?]+$/, '').trim()))
+      .filter((s) => s.length >= 35);
 
     // Evaluar cada oración por densidad de palabras con contenido sustantivo
     const scoredSentences = sentences.map((sent) => {
@@ -379,10 +392,14 @@ export class LiveSearchService {
         const url = item.doi || item.primary_location?.landing_page_url || 'https://openalex.org';
         const venue = item.primary_location?.source?.display_name || 'Publicación Científica';
 
+        // Con el resumen, el cotejo compara contra el contenido del trabajo y no solo contra su título
+        const resumen = reconstruirResumen(item.abstract_inverted_index);
         results.push({
           url,
           title: `${authors ? authors + ': ' : ''}${title}`,
-          snippet: `Publicación académica indexada en OpenAlex: "${title}" (${venue}, ${year || 's.f.'}).`,
+          snippet: resumen
+            ? resumen.slice(0, 1500)
+            : `Publicación académica indexada en OpenAlex: "${title}" (${venue}, ${year || 's.f.'}).`,
           year,
           author: authors || venue,
           publisher: venue,

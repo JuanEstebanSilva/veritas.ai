@@ -15,7 +15,7 @@
 
 **Plagelio** es una solución web integral y funcional de extremo a extremo inspirada en herramientas líderes del sector educativo y editorial como **Turnitin**, **Grammarly** y **QuillBot**. 
 
-Evalúa la autenticidad estilística y académica de textos y documentos **.DOCX**, estimando la probabilidad de generación por inteligencia artificial mediante análisis estilométrico (perplejidad y burstiness), indexando coincidencias contra fuentes de acceso abierto distinguiendo citas legítimas de presunto plagio, y ofreciendo un asistente de reescritura ética que permite descargar el documento optimizado en formato nativo de Microsoft Word.
+Evalúa la autenticidad estilística y académica de textos y documentos **.DOCX**, estimando la probabilidad de generación por inteligencia artificial mediante análisis estilométrico heurístico (cadencia o burstiness, riqueza léxica y conectores formulaicos; no calcula perplejidad con un modelo de lenguaje), indexando coincidencias contra fuentes de acceso abierto distinguiendo citas legítimas de presunto plagio, y ofreciendo un asistente de reescritura ética que permite descargar el documento optimizado en formato nativo de Microsoft Word.
 
 ---
 
@@ -94,17 +94,17 @@ npm test
 
 ---
 
-## 🔑 Credenciales Predeterminadas para Pruebas (Seed)
+## 🔑 Cuentas de prueba (seed)
 
-El comando `npm run seed` inicializa de forma determinista las siguientes cuentas de prueba:
+`npm run seed` crea dos cuentas. Sus contraseñas **no están en el repositorio**: salen del `.env` de cada equipo.
 
-| Rol | Correo Electrónico | Contraseña | Privilegios y Funcionalidades |
+| Rol | Correo | Contraseña | Uso |
 | :--- | :--- | :--- | :--- |
-| 👑 **ADMIN** | `admin@plagelio.com` | `Admin123!Secure*` | Panel administrativo exclusivo (`/admin`), métricas globales en tiempo real, auditoría de transacciones y gestión completa (CRUD) de usuarios del sistema. |
-| 👤 **USER (Demo)** | `usuario@plagelio.com` | `User123!Secure*` | 5 análisis diarios gratuitos con contador en tiempo real, analizador de texto y archivos DOCX, y simulación de pase Premium Vitalicio por US$2. |
+| ADMIN | valor de `ADMIN_EMAIL` | valor de `ADMIN_PASSWORD` (mínimo 12 caracteres; el seed se detiene si falta) | Panel administrativo (`/admin`), métricas globales y gestión de usuarios. |
+| USER (demo) | `usuario@plagelio.com` | valor de `DEMO_PASSWORD`; si no se define, el seed genera una aleatoria y la imprime una sola vez | Analizador de texto y archivos, historial y reescritura. |
 
-> [!TIP]
-> En la página de **Inicio de Sesión** (`/login`) del Frontend, puedes hacer clic en los botones de acceso rápido o navegar a `/login?demo=admin` o `/login?demo=user` para que las credenciales se completen automáticamente.
+> [!IMPORTANT]
+> Versiones anteriores de este README publicaban contraseñas, el `JWT_SECRET` y una API key. Esos valores deben considerarse comprometidos: cualquier base o despliegue que los haya usado tiene que rotarlos (nuevas API keys con `openssl rand -hex 32`, nuevo `JWT_SECRET`, nuevas contraseñas y reinicio del servidor para que `sincronizarClientesApi` actualice los hashes).
 
 ---
 
@@ -122,7 +122,7 @@ plagelio/
 │   │   ├── middleware/              # JWT, RoleGuard (ADMIN/USER), DailyLimitGuard (5/día) y Multer DOCX
 │   │   ├── routes/                  # /api/auth, /api/analyses, /api/writing, /api/users, /api/payments
 │   │   ├── services/                # AIService (IA, similitud, reescritura), DocxService y PaymentService
-│   │   ├── utils/                   # Motor lingüístico (burstiness, perplejidad, TTR) y corpus público
+│   │   ├── utils/                   # Motor lingüístico (burstiness, TTR, conectores) y corpus público
 │   │   ├── app.ts                   # Middlewares globales, CORS y enrutador Express
 │   │   └── server.ts                # Inicialización del servidor HTTP
 │   ├── tests/                       # Suite de 21 pruebas automatizadas (Jest + Supertest)
@@ -210,7 +210,7 @@ PASS tests/payments.test.ts (5 tests)
 ## 📋 Guía de Escenarios para Probar las Funcionalidades
 
 ### 1. Probar el límite de 5 análisis diarios (Usuario Gratuito)
-1. Inicia sesión con el usuario demo: `usuario@plagelio.com` / `User123!Secure*`.
+1. Inicia sesión con el usuario demo (`usuario@plagelio.com` y la contraseña de `DEMO_PASSWORD`).
 2. Ingresa a **Analizar Contenido** (`/analyzer`).
 3. Realiza análisis sucesivos pegando fragmentos de texto.
 4. Observa cómo el contador en el Navbar y la pantalla avanza (ej. `1/5`, `2/5`, ..., `5/5`).
@@ -245,7 +245,7 @@ PASS tests/payments.test.ts (5 tests)
 4. Presiona **"Descargar .DOCX"**: el sistema generará y descargará automáticamente el archivo `documento_mejorado.docx` listo para ser abierto en Microsoft Word o LibreOffice.
 
 ### 6. Probar el Panel Administrativo (ADMIN)
-1. Cierra sesión e ingresa con las credenciales del Administrador: `admin@plagelio.com` / `Admin123!Secure*`.
+1. Cierra sesión e ingresa con la cuenta de administrador (`ADMIN_EMAIL` / `ADMIN_PASSWORD` de tu `.env`).
 2. Dirígete a **Panel Admin** (`/admin`).
 3. Inspecciona las métricas globales del sistema (total de usuarios, análisis del día, suscripciones activas).
 4. En la tabla de gestión de usuarios puedes crear usuarios, editar información, activar/desactivar accesos y alternar el estado Premium de cualquier cuenta. El sistema cuenta con protección activa para evitar que el Administrador sea eliminado o desactivado.

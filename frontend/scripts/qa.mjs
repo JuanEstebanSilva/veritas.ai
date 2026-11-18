@@ -20,8 +20,8 @@ mkdirSync(out, { recursive: true });
 const base = process.env.QA_BASE || 'http://localhost:5173';
 const api = process.env.QA_API || 'http://localhost:5000/api';
 const creds = {
-  user: ['usuario@plagelio.com', 'User123!Secure*'],
-  admin: ['admin@plagelio.com', 'Admin123!Secure*'],
+  user: ['usuario@plagelio.com', process.env.QA_USER_PASSWORD || ''],
+  admin: [process.env.QA_ADMIN_EMAIL || 'admin@plagelio.com', process.env.QA_ADMIN_PASSWORD || ''],
 };
 const routes = [
   ['landing', '/', null], ['login', '/login', null], ['register', '/register', null],

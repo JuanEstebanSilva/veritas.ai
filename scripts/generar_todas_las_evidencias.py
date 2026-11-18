@@ -11,7 +11,7 @@ from playwright.sync_api import sync_playwright
 EDGE_PATH = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 OUTPUT_DIR = r"D:\Varios\Varios\GitHub\veritas-ai\Evidencias_2.2_PlagelioAI"
 BASE_URL = "http://localhost:5000"
-API_KEY_POSTMAN = "61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0"
+API_KEY_POSTMAN = os.environ.get("API_KEY_POSTMAN", "")
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -397,7 +397,7 @@ def main():
         # -------------------------------------------------------------------------
         login_admin = http_req("POST", "/api/auth/login", {
             "email": "admin@veritas.com",
-            "password": "SANTOTO_2026—2"
+            "password": os.environ.get("ADMIN_PASSWORD", "")
         }, headers={"X-API-Key": API_KEY_POSTMAN})
         token_admin = login_admin["body"].get("token", "")
         

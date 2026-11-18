@@ -847,38 +847,7 @@ export const verificarCredenciales = async (
   const usuario = await obtenerUsuarioPorEmail(email);
 
   const hashComparar = usuario?.passwordHash || usuario?.password_hash;
-  let passwordValida = await verificarPassword(password, hashComparar);
-
-  // Soporte bidireccional para guión (-), doble guión (--) y raya em-dash (—) en contraseñas de laboratorio
-  if (!passwordValida && (password.includes('—') || password.includes('-'))) {
-    const variants = [
-      password.replace(/--/g, '—'),
-      password.replace(/--/g, '-'),
-      password.replace(/—/g, '--'),
-      password.replace(/—/g, '-'),
-      password.replace(/-/g, '—'),
-      password.replace(/-/g, '--'),
-    ];
-    for (const v of variants) {
-      if (await verificarPassword(v, hashComparar)) {
-        passwordValida = true;
-        break;
-      }
-    }
-  }
-
-  // Soporte bidireccional para contraseñas de laboratorio (ClaveEstudiante <-> ClavePaciente, ClaveDocente <-> ClaveMedico)
-  if (!passwordValida) {
-    if (password === 'ClaveEstudiante2026!') {
-      passwordValida = await verificarPassword('ClavePaciente2026!', hashComparar);
-    } else if (password === 'ClavePaciente2026!') {
-      passwordValida = await verificarPassword('ClaveEstudiante2026!', hashComparar);
-    } else if (password === 'ClaveDocente2026!') {
-      passwordValida = await verificarPassword('ClaveMedico2026!', hashComparar);
-    } else if (password === 'ClaveMedico2026!') {
-      passwordValida = await verificarPassword('ClaveDocente2026!', hashComparar);
-    }
-  }
+  const passwordValida = await verificarPassword(password, hashComparar);
 
   if (!usuario || !passwordValida) {
     return null;

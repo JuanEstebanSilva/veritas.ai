@@ -8,7 +8,7 @@ import app from '../src/app';
 import { pool, consultar } from '../src/config/database';
 import usuariosService from '../src/services/usuarios.service';
 
-const apiKey = '61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0';
+const apiKey = process.env.API_KEY_POSTMAN || '';
 
 async function ejecutarPruebaE2E() {
   console.log('================================================================');
@@ -49,7 +49,7 @@ async function ejecutarPruebaE2E() {
       .set('X-API-Key', apiKey)
       .send({
         email: 'admin@veritas.com',
-        password: process.env.ADMIN_PASSWORD || 'SANTOTO_2026—2',
+        password: process.env.ADMIN_PASSWORD || '',
       });
 
     if (resLoginAdmin.status !== 200 || !resLoginAdmin.body.token) {

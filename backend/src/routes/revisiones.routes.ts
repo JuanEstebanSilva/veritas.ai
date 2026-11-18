@@ -123,6 +123,7 @@ router.patch(
   autorizarRoles('administrador', 'admin', 'docente', 'profesor', 'auditor'),
   validarIdRevision,
   validar,
+  autorizarAccesoRevision,
   confirmarRevision
 );
 
@@ -132,6 +133,7 @@ router.patch(
   autorizarRoles('administrador', 'admin', 'docente', 'profesor', 'auditor'),
   validarIdRevision,
   validar,
+  autorizarAccesoRevision,
   atenderRevision
 );
 
@@ -141,6 +143,7 @@ router.patch(
   autorizarRoles('administrador', 'admin', 'docente', 'profesor', 'auditor', 'estudiante', 'paciente', 'user'),
   validarIdRevision,
   validar,
+  autorizarAccesoRevision,
   cancelarRevision
 );
 

@@ -62,7 +62,7 @@ export const RegisterPage: React.FC = () => {
     <AuthShell
       tone="human"
       headline={<>Análisis ilimitados<br /><span className="serif text-human">100% gratis.</span></>}
-      lede="Sin pagos, sin suscripciones y sin límites. Informe completo de plagio con cotejo en repositorio institucional, perplejidad y similitud web."
+      lede="Sin pagos, sin suscripciones y sin límites. Informe completo de plagio con cotejo en el repositorio interno, estilometría y similitud web."
       aside={
         <ul className="flex flex-col gap-4 max-w-[520px]">
           {['Acceso completo y gratuito para toda la comunidad académica', 'Cotejo contra repositorio interno de documentos (Turnitin Open Source)', 'Soporte multiformato: Word (.docx, .doc), PDF, ODT, RTF, TXT y MD', 'Reescritura y humanización ética integrada con Google Gemini'].map((t) => (

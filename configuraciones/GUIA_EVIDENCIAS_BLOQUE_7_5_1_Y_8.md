@@ -115,7 +115,7 @@ Esta guía detalla con total precisión **dónde termina el Bloque 7.5.1** y **d
 
 ### Evidencia 8-B: Autenticación y Usuarios (P01–P07)
 En Swagger UI o Postman, configurar la cabecera:
-`X-API-Key: 61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0`
+`X-API-Key: <valor de API_KEY_POSTMAN en tu .env>`
 
 1. **P01 — Registro exitoso (201 Created):**
    - **Endpoint:** `POST /api/auth/registro`
@@ -308,10 +308,10 @@ En Swagger UI o Postman, configurar la cabecera:
 
 | Concepto | Valor Configurado en el Sistema |
 |---|---|
-| **API Key Global** | `61135a3dc83768741e1c3eb1b8210dc60e78f265fbbe86ddb931a299ab42a3d0` |
+| **API Key Global** | valor de `API_KEY_POSTMAN` en el `.env` (no se publica) |
 | **Cabecera API Key** | `X-API-Key` |
 | **Correo Admin Bootstrap** | `admin@veritas.com` |
-| **Clave Admin Bootstrap** | `SANTOTO_2026—2` |
+| **Clave Admin Bootstrap** | valor de `ADMIN_PASSWORD` en el `.env` (no se publica) |
 | **URL Swagger UI** | `http://localhost:3000/api-docs` |
 | **Comando Tests Bloque 7.5.1** | `npm run test:bloque7.5.1` |
 | **Comando Tests Bloque 8** | `npm run test:bloque8` |

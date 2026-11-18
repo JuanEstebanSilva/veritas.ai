@@ -53,6 +53,7 @@ database/
 ├── 11_4_password_reset_tokens.sql              # Migración Bloque 11: Tabla de tokens de recuperación administrativa
 ├── 11_4_2_codigos_recuperacion.sql             # Migración Bloque 11: Tabla de códigos de respaldo
 ├── 11_5_indices_anticonflicto_y_rendimiento.sql# Migración Bloque 11: Índices parciales anticonflicto de horario
+├── 11_6_cierre_rls.sql                        # Retira las políticas USING (true) y el acceso de anon/authenticated
 ├── 11_verificacion_plagelio.sql                # Auditoría integral de 25 pruebas del Bloque 11
 └── README.md                                   # Esta documentación técnica
 ```
@@ -79,6 +80,7 @@ psql -U postgres -d plagelio -f database/11_3_version_sesion.sql
 psql -U postgres -d plagelio -f database/11_4_password_reset_tokens.sql
 psql -U postgres -d plagelio -f database/11_4_2_codigos_recuperacion.sql
 psql -U postgres -d plagelio -f database/11_5_indices_anticonflicto_y_rendimiento.sql
+psql -U postgres -d plagelio -f database/11_6_cierre_rls.sql
 
 # 4. Verificar integridad y pruebas
 psql -U postgres -d plagelio -f database/11_verificacion_plagelio.sql
@@ -96,6 +98,7 @@ psql -U postgres -d plagelio -f database/11_verificacion_plagelio.sql
    5. `11_4_password_reset_tokens.sql` (Crea tabla de recuperación administrativa)
    6. `11_4_2_codigos_recuperacion.sql` (Crea tabla de códigos de respaldo)
    7. `11_5_indices_anticonflicto_y_rendimiento.sql` (Crea índices anticonflicto)
+   8. `11_6_cierre_rls.sql` (Retira las políticas abiertas y el acceso de la API pública de Supabase)
    8. `11_verificacion_plagelio.sql` (Ejecuta la batería de comprobaciones)
 
 ---
@@ -124,4 +127,4 @@ psql -U postgres -d plagelio -f database/11_verificacion_plagelio.sql
      ```
 
 4. **Row Level Security (RLS)**:
-   - RLS habilitado en todas las tablas sensibles para garantizar aislamiento multi-tenant cuando se consulta mediante el cliente Supabase.
+   - RLS habilitado en todas las tablas y **sin políticas abiertas** (desde `11_6`): los roles `anon` y `authenticated` de Supabase no pueden leer ni escribir nada. Solo el backend accede, con el rol dueño de las tablas, que no está sujeto a RLS mientras no se use `FORCE ROW LEVEL SECURITY`. Antes de `11_6`, las políticas `USING (true)` dejaban las tablas académicas abiertas a cualquiera con la clave anónima.

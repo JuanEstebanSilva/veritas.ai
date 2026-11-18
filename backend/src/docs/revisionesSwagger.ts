@@ -37,7 +37,7 @@
  *           example: "09:30:00"
  *         motivo:
  *           type: string
- *           example: Auditoría de originalidad, perplejidad y similitud semántica en tesis de IA
+ *           example: Auditoría de originalidad y similitud en tesis de IA
  *     EstadoRevisionEntrada:
  *       type: object
  *       required:
@@ -71,7 +71,7 @@
  *           example: "09:30"
  *         motivo:
  *           type: string
- *           example: Auditoría de originalidad, perplejidad y similitud semántica en tesis de IA
+ *           example: Auditoría de originalidad y similitud en tesis de IA
  *         estado:
  *           type: string
  *           example: programada

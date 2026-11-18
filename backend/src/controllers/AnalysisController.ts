@@ -30,7 +30,7 @@ export class AnalysisController {
       const analysisTitle = title && title.trim().length > 0 ? title.trim() : autoTitle;
 
       // 1. Ejecutar análisis completo mediante AIService
-      const { aiReport, similarityReport } = await AIService.runFullAnalysis(trimmedText);
+      const { aiReport, similarityReport } = await AIService.runFullAnalysis(trimmedText, undefined, req.user?.id);
 
       // 2. Persistir análisis y resultados en base de datos
       const analysis = await prisma.analysis.create({
@@ -145,7 +145,7 @@ export class AnalysisController {
       }
 
       // 2. Ejecutar análisis completo
-      const { aiReport, similarityReport } = await AIService.runFullAnalysis(extractedText);
+      const { aiReport, similarityReport } = await AIService.runFullAnalysis(extractedText, undefined, req.user?.id);
 
       // 3. Persistir en base de datos
       const analysis = await prisma.analysis.create({
@@ -390,7 +390,7 @@ export class AnalysisController {
         return;
       }
 
-      const { aiReport, similarityReport } = await AIService.runFullAnalysis(analysis.improved_text, id);
+      const { aiReport, similarityReport } = await AIService.runFullAnalysis(analysis.improved_text, id, req.user?.id);
 
       const updated = await prisma.analysis.update({
         where: { id },
